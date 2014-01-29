@@ -10,7 +10,6 @@
 
 int daemonize(int argc, char const *argv[])
 {
-
 	int pid;
 
 	openlog(NULL, 0, LOG_DAEMON);

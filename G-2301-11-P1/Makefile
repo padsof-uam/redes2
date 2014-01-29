@@ -1,7 +1,7 @@
 GCC = gcc
 CFLAGS = -ggdb -Wall -pedantic -ansi
-LIBS = 
-TARGET = daemonize
+E_LIBS = 
+TARGET = main
 INCLUDES = -I./includes/
 
 OBJDIR = obj
@@ -9,10 +9,17 @@ SRCDIR = src
 INCDIR = includes
 BINDIR = bin
 DOCDIR = doc
+LIBDIR = lib
+LIBSRCDIR = srclib
 
 INCS := $(wildcard $(INCDIR)/*.h)
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
+
+LIBS := $(sort $(notdir $(patsubst %/,%, $(wildcard $(LIBSRCDIR)/*/))))
+LIB_SRCS := $(foreach dir, $(addprefix $(LIBSRCDIR)/, $(LIBS)), $(wildcard $(dir)/*.c))
+LIB_OBJS := $(addprefix lib/, $(addsuffix .a, $(LIBS)))
+
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
 
@@ -21,52 +28,89 @@ P_NUM = 1
 P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 
+TAR_EXCLUDES= bin Makefile obj doc .tar.gz
+TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
+
 .PRECIOUS: %.o %.d
 .PHONY: debug clean 
  
+all: debug docs pack
+
+### Compilation
+
 debug: $(TARGET)
 scan: clean
 	@scan-build make
 $(OBJS): | $(OBJDIR)
 
-# Packing
-
-TAR_EXCLUDES= bin Makefile obj doc .tar.gz
-TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
-
-pack: ls $(DOC_PDFS)
-	@cp Makefile $(P_NAME)-makefile
-	@cd ..; tar $(TAR_EXCLUDES_ARG) -czf $(P_NAME).tar.gz $(P_NAME) 
-	@echo "Packed $(P_NAME).tar.gz in parent directory."
-	@rm $(P_NAME)-makefile
+## Dependencies
 
 depend: $(OBJDIR)/.deps
 
-$(OBJDIR)/.deps: $(SRCS) $(INCS) | $(OBJDIR)
+$(OBJDIR)/.deps: $(SRCS) $(INCS) $(LIB_SRCS) | $(OBJDIR)
 	@-rm -f $(OBJDIR)/.deps
-	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
+	@$(GCC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
 	@awk '{printf("$(OBJDIR)/$(SRCDIR)/%s\n", $$0)}' $@ > "$@.0"
 	@mv "$@.0" $@
 
 -include $(OBJDIR)/.deps
 
-$(TARGET): $(OBJDIR)/$(SRCDIR)/$(TARGET).o $(OBJS) $(INCS) | $(BINDIR) depend
-	@echo Building final target: $@
-	@$(GCC) $(CFLAGS) $(INCLUDES) -o $(BINDIR)/$@ $^ $(LIBS)
-$(OBJDIR)/%.o: %.c | $(OBJDIR) depend
-	@echo "$< -> $@"
-	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+## Directories
+
 $(OBJDIR):
-	@echo Creating obj directoriesg
+	@echo Creating obj directories
 	@mkdir -p $(OBJDIR)/$(SRCDIR)
+	@mkdir -p $(OBJDIR)/$(LIBSRCDIR)
+
 $(BINDIR):
 	@echo Creating bin directory
 	@mkdir -p $(BINDIR)
+
+$(LIBDIR):
+	@echo Creating lib directory
+	@mkdir -p $(LIBDIR)
+
+## Common
+
+$(OBJDIR)/%.o: %.c | $(OBJDIR) depend
+	@echo "$< -> $@"
+	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
 clean: 
 	-rm -rf $(OBJDIR) $(BINDIR) $(TARGET) 
+	@cd $(DOCDIR); latexmk -C # Clean tex files.
+
+## Libraries
+
+libs: $(LIB_OBJS)
+
+%.a: lib/%.a
+
+lib/%.a: $(OBJDIR)/$(LIBSRCDIR)/%.o
+	ar -r $@ $^ 
+
+$(OBJDIR)/$(LIBDIR)/%.o: $()
+
+## Executable
+
+$(TARGET): $(BINDIR)/$(TARGET)
+
+$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
+	@echo Building final target: $@
+	@$(GCC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+
+### Documentation
 
 docs: $(DOC_PDFS)
 
 %.pdf: %.tex
 	@echo Latexmk: generating $@
 	cd $(DOCDIR); latexmk -pdf -silent $(notdir $<)
+
+### Packing
+
+pack: ls $(DOC_PDFS)
+	@cp Makefile $(P_NAME)-makefile
+	@cd ..; tar $(TAR_EXCLUDES_ARG) -czf $(P_NAME).tar.gz $(P_NAME) 
+	@echo "Packed $(P_NAME).tar.gz in parent directory."
+	@rm $(P_NAME)-makefile

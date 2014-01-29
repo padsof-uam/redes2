@@ -5,7 +5,11 @@ help() {
 Usage: cref mode <args>
 
 Current options:
-	rf oldname newname: Change the name of the C symbol.
+	rf oldname newname: Change the name of the C symbol oldname to newname.
+
+	undo mode: Undo the last action executed in the given mode. E.g.
+			cref undo rf
+		will undo the last refactoring.
 EOF
 }
 

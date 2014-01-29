@@ -8,10 +8,13 @@ OBJDIR = obj
 SRCDIR = src
 INCDIR = includes
 BINDIR = bin
+DOCDIR = doc
 
 INCS := $(wildcard $(INCDIR)/*.h)
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
+DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
+DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
 
 P_GROUP = 2301
 P_NUM = 1
@@ -26,9 +29,14 @@ scan: clean
 	@scan-build make
 $(OBJS): | $(OBJDIR)
 
-pack: 
+# Packing
+
+TAR_EXCLUDES= bin Makefile obj doc .tar.gz
+TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
+
+pack: ls $(DOC_PDFS)
 	@cp Makefile $(P_NAME)-makefile
-	@cd ..; tar --exclude bin --exclude Makefile --exclude obj --exclude .tar.gz -czf $(P_NAME).tar.gz $(P_NAME) 
+	@cd ..; tar $(TAR_EXCLUDES_ARG) -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."
 	@rm $(P_NAME)-makefile
 
@@ -56,3 +64,9 @@ $(BINDIR):
 	@mkdir -p $(BINDIR)
 clean: 
 	-rm -rf $(OBJDIR) $(BINDIR) $(TARGET) 
+
+docs: $(DOC_PDFS)
+
+%.pdf: %.tex
+	@echo Latexmk: generating $@
+	cd $(DOCDIR); latexmk -pdf -silent $(notdir $<)

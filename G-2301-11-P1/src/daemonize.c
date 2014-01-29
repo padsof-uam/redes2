@@ -1,5 +1,5 @@
-#include "../includes/daemonize.h"
-#include "../includes/errors.h"
+#include "daemonize.h"
+#include "errors.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-
 
 int daemonize(int argc, char const *argv[])
 {

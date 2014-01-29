@@ -1,0 +1,69 @@
+#!/bin/bash
+
+help() {
+	cat << "EOF" 
+Usage: cref mode <args>
+
+Current options:
+	rf oldname newname: Change the name of the C symbol.
+EOF
+}
+
+refactor_function() {
+	oldname=$1
+	newname=$2
+	rfundofile=/tmp/cref_rf_undo 
+	if [ -z $oldname ] || [ -z $newname ]; then
+		echo "Provide old and new function names."
+		return
+	fi
+
+	appearances=$(cscope -R -L0$oldname)
+
+	if [ -z "$appearances" ]; then
+		echo "No appearances."
+		return
+	fi
+
+	if [ -f $rfundofile ]; then
+		rm $rfundofile
+	fi
+
+	echo "Changing $oldname -> $newname"
+	
+	while read -r app; do
+		file=$(echo $app | awk '{print $1}')
+		line=$(echo $app | awk '{print $3}') 
+
+		if [[ "$file" != /* ]]; then # No queremos andar cambiado los includes del sistema.
+			echo "$file:$line"
+			sed -i -sbc -e "$line""s/$oldname/$newname/" $file
+			rm $file-sbc
+			echo "sed -i -sbc -e \"$line""s/$newname/$oldname/\" $file" >> $rfundofile
+			echo "rm $file-sbc" >> $rfundofile
+		fi
+	done <<< "$appearances"
+}
+
+undo_action() {
+	if [ -z "$1" ]; then
+		echo "We need an action to undo."
+		return
+	fi
+
+	file=/tmp/cref_$1_undo
+
+	if [ -f $file ]; then
+		bash $file
+		echo "Undone"
+	else
+		echo "There's no undo action."
+	fi
+}
+
+case "$1" in
+	"rf") refactor_function $2 $3 ;;
+	"undo")	undo_action $2 ;;
+	*) help	;;
+esac
+

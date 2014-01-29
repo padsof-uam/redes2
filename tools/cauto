@@ -1,0 +1,125 @@
+#!/bin/bash
+
+group=2301
+pair=11
+authors="Víctor de Juan, Guillermo Julián"
+
+toupper() {
+	echo $name | tr '[:lower:]' '[:upper:]'
+}
+
+get_pracname() {
+	echo G-$group-$pair-P$1
+}
+
+create_prac_dir() {
+	if [ -z $1 ]; then
+		echo "We need another argument: number."
+		return
+	fi
+	pracnum=$1
+	dirname=$(get_pracname $pracnum)
+
+	mkdir $dirname
+	cd $dirname
+
+	cp "$( dirname "${BASH_SOURCE[0]}" )"/Makefile ./
+
+	mkdir src srclib includes lib doc 
+	
+	cat << EOF > doc/$dirname-doc.tex
+\\documentclass\[nochap\]\{apuntes\}
+
+\\title\{ $dirname \}
+\\author\{ $authors \}
+\\date\{ $(date "+%Y, %B %d") \}
+
+\\begin\{document\}
+
+\\maketitle\\newpage
+
+\\pagestyle\{plain\}
+
+\\end\{document\}
+EOF
+	cat << EOF > $dirname.sublime-project
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings": 
+	{
+		"sublimeclang_options":
+    	[
+    		"-I\${folder:\${project_path:$dirname.sublime-project}}/includes"
+    	]
+	}
+}
+EOF
+}
+
+create_header() {
+	if [ -z $1 ]; then
+		echo "We need a file name."
+		return
+	fi
+
+	name=$1
+	guard=$(toupper $name)_H
+	cat << EOF > $name.h
+#ifdef $guard
+#define $guard
+
+#endif /* $guard */c
+EOF
+}
+
+generate_file() {
+	if [ ! -d src ] || [ ! -d includes ]; then
+		echo "Make sure you're in the root directory for the project."
+		return
+	fi
+
+	if [ -z $1 ]; then
+		echo "We need a file name."
+		return
+	fi
+
+	name=$1
+	guard=$(toupper $name)_H
+
+	funcs_h="#ifdef $guard\n#define $guard\n\n"
+	funcs_c="#include \"$name.h\"\n\n"
+
+	echo "Write the functions (Ctrl-D to end):"
+
+	while read func; do
+		funcs_h=$funcs_h$func";\n"
+		funcs_c=$funcs_c$func" {\n\n}\n\n"
+	done
+
+	funcs_h=$funcs_h"#endif\n" # Bash expands /* and idk wtf it does that.
+
+	echo -e $funcs_c > src/$name.c
+	echo -e $funcs_h > includes/$name.h
+	echo 
+	echo "Created src/$name.c and includes/$name.h"
+}
+
+case $1 in
+	"header")
+		create_header $2
+		;;
+	"file")
+		generate_file $2
+		;;
+	"newprac")
+		create_prac_dir $2
+		;;
+	*)
+		echo "I don't recognize that command."
+		;;
+esac

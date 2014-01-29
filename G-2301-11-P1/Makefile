@@ -26,13 +26,13 @@ depend: $(OBJDIR)/.deps
 
 $(OBJDIR)/.deps: $(SRCS) $(INCS) | $(OBJDIR)
 	@-rm -f $(OBJDIR)/.deps
-	@$(CC) $(CFLAGS) -MM $^ >> $(OBJDIR)/.deps;
+	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
 	@awk '{printf("$(OBJDIR)/$(SRCDIR)/%s\n", $$0)}' $@ > "$@.0"
 	@mv "$@.0" $@
 
 -include $(OBJDIR)/.deps
 
-$(TARGET): $(OBJDIR)/src/$(TARGET).o $(OBJS) $(INCS) | $(BINDIR) depend
+$(TARGET): $(OBJDIR)/$(SRCDIR)/$(TARGET).o $(OBJS) $(INCS) | $(BINDIR) depend
 	@echo Building final target: $@
 	@$(GCC) $(CFLAGS) $(INCLUDES) -o $(BINDIR)/$@ $^ $(LIBS)
 $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
@@ -40,7 +40,6 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
 	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 $(OBJDIR):
 	@echo Creating obj directories
-	@mkdir -p $(OBJDIR)
 	@mkdir -p $(OBJDIR)/$(SRCDIR)
 $(BINDIR):
 	@echo Creating bin directory

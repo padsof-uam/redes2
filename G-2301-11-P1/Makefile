@@ -12,6 +12,7 @@ BINDIR = bin
 DOCDIR = doc
 LIBDIR = lib
 LIBSRCDIR = srclib
+TESTDIR = tests
 
 INCS := $(wildcard $(INCDIR)/*.h)
 SRCS := $(wildcard $(SRCDIR)/*.c)
@@ -19,6 +20,9 @@ OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
 
 LIB_SRCS := $(wildcard $(LIBSRCDIR)/*.c)
 LIB_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(LIB_SRCS)))
+
+TEST_SRCS := $(wildcard $(TESTDIR)/*.c)
+TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
 
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
@@ -61,6 +65,7 @@ $(OBJDIR):
 	@echo Creating obj directories
 	@mkdir -p $(OBJDIR)/$(SRCDIR)
 	@mkdir -p $(OBJDIR)/$(LIBSRCDIR)
+	@mkdir -p $(OBJDIR)/$(TESTDIR)
 
 $(BINDIR):
 	@echo Creating bin directory
@@ -95,6 +100,14 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
 	@echo Building final target: $@
+	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIBDIR)/$(LIB) -o $@ $^ $(E_LIBS)
+
+## Tests
+
+test: $(BINDIR)/test
+
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(INCS) | $(BINDIR) depend
+	@echo Building test executable
 	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIBDIR)/$(LIB) -o $@ $^ $(E_LIBS)
 
 ### Documentation

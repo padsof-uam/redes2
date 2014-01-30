@@ -1,6 +1,7 @@
 *.sublime-*
 obj
 bin
+lib
 
 # LaTeX
 *.acn

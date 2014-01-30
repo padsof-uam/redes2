@@ -1,7 +1,8 @@
 GCC = gcc
 CFLAGS = -ggdb -Wall -pedantic -ansi
 E_LIBS = 
-TARGET = main
+TARGET = daemonize
+LIB = libredes2.a
 INCLUDES = -I./includes/
 
 OBJDIR = obj
@@ -16,9 +17,8 @@ INCS := $(wildcard $(INCDIR)/*.h)
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
 
-LIBS := $(sort $(notdir $(patsubst %/,%, $(wildcard $(LIBSRCDIR)/*/))))
-LIB_SRCS := $(foreach dir, $(addprefix $(LIBSRCDIR)/, $(LIBS)), $(wildcard $(dir)/*.c))
-LIB_OBJS := $(addprefix lib/, $(addsuffix .a, $(LIBS)))
+LIB_SRCS := $(wildcard $(LIBSRCDIR)/*.c)
+LIB_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(LIB_SRCS)))
 
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
@@ -32,7 +32,7 @@ TAR_EXCLUDES= bin Makefile obj doc .tar.gz
 TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
 
 .PRECIOUS: %.o %.d
-.PHONY: debug clean 
+.PHONY: debug clean pack
  
 all: debug docs pack
 
@@ -47,7 +47,7 @@ $(OBJS): | $(OBJDIR)
 
 depend: $(OBJDIR)/.deps
 
-$(OBJDIR)/.deps: $(SRCS) $(INCS) $(LIB_SRCS) | $(OBJDIR)
+$(OBJDIR)/.deps: $(SRCS) $(LIB_SRCS) | $(OBJDIR)
 	@-rm -f $(OBJDIR)/.deps
 	@$(GCC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
 	@awk '{printf("$(OBJDIR)/$(SRCDIR)/%s\n", $$0)}' $@ > "$@.0"
@@ -77,19 +77,17 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
 	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean: 
-	-rm -rf $(OBJDIR) $(BINDIR) $(TARGET) 
+	-rm -rf $(OBJDIR) $(BINDIR) $(LIBDIR)
 	@cd $(DOCDIR); latexmk -C # Clean tex files.
 
 ## Libraries
 
-libs: $(LIB_OBJS)
-
-%.a: lib/%.a
-
-lib/%.a: $(OBJDIR)/$(LIBSRCDIR)/%.o
-	ar -r $@ $^ 
-
-$(OBJDIR)/$(LIBDIR)/%.o: $()
+libr: $(LIBDIR)/$(LIB)
+	@echo $(LIB_OBJS)
+lib/%: $(LIB_OBJS) | $(LIBDIR)
+	@echo $(LIB_OBJS)
+	@echo Creating library $@
+	@ar -r $@ $^ 
 
 ## Executable
 
@@ -97,7 +95,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
 	@echo Building final target: $@
-	@$(GCC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIBDIR)/$(LIB) -o $@ $^ $(E_LIBS)
 
 ### Documentation
 

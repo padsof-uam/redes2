@@ -1,0 +1,50 @@
+#!/bin/bash
+
+append_file() {
+	echo $2 | cat - $1 > $1.temp && mv $1.temp $1
+}
+
+init_tests() {
+	mkdir -p tests
+	templatedir="$( dirname "${BASH_SOURCE[0]}" )"/templates	
+	cp "$templatedir/test.c" "$templatedir/testmacros.h" tests
+}
+
+create_suite() {
+	name=$1
+	templatedir="$( dirname "${BASH_SOURCE[0]}" )"/templates
+
+	if [ -z $name ]; then
+		echo "Please set a test suite name."
+		return
+	fi
+
+	cp "$templatedir/testsuite.h" tests/$name.h
+	cp "$templatedir/testsuite.c" tests/$name.c
+
+	sed -i -sbc "s/_testsuite_/$name/g"  tests/$name.h
+	sed -i -sbc "s/_testsuite_/$name/g"  tests/$name.c
+
+	rm tests/$name.h-sbc tests/$name.c-sbc
+
+	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addsuitetoglob tests/test.c $name
+}
+
+create_test() {
+	name=$2
+	suite=$1
+
+	if [ -z $name ] || [ -z $suite ]; then
+		echo "Please set a test name and corresponding suite."
+		return
+	fi
+
+	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addtesttosuite tests/$suite.c $name
+}
+
+case "$1" in
+	"init") init_tests ;;
+	"suite") create_suite $2 ;;
+	"test") create_test $2 $3 ;;
+	*) echo "Unrecognized command." ;;
+esac

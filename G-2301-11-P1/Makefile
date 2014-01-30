@@ -120,7 +120,7 @@ docs: $(DOC_PDFS)
 
 ### Packing
 
-pack: ls $(DOC_PDFS)
+pack: $(DOC_PDFS)
 	@cp Makefile $(P_NAME)-makefile
 	@cd ..; tar $(TAR_EXCLUDES_ARG) -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."

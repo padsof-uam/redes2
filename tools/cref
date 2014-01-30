@@ -41,9 +41,9 @@ refactor_function() {
 
 		if [[ "$file" != /* ]]; then # No queremos andar cambiado los includes del sistema.
 			echo "$file:$line"
-			sed -i -sbc -e "$line""s/$oldname/$newname/" $file
+			sed -i -sbc -e "$line""s/$oldname/$newname/g" $file
 			rm $file-sbc
-			echo "sed -i -sbc -e \"$line""s/$newname/$oldname/\" $file" >> $rfundofile
+			echo "sed -i -sbc -e \"$line""s/$newname/$oldname/g\" $file" >> $rfundofile
 			echo "rm $file-sbc" >> $rfundofile
 		fi
 	done <<< "$appearances"

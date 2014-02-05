@@ -1,5 +1,5 @@
-#ifndef errors_h
-
+#ifndef ERRORS_H
+#define ERRORS_H 
 
 #define OK 0
 
@@ -9,5 +9,5 @@
 #define ERR_HUP 8
 
 #define ERR 1
-#define errors_h 
+
 #endif

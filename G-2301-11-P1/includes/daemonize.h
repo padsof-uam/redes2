@@ -1,5 +1,7 @@
 #ifndef DAEMONIZE_H
-
-int daemonize(int argc, char const *argv[]);
 #define DAEMONIZE_H 
+
+int daemonize();
+int close_open_fds();
+
 #endif

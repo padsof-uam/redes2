@@ -2,7 +2,7 @@ GCC = gcc
 CFLAGS = -ggdb -Wall -pedantic -ansi
 E_LIBS = 
 TARGET = daemonize
-LIB = libredes2.a
+LIB = 
 INCLUDES = -I./includes/
 
 OBJDIR = obj
@@ -100,15 +100,15 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
 	@echo Building final target: $@
-	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIBDIR)/$(LIB) -o $@ $^ $(E_LIBS)
+	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIB) -o $@ $^ $(E_LIBS)
 
 ## Tests
 
-test: $(BINDIR)/test
+test: $(BINDIR)/test | $(OBJDIR)
 
-$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(INCS) | $(BINDIR) depend
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS) $(INCS) | $(BINDIR) depend
 	@echo Building test executable
-	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIBDIR)/$(LIB) -o $@ $^ $(E_LIBS)
+	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIB) -o $@ $^ $(E_LIBS)
 
 ### Documentation
 

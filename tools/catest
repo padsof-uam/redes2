@@ -42,9 +42,19 @@ create_test() {
 	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addtesttosuite tests/$suite.c $name
 }
 
+help() {
+	cat << EOF 
+Available commands:
+	- init: initialize folder and test structure.
+	- suite <suitename>: create a test suite with the given name.
+	- test <suite> <testname>: create a test for the given suite.
+EOF
+}
+
 case "$1" in
 	"init") init_tests ;;
 	"suite") create_suite $2 ;;
 	"test") create_test $2 $3 ;;
-	*) echo "Unrecognized command." ;;
+	*) echo "Unrecognized command."
+		help ;;
 esac

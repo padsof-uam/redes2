@@ -1,0 +1,2 @@
+- Añadir SIGCHLD y SIGPWR en daemonize (algo del enunciado).
+- Escribir un test para unlink_proc

@@ -1,4 +1,4 @@
-#include "daemon.h"
+#include "test_daemonize.h"
 #include "daemonize.h"
 #include "testmacros.h"
 #include <stdio.h>
@@ -12,31 +12,17 @@
 #define SEMKEY_B 1623
 #define BUF_SIZE 500
 
+#define PID_FILE "/tmp/pidfile_test_r2"
+
 /* BEGIN TESTS */
-static int _get_parent_proc(pid_t pid)
-{
-    FILE *p;
-    char cmd[100];
-    char line[BUF_SIZE];
-
-    sprintf(cmd, "ps -o ppid= -p %d", pid);
-    p = popen(cmd, "r");
-
-    if (fgets(line, BUF_SIZE, p))
-        return atoi(line);
-    else
-        return -1;
-}
-
 int t_hangs_on_init()
 {
     pid_t child_pid, secchild_pid;
-    int exit_status;
     int semid;
-    int status;
     struct sembuf sb;
-    int child_ppid;
-    int parent_proc;
+    int child_ppid = -1;
+    FILE* f = NULL;
+        
     semid = semget(SEMKEY_A, 1, IPC_CREAT | IPC_EXCL | 0666);
 
     if (semid == -1)
@@ -64,11 +50,22 @@ int t_hangs_on_init()
 
         if (secchild_pid == 0)
         {   
-            printf("YujuHijoReportando\n");
-            /* Esperamos hasta que nos digan que nos podemos cerrar. */
+            f = fopen(PID_FILE, "w+");
+
+            if(f)
+            {
+                fprintf(f, "%d", getppid());
+                fclose(f);
+            }
+            else
+            {
+                perror("fopen");
+            }
+
+            /* Le decimos al proceso de test que ya puede escribir. */
             sb.sem_flg = 0;
             sb.sem_num = 0;
-            sb.sem_op = -1;
+            sb.sem_op = 1;
 
             semop(semid, &sb, 1);
 
@@ -76,27 +73,26 @@ int t_hangs_on_init()
         }
         else
         {   
-            printf("adfsklhj\n");
-            exit(secchild_pid);
+            exit(EXIT_SUCCESS);
         }
     }
     else
     {
-        waitpid(child_pid, &status, 0);
-
-        if (WIFEXITED(status))
-            parent_proc = WEXITSTATUS(status);
-        else
-            perror("exit fail");
-
-        getchar();
-
-        /* Le decimos al hijo que ya puede salir. */
+        /* Esperamos hasta que escriba PID en fichero */
         sb.sem_num = 0;
-        sb.sem_op = 1;
+        sb.sem_op = -1;
         sb.sem_flg = 0;
 
         semop(semid, &sb, 1);
+
+        f = fopen(PID_FILE, "r");
+        
+        if(f)
+        { 
+            fscanf(f, "%d", &child_ppid);
+            fclose(f);
+            remove(PID_FILE);
+        }
 
         if (semctl(semid, 0, IPC_RMID, NULL) == -1)
         {
@@ -105,7 +101,12 @@ int t_hangs_on_init()
         }
     }
 
-    mu_assert_eq(parent_proc, 1, "Process doesn't hanmg on init");
+    if(child_ppid == -1)
+    {
+        mu_sysfail("fopen");
+    }
+
+    mu_assert_eq(child_ppid, 1, "Process doesn't hang on init");
 
     mu_end;
 }
@@ -115,7 +116,6 @@ static int _has_fds_open(pid_t pid)
     FILE *p;
     char cmd[100];
     char line[BUF_SIZE];
-    int fd_num = 0;
 
     sprintf(cmd, "lsof -p %d | awk '{print $4}' | egrep \"\\d+[urw]\"", pid);
     p = popen(cmd, "r");
@@ -130,7 +130,6 @@ int t_no_fds_open()
 {
     pid_t child_pid;
     int semid;
-    int status;
     struct sembuf sb;
 
     semid = semget(SEMKEY_B, 2, IPC_CREAT | IPC_EXCL | 0666);
@@ -202,7 +201,7 @@ int t_no_fds_open()
 
 /* END TESTS */
 
-int daemon_suite(int *errors, int *success)
+int test_daemonize_suite(int *errors, int *success)
 {
     int tests_run = 0;
     int tests_passed = 0;

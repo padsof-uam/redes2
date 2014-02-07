@@ -1,5 +1,5 @@
 #include "test_commparser.h"
-#include "daemon.h"
+#include "test_daemonize.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -12,7 +12,7 @@ int main(int argc, const char** argv) {
 	printf("Begin test run %s\n", ctime(&t));	
 /* BEGIN TEST REGION */
 	run += test_commparser_suite(&error, &success);
-	run += daemon_suite(&error, &success);
+	run += test_daemonize_suite(&error, &success);
 
 /* END TEST REGION */
 	time(&t);

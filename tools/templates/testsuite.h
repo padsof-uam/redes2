@@ -1,5 +1,5 @@
-#ifndef _TESTSUITE__H
-#define _TESTSUITE__H
+#ifndef _testsuite__H
+#define _testsuite__H
 
 int _testsuite__suite(int*, int*);
 

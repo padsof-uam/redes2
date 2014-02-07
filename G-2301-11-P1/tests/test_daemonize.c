@@ -1,4 +1,4 @@
-#include "daemon.h"
+#include "test_daemonize.h"
 #include "daemonize.h"
 #include "testmacros.h"
 #include <stdio.h>
@@ -201,7 +201,7 @@ int t_no_fds_open()
 
 /* END TESTS */
 
-int daemon_suite(int *errors, int *success)
+int test_daemonize_suite(int *errors, int *success)
 {
     int tests_run = 0;
     int tests_passed = 0;

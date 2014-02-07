@@ -1,5 +1,5 @@
-#ifndef _TESTSUITE__H
-#define _TESTSUITE__H
+#ifndef TEST_COMMPARSER_H
+#define TEST_COMMPARSER_H
 
 int test_commparser_suite(int*, int*);
 

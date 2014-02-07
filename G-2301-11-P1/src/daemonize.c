@@ -35,7 +35,7 @@ int daemonize(const char *log_id)
         syslog(LOG_ERR, "Error en la captura de SIGTTIN");
         return -ERR;
     }
-    
+
     if (signal(SIGTSTP, SIG_IGN))
     {
         syslog(LOG_ERR, "Error en la captura de SIGTSTP");
@@ -73,7 +73,9 @@ int unlink_proc()
         return pid;
 
     if (setsid() < 0)
+    {
         syslog(LOG_ERR, "Error creando un nuevo SID");
+    }   
 
     if (signal(SIGHUP, SIG_IGN))
     {

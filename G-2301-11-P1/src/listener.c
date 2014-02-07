@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <errno.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,12 @@
 #include "listener.h"
 #include <syslog.h>
 
-int ServerOpenSocket(int port, int max_long);
+int ServerOpenSocket(int port, int max_long){
+
+	int handler = _server_open_socket();
+	_link_socket_port(port, handler);
+	return OK;
+}
 int ServerListenConnect();
 int ServerClose();
 
@@ -21,7 +27,7 @@ static int _server_open_socket()
 	if (handler==-1)
 	{
 		syslog(LOG_ERR, "Error en la creación de socket");
-		return SYS_ERR;
+		return -SYS_ERR;
 	}
 	return handler;
 }
@@ -38,9 +44,21 @@ static int _link_socket_port(int port, int handler){
 	if(bind(handler, (struct sockaddr *)&serv_addr,sizeof(struct sockaddr_in) ) == -1)
 	{
 		syslog(LOG_ERR, "Error asociando puerto con socket.");
-		return SYS_ERR;
+		return -SYS_ERR;
 	}
 
 	return OK;
 }
+
+static int _set_queue_socket(int handler,int long_max){
+
+	if (listen(handler, long_max) == -1){
+		syslog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
+		return -SYS_ERR;
+	}
+	return OK;
+}
+
+
+
 

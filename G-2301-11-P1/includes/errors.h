@@ -8,7 +8,7 @@
 //#define ERR_TSTP 6
 //#define ERR_HUP 8
 
-#define ERR -1
-#define SYS_ERR -2 
+#define ERR 1
+#define SYS_ERR 2 
 
 #endif

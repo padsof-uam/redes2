@@ -91,7 +91,7 @@ generate_file() {
 	name=$1
 	guard=$(toupper $name)_H
 
-	funcs_h="#ifdef $guard\n#define $guard\n\n"
+	funcs_h="#ifndef $guard\n#define $guard\n\n"
 	funcs_c="#include \"$name.h\"\n\n"
 
 	echo "Write the functions (Ctrl-D to end):"
@@ -120,6 +120,11 @@ case $1 in
 		create_prac_dir $2
 		;;
 	*)
-		echo "I don't recognize that command."
+		cat << EOF
+Available commands.
+	-header <name>: Create a header file.
+	-file <name>: create file and header.
+	-newprac <name>: create prac dir.
+EOF
 		;;
 esac

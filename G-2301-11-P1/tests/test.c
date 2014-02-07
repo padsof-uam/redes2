@@ -1,3 +1,4 @@
+#include "test_commparser.h"
 #include "daemon.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,7 @@ int main(int argc, const char** argv) {
 
 	printf("Begin test run %s\n", ctime(&t));	
 /* BEGIN TEST REGION */
+	run += test_commparser_suite(&error, &success);
 	run += daemon_suite(&error, &success);
 
 /* END TEST REGION */

@@ -81,7 +81,7 @@ int unlink_proc()
         return -ERR;
     }
 
-    return OK;
+    return 0;
 }
 
 int close_open_fds()

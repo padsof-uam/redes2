@@ -8,29 +8,122 @@
 #include <sys/sem.h>
 #include <string.h>
 
-#define SEMKEY 2561
+#define SEMKEY_A 2561
+#define SEMKEY_B 1623
 #define BUF_SIZE 500
+
 /* BEGIN TESTS */
+static int _get_parent_proc(pid_t pid)
+{
+    FILE *p;
+    char cmd[100];
+    char line[BUF_SIZE];
+
+    sprintf(cmd, "ps -o ppid= -p %d", pid);
+    p = popen(cmd, "r");
+
+    if (fgets(line, BUF_SIZE, p))
+        return atoi(line);
+    else
+        return -1;
+}
+
 int t_hangs_on_init()
 {
+    pid_t child_pid, secchild_pid;
+    int exit_status;
+    int semid;
+    int status;
+    struct sembuf sb;
+    int child_ppid;
+    int parent_proc;
+    semid = semget(SEMKEY_A, 1, IPC_CREAT | IPC_EXCL | 0666);
+
+    if (semid == -1)
+    {
+        mu_sysfail("semget");
+    }
+
+    child_pid = fork();
+
+    if (child_pid < 0)
+    {
+        if (semctl(semid, 0, IPC_RMID, NULL) == -1)
+        {
+            perror("semctl");
+            exit(1);
+        }
+
+        mu_sysfail("fork");
+    }
+
+
+    if (child_pid == 0)
+    {
+        secchild_pid = unlink_proc();
+
+        if (secchild_pid == 0)
+        {   
+            printf("YujuHijoReportando\n");
+            /* Esperamos hasta que nos digan que nos podemos cerrar. */
+            sb.sem_flg = 0;
+            sb.sem_num = 0;
+            sb.sem_op = -1;
+
+            semop(semid, &sb, 1);
+
+            exit(EXIT_SUCCESS);
+        }
+        else
+        {   
+            printf("adfsklhj\n");
+            exit(secchild_pid);
+        }
+    }
+    else
+    {
+        waitpid(child_pid, &status, 0);
+
+        if (WIFEXITED(status))
+            parent_proc = WEXITSTATUS(status);
+        else
+            perror("exit fail");
+
+        getchar();
+
+        /* Le decimos al hijo que ya puede salir. */
+        sb.sem_num = 0;
+        sb.sem_op = 1;
+        sb.sem_flg = 0;
+
+        semop(semid, &sb, 1);
+
+        if (semctl(semid, 0, IPC_RMID, NULL) == -1)
+        {
+            perror("semctl");
+            exit(1);
+        }
+    }
+
+    mu_assert_eq(parent_proc, 1, "Process doesn't hanmg on init");
 
     mu_end;
 }
 
 static int _has_fds_open(pid_t pid)
 {
-	FILE* p;
-	char cmd[100];
-	char line[BUF_SIZE];
-	int fd_num = 0;
+    FILE *p;
+    char cmd[100];
+    char line[BUF_SIZE];
+    int fd_num = 0;
 
-	sprintf(cmd, "lsof -p %d | awk '{print $4}' | egrep \"\\d+[urw]\"", pid);
-	p = popen(cmd, "r");
+    sprintf(cmd, "lsof -p %d | awk '{print $4}' | egrep \"\\d+[urw]\"", pid);
+    p = popen(cmd, "r");
 
-	if(fgets(line, BUF_SIZE, p) && strlen(line) > 0)
-		return 1;
-	else
-		return 0;
+    if (fgets(line, BUF_SIZE, p) && strlen(line) > 0)
+        return 1;
+    else
+        return 0;
 }
 
 int t_no_fds_open()
@@ -40,7 +133,7 @@ int t_no_fds_open()
     int status;
     struct sembuf sb;
 
-    semid = semget(SEMKEY, 2, IPC_CREAT | IPC_EXCL | 0666);
+    semid = semget(SEMKEY_B, 2, IPC_CREAT | IPC_EXCL | 0666);
 
     if (semid == -1)
     {
@@ -49,9 +142,9 @@ int t_no_fds_open()
 
     child_pid = fork();
 
-    if(child_pid < 0)
+    if (child_pid < 0)
     {
-    	if (semctl(semid, 0, IPC_RMID, NULL) == -1)
+        if (semctl(semid, 0, IPC_RMID, NULL) == -1)
         {
             perror("semctl");
             exit(1);
@@ -59,7 +152,7 @@ int t_no_fds_open()
 
         mu_sysfail("fork");
     }
-    
+
 
     if (child_pid == 0)
     {
@@ -89,7 +182,6 @@ int t_no_fds_open()
         sb.sem_op = -1;
 
         semop(semid, &sb, 1);
-        printf("Child is %d\n", child_pid);
         mu_assert("Process didn't close all fd", !(_has_fds_open(child_pid)));
 
         /* Le decimos al hijo que ya puede salir. */

@@ -16,7 +16,7 @@ int _testsuite__suite(int* errors, int* success) {
 /* BEGIN TEST EXEC */
 	
 /* END TEST EXEC */
-	printf("End _testsuite_ suite. %d/%d\n", tests_passed, tests_run);
+	printf("End _testsuite_ suite. %d/%d\n\n", tests_passed, tests_run);
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

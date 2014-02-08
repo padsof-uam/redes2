@@ -9,7 +9,7 @@ int parse_command(const char* str, const char** commands, int len)
 		return -1;
 
 	for(i = 0; i < len; i++)
-		if(!strncmp(str, commands[i], strlen(commands[i])))
+		if(!strncasecmp(str, commands[i], strlen(commands[i])))
 			return i;
 	return -1;
 }

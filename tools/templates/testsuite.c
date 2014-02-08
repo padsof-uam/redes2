@@ -9,8 +9,8 @@
 /* END TESTS */
 
 int _testsuite__suite(int* errors, int* success) {
-	int tests_run;
-	int tests_passed;
+	int tests_run = 0;
+	int tests_passed = 0;
 
 	printf("Begin _testsuite_ suite.\n");
 /* BEGIN TEST EXEC */

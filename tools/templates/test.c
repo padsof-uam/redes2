@@ -1,6 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+
+int include_test(const char *testname, int argc, const char **argv)
+{
+    int is_including = 0;
+    int i;
+
+    if (argc == 1)
+        return 1; /* No hay especificaciones */
+
+    if (!strncasecmp("include", argv[1], strlen(testname)))
+        is_including = 1;
+    else if (!strncasecmp("exclude", argv[1], strlen(testname)))
+        is_including = 0;
+    else
+        fprintf(stderr, "include/exclude not recognized. Assuming 'exclude'\n");
+
+    for(i = 2; i < argc; i++)
+    	if(!strncasecmp(testname, argv[i], strlen(testname)))
+    		return is_including;
+
+    return !is_including;
+}
 
 int main(int argc, const char** argv) {
 	time_t t;
@@ -12,8 +35,8 @@ int main(int argc, const char** argv) {
 
 /* END TEST REGION */
 	time(&t);
-	printf("End test run %s.\n", ctime(&t));
-	printf("Run %d. %d success, %d errors.\n", run, success, error);
+	printf("\nEnd test run %s.", ctime(&t));
+	printf("%d tests run. %d success, %d errors.\n", run, success, error);
 
 	return 0;
 }

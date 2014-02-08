@@ -51,7 +51,6 @@ int t_parse_exec_command__nullstr__noexec() {
 	mu_assert_eq(result, -1, "");
 	mu_end;	
 }
-
 int t_parse_command__nullstr_returnsM1() {
 	char *cmd = NULL;
 	int result;

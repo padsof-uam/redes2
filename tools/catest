@@ -19,13 +19,13 @@ create_suite() {
 		return
 	fi
 
-	cp "$templatedir/testsuite.h" tests/$name.h
-	cp "$templatedir/testsuite.c" tests/$name.c
+	cp "$templatedir/testsuite.h" tests/test_$name.h
+	cp "$templatedir/testsuite.c" tests/test_$name.c
 
-	sed -i -sbc "s/_testsuite_/$name/g"  tests/$name.h
-	sed -i -sbc "s/_testsuite_/$name/g"  tests/$name.c
+	sed -i -sbc "s/_testsuite_/test_$name/g"  tests/test_$name.h
+	sed -i -sbc "s/_testsuite_/test_$name/g"  tests/test_$name.c
 
-	rm tests/$name.h-sbc tests/$name.c-sbc
+	rm tests/test_$name.h-sbc tests/test_$name.c-sbc
 
 	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addsuitetoglob tests/test.c $name
 }
@@ -39,7 +39,7 @@ create_test() {
 		return
 	fi
 
-	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addtesttosuite tests/$suite.c $name
+	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addtesttosuite tests/test_$suite.c $name
 }
 
 help() {

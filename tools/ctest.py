@@ -8,13 +8,13 @@ def addsuitetoglob(glob_test_file, suite_name):
 	globtest.close()
 	globtest = open(glob_test_file, "w")
 
-	globtest.write('#include "{0}.h"\n'.format(suite_name))
+	globtest.write('#include "test_{0}.h"\n'.format(suite_name))
 
 	in_test_region = False
 
 	for line in globtest_contents:
 		if in_test_region:
-			globtest.write("\trun += {0}_suite(&error, &success);\n".format(suite_name))
+			globtest.write("\tif(include_test(\"{0}\", argc, argv))\n\t\trun += test_{0}_suite(&error, &success);\n".format(suite_name))
 			in_test_region = False
 		globtest.write(line)
 

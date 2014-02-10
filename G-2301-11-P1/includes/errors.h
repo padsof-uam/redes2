@@ -3,13 +3,13 @@
 
 #define OK 0
 
-
 #define ERR_TTOU 2
 #define ERR_TTIN 4
 #define ERR_TSTP 8
 #define ERR_HUP 16
 #define ERR_SOCK 32
 #define ERR_MEM 64
+
 #define ERR 1
 
 #endif

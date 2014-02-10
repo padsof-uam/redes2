@@ -17,13 +17,13 @@ int parse_command(const char* str, const char** commands, int len)
 int parse_exec_command(const char* str, const char** commands, const cmd_action* actions, int len, void* data)
 {
 	int cmd;
-
+	cmd_action func;
 	cmd = parse_command(str, commands, len);
 
 	if(cmd == -1)
 		return -1;
 
-	cmd_action func = actions[cmd];
+	func = actions[cmd];
 
 	if(!func)
 		return -1;

@@ -1,3 +1,5 @@
+#include "test_messager.h"
+#include "test_messager.h"
 #include "test_commparser.h"
 #include "test_daemonize.h"
 #include <stdio.h>
@@ -35,6 +37,8 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("messager", argc, argv))
+		run += test_messager_suite(&error, &success);
     if(include_test("commparser", argc, argv))
 	    run += test_commparser_suite(&error, &success);
     if(include_test("daemonize", argc, argv))

@@ -38,7 +38,9 @@ TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
 .PRECIOUS: %.o %.d
 .PHONY: debug clean pack
  
-all: debug docs pack
+all: debug test
+
+final: all docs pack
 
 ### Compilation
 

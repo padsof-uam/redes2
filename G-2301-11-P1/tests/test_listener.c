@@ -8,7 +8,7 @@
 /* BEGIN TESTS */
 int t_Server_close_communication__close_noconnected_socket() {
 	int sock = socket(AF_INET, SOCK_STREAM, TCP);
-	int res = Server_close_communication(sock);
+	int res = server_close_communication(sock);
 	mu_assert_eq(res, OK, "close failed");
 
 	mu_end;
@@ -21,17 +21,17 @@ int t_Server_close_communication__close_connected_socket() {
     {
         mu_sysfail("socketpair");
     }
-    res = Server_close_communication(sock[0]);
+    res = server_close_communication(sock[0]);
     mu_assert_eq(res, OK, "close s1 failed");
 
-    res = Server_close_communication(sock[1]);
+    res = server_close_communication(sock[1]);
     mu_assert_eq(res, OK, "close s2 failed");
 
 	mu_end;
 }
 
 int t_server_open_socket__opensocket() {
-	int handler = Server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
+	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
 	mu_assert("Server won't open", handler !=- ERR_SOCK);
 
 	close(handler);

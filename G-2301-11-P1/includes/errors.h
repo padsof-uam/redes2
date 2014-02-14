@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+           
 #ifndef ERRORS_H
 #define ERRORS_H 
 
@@ -13,3 +16,4 @@
 #define ERR 1
 
 #endif
+#pragma GCC diagnostic pop

@@ -1,7 +1,7 @@
+#include <stdio.h>
 #include "test_daemonize.h"
 #include "daemonize.h"
 #include "testmacros.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ipc.h>

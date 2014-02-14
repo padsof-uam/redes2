@@ -8,7 +8,17 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <strings.h>
 
+
+/*void *reallocf(void *p, size_t s)
+{
+    void *tmp = realloc(p, s);
+    if(tmp) return tmp;
+    free(p);
+    return NULL;
+}
+*/
 int include_test(const char *testname, int argc, const char **argv)
 {
     int is_including = 0;

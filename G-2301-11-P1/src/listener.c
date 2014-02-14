@@ -72,7 +72,7 @@ int Server_open_socket(int port, int max_long){
 		return -ERR_SOCK;
 
 	/*
-	Código de error: Valor negativo -> ERROR
+	Código de error: Valor negativo -> ERROR; sino, devuelve el handler del socket creado.
 	*/
 	return handler;
 }

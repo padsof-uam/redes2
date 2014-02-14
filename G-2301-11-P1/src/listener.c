@@ -14,11 +14,50 @@
 int ServerOpenSocket(int port, int max_long){
 
 	int handler = _server_open_socket();
+	if (handler != OK)	
+	{
+		syslog(LOG_ERR, "Error al abrir el socket");
+		return handler;
+	}
 	_link_socket_port(port, handler);
 	return OK;
 }
-int ServerListenConnect();
-int ServerClose();
+int ServerListenConnect(int handler, int max_queue){
+	struct sockaddr peer_addr;
+	socklen_t peer_len=sizeof(peer_addr);
+	int handler_accepted;
+
+	if( _set_queue_socket(handler, max_queue)!=OK)
+		return -ERR_SOCK;
+	/*Now the socket refered by handler y listening. Now let's accept conections*/
+	
+	handler_accepted=accept(handler,&peer_addr, &peer_len);
+	
+	if( handler_accepted == -1){
+		syslog(LOG_ERR, "Error aceptando conexiones, %d",errno);
+		return -ERR_SOCK;
+	}
+
+	/*
+	- Qué hacemos con handler_accepted¿? Es el socket de la nueva conexión. El enunciado dice devolver código de error
+	- ¿Cómo gestionar más d euna conexión?
+	*/
+
+	return handler_accepted;
+}
+static int _server_close_socket(int handler){
+	if(shutdown(handler, 2) == -1){
+		syslog(LOG_ERR, "Error cerrando el socket, %d",errno);
+		return -ERR_SOCK;
+	}
+	return OK;
+}
+
+int ServerCloseCommunication(int handler){
+	return _server_close_socket(handler);
+}
+
+
 
 
 static int _server_open_socket()

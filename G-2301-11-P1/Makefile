@@ -1,7 +1,7 @@
 GCC = gcc
 CFLAGS = -ggdb -Wall -pedantic -ansi
 E_LIBS = 
-TARGET = daemonize
+TARGET = main
 LIB = 
 INCLUDES = -I./includes/
 
@@ -23,6 +23,7 @@ LIB_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(LIB_SRCS)))
 
 TEST_SRCS := $(wildcard $(TESTDIR)/*.c)
 TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
+OBJS_NOMAIN := $(filter-out %/$(TARGET).o, $(OBJS))
 
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
@@ -108,7 +109,7 @@ $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
 
 test: $(BINDIR)/test | $(OBJDIR)
 
-$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS) $(INCS) | $(BINDIR) depend
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(INCS) | $(BINDIR) depend
 	@echo Building test executable
 	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIB) -o $@ $^ $(E_LIBS)
 

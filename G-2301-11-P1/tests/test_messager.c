@@ -25,9 +25,12 @@ struct th_data
 
 static char *_rand_data(size_t len)
 {
-    char *buffer = malloc(len);
+    int i;
+    char *buffer = malloc(len * sizeof(char));
+    srand(clock());
 
-    arc4random_buf(buffer, len); /* Más rápido. */
+    for(i = 0; i < len; i++)
+        buffer[i] = rand();
 
     return buffer;
 }

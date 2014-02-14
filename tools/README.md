@@ -12,4 +12,6 @@ La herramienta `catest` genera tests automáticamente. Hay tres posibles modos:
 
 El binario generado con `make test` permite excluir o incluir suites de tests. Sin argumentos, ejecutará todos los tests encontrados. Con `test exclude suite1 suite2 ...` ejecutará todas las suites salvo las especificadas, y con `test include suite1 suite2 ...` ejecutará sólo las suites especificadas.
 
+### Creando un test
 
+Una vez que tenemos las funciones de tests generadas, simplemente las rellenamos. En `testmacros.h` hay varias macros para hacer las aserciones (`mu_assert, mu_assert_eq`). Además, hay algunas utilidades para cuando tenemos que liberar memoria antes de salir del test (`mu_cleanup_fail` y `mu_cleanup_sysfail`), para marcar fallos directamente (`mu_fail` y `mu_sysfail`). Los tests deben de acabar con `mu_end` para que lo reconozca todo bien.

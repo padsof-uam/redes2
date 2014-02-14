@@ -59,15 +59,17 @@ int daemonize(const char *log_id)
         return -ERR;
     }
 
+#ifndef __APPLE__
     if (signal(SIGPWR, finish_daemon))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        syslog(LOG_ERR, "Error en la captura de SIGPWR");
         return -ERR;
     }
-
+#endif 
+    
     if (signal(SIGCHLD, finish_daemon))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        syslog(LOG_ERR, "Error en la captura de SIGCHLD");
         return -ERR;
     }
 

@@ -7,7 +7,7 @@
 int t_Server_open_socket() {
 	int handler = Server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
 	
-	mu_assert("Server won't open", handler!=-ERR_SOCK);
+	mu_assert("Server won't open", handler !=- ERR_SOCK);
 
 	mu_end;
 }

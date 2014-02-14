@@ -41,8 +41,6 @@ int main(int argc, const char **argv)
     /* BEGIN TEST REGION */
 	if(include_test("listener", argc, argv))
 		run += test_listener_suite(&error, &success);
-	if(include_test("listener", argc, argv))
-		run += test_listener_suite(&error, &success);
 	if(include_test("messager", argc, argv))
 		run += test_messager_suite(&error, &success);
     if(include_test("commparser", argc, argv))

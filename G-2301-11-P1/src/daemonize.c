@@ -91,6 +91,7 @@ int daemonize(const char *log_id)
     if (close_open_fds() < 0)
         syslog(LOG_ERR, "Error cerrando los ficheros abiertos.");
 
+    syslog(LOG_INFO, "Daemonización completa");
     return OK;
 }
 

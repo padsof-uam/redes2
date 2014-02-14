@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define IRC_PORT
+#define IRC_PORT 1500 /* Seguro? */
 
 int main(int argc, char const *argv[])
 {

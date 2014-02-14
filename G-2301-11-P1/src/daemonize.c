@@ -16,6 +16,7 @@
 #define FD_DIR "/proc/self/fd"
 #endif
 
+/* Hay alguna razón por la que esto sea estático? */
 char * _log_id;
 
 static void _open_log(){
@@ -23,7 +24,7 @@ static void _open_log(){
 }
 
 static void _close_log(){
-    openlog(_log_id, 0, LOG_DAEMON);    
+    closelog();   
 }
 
 

@@ -35,7 +35,7 @@ int server_close_communication(int handler);
  * @param  port        Puerto de escucha.
  * @param  commsocket  Socket de comunicaciones con el hilo principal. 
  *                     	Para no usar las comunicaciones con el hilo principal,
- *                     	hay que pasar -1 como argumento.
+ *                     	hay que pasar 0 como argumento.
  * @param  connhandler Función que será llamada para gestionar las conexiones.
  * @return             OK/ERR.
  */
@@ -53,7 +53,7 @@ void* thread_listener(void* data);
  * @param  connhandler Función que gesitona la conexión.
  * @param  commsocket  Socket de comunicaciones con el hilo principal. 
  *                     	Para no usar las comunicaciones con el hilo principal,
- *                     	hay que pasar -1 como argumento.
+ *                     	hay que pasar 0 como argumento.
  * @return             OK/ERR.
  */
 int create_new_connection_thread(int listen_sock, connection_handler connhandler, int commsocket);

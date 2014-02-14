@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <string.h>
 
 #ifdef __APPLE__
 #define FD_DIR "/dev/fd"
@@ -15,14 +16,30 @@
 #define FD_DIR "/proc/self/fd"
 #endif
 
+char * _log_id;
+
+static void _open_log(){
+    openlog(_log_id, 0, LOG_DAEMON);    
+}
+
+static void _close_log(){
+    openlog(_log_id, 0, LOG_DAEMON);    
+}
+
+
+void finish_daemon (int signal){
+    _close_log();
+    exit(EXIT_SUCCESS);
+}
+
+
 int daemonize(const char *log_id)
 {
     int pid;
-
+    _log_id = strdup(log_id);
     umask(0);
-
+    _open_log();
     setlogmask (LOG_UPTO (LOG_INFO));
-    openlog(log_id, 0, LOG_DAEMON);
 
     if (signal(SIGTTOU, SIG_IGN))
     {
@@ -41,6 +58,19 @@ int daemonize(const char *log_id)
         syslog(LOG_ERR, "Error en la captura de SIGTSTP");
         return -ERR;
     }
+
+    if (signal(SIGPWR, finish_daemon))
+    {
+        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        return -ERR;
+    }
+
+    if (signal(SIGCHLD, finish_daemon))
+    {
+        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        return -ERR;
+    }
+
 
     pid = unlink_proc();
     if (pid > 0) exit(EXIT_SUCCESS);

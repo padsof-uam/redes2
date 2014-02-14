@@ -1,3 +1,5 @@
+#include "test_listener.h"
+#include "test_listener.h"
 #include "test_messager.h"
 #include "test_messager.h"
 #include "test_commparser.h"
@@ -37,6 +39,10 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("listener", argc, argv))
+		run += test_listener_suite(&error, &success);
+	if(include_test("listener", argc, argv))
+		run += test_listener_suite(&error, &success);
 	if(include_test("messager", argc, argv))
 		run += test_messager_suite(&error, &success);
     if(include_test("commparser", argc, argv))

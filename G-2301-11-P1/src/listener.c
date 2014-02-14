@@ -11,26 +11,31 @@
 #include "listener.h"
 #include <syslog.h>
 
-int ServerOpenSocket(int port, int max_long){
+int Server_open_socket(int port, int max_long){
 
 	int handler = _server_open_socket();
-	if (handler != OK)	
+	if (handler == -ERR_SOCK)	
 	{
 		syslog(LOG_ERR, "Error al abrir el socket");
-		return handler;
+		return -ERR_SOCK;
 	}
 	_link_socket_port(port, handler);
-	return OK;
+	
+	if( _set_queue_socket(handler, max_long)!=OK)
+		return -ERR_SOCK;
+
+	/*
+	Código de error: Valor negativo -> ERROR
+	*/
+	return handler;
 }
-int ServerListenConnect(int handler, int max_queue){
+
+int Server_listen_connect(int handler){
 	struct sockaddr peer_addr;
 	socklen_t peer_len=sizeof(peer_addr);
 	int handler_accepted;
 
-	if( _set_queue_socket(handler, max_queue)!=OK)
-		return -ERR_SOCK;
-	/*Now the socket refered by handler y listening. Now let's accept conections*/
-	
+
 	handler_accepted=accept(handler,&peer_addr, &peer_len);
 	
 	if( handler_accepted == -1){
@@ -44,7 +49,14 @@ int ServerListenConnect(int handler, int max_queue){
 	*/
 
 	return handler_accepted;
+
 }
+
+int Server_close_communication(int handler){
+	return _server_close_socket(handler);
+}
+
+
 static int _server_close_socket(int handler){
 	if(shutdown(handler, 2) == -1){
 		syslog(LOG_ERR, "Error cerrando el socket, %d",errno);
@@ -53,9 +65,6 @@ static int _server_close_socket(int handler){
 	return OK;
 }
 
-int ServerCloseCommunication(int handler){
-	return _server_close_socket(handler);
-}
 
 
 

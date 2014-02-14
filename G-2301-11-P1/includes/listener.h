@@ -16,11 +16,9 @@ typedef void* (*connection_handler)(void*);
 struct listener_thdata {
 	int port;
 	int commsocket;
-	connection_handler connhandler;
 };
 
 struct newconn_data {
-	pthread_t th;
 	int commsocket;
 };
 
@@ -34,12 +32,9 @@ int server_close_communication(int handler);
  * @param  pth         Identificador del hilo creado
  * @param  port        Puerto de escucha.
  * @param  commsocket  Socket de comunicaciones con el hilo principal. 
- *                     	Para no usar las comunicaciones con el hilo principal,
- *                     	hay que pasar 0 como argumento.
- * @param  connhandler Función que será llamada para gestionar las conexiones.
  * @return             OK/ERR.
  */
-int spawn_listener_thread(pthread_t* pth, int port, int commsocket, connection_handler connhandler);
+int spawn_listener_thread(pthread_t* pth, int port, int commsocket);
 
 /**
  * Función que se encarga de escuchar las conexiones entrandes.
@@ -50,12 +45,11 @@ void* thread_listener(void* data);
 /**
  * Crea un nuevo hilo para gestionar una conexión entrante (todavía no aceptada).
  * @param  listen_sock Socket de escucha sobre el que se realiza un accept.
- * @param  connhandler Función que gesitona la conexión.
  * @param  commsocket  Socket de comunicaciones con el hilo principal. 
  *                     	Para no usar las comunicaciones con el hilo principal,
  *                     	hay que pasar 0 como argumento.
  * @return             OK/ERR.
  */
-int create_new_connection_thread(int listen_sock, connection_handler connhandler, int commsocket);
+int create_new_connection_thread(int listen_sock, int commsocket);
 
 #endif

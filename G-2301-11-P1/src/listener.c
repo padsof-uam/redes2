@@ -12,6 +12,7 @@
 #include <syslog.h>
 #include "messager.h"
 #include <fcntl.h>
+#include <poll.h>
 
 static int _server_close_socket(int handler)
 {
@@ -115,12 +116,11 @@ int server_close_communication(int handler)
     return _server_close_socket(handler);
 }
 
-int spawn_listener_thread(pthread_t *pth, int port, int commsocket, connection_handler connhandler)
+int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
 {
     struct listener_thdata thdata;
     thdata.commsocket = commsocket;
     thdata.port = port;
-    thdata.connhandler = connhandler;
 
     if (pthread_create(pth, NULL, thread_listener, &thdata))
     {
@@ -138,8 +138,7 @@ void *thread_listener(void *data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
     int listen_sock;
-    fd_set fds;
-    int nfds;
+    struct pollfd fds[2];
     char *commbuf;
 
     listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE);
@@ -154,32 +153,28 @@ void *thread_listener(void *data)
         syslog(LOG_INFO, "Puerto de escucha abierto en %d", thdata->port);
     }
 
-    /* Necesitamos esto para la llamada a select. Mejor calcularlo sólo una vez. */
-    nfds = listen_sock > thdata->commsocket ? listen_sock : thdata->commsocket;
+    fds[0].events = POLLIN;
+    fds[0].fd = listen_sock;
 
+	fds[1].events = POLLIN;
+    fds[1].fd = thdata->commsocket;
+    
     while (1)
     {
-        FD_ZERO(&fds);
-
-        if (thdata->commsocket > 0)
-            FD_SET(thdata->commsocket, &fds);
-
-        FD_SET(listen_sock, &fds);
-
         /* Esperamos indefinidamente hasta que haya datos en algún socket */
-        if (select(nfds, &fds, NULL, NULL, NULL) < 0)
+        if (poll(fds, 2, -1) < 0)
         {
             syslog(LOG_NOTICE, "Error al llamar a select: %s", strerror(errno));
         }
         else
         {
-            if (FD_ISSET(listen_sock, &fds))
+            if (fds[0].revents & POLLIN)
             {
-                if (create_new_connection_thread(listen_sock, thdata->connhandler, thdata->commsocket) != OK)
+                if (create_new_connection_thread(listen_sock, thdata->commsocket) != OK)
                     syslog(LOG_ERR, "fallo al aceptar una conexión. Error %s", strerror(errno));
             }
 
-            if (thdata->commsocket > 0 && FD_ISSET(thdata->commsocket, &fds))
+            if (fds[1].revents & POLLIN)
             {
                 if (rcv_message(thdata->commsocket, (void **)&commbuf) > 0)
                 {
@@ -197,10 +192,9 @@ void *thread_listener(void *data)
     pthread_exit(0);
 }
 
-int create_new_connection_thread(int listen_sock, connection_handler connhandler, int commsocket)
+int create_new_connection_thread(int listen_sock, int commsocket)
 {
     int connsock;
-    int commsocks[2];
     struct newconn_data conndata;
 
     connsock = server_listen_connect(listen_sock);
@@ -211,36 +205,11 @@ int create_new_connection_thread(int listen_sock, connection_handler connhandler
         return -ERR;
     }
 
-    /* Creamos los dos sockets de comunicación */
-    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, commsocks) < 0)
+    if (send_message(commsocket, &conndata, sizeof(struct newconn_data)) < 0)
     {
-        syslog(LOG_ERR, "No se han podido crear los sockets de comunicación: %s", strerror(errno));
-        close(connsock);
+        syslog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
+        server_close_communication(connsock);
         return -ERR;
-    }
-
-    conndata.commsocket = commsocks[0];
-
-    if (pthread_create(&(conndata.th), NULL, connhandler, (void *)(commsocks[1])) < 0)
-    {
-        syslog(LOG_ERR, "No se ha podido crear un hilo para gestionar la conexión: %s", strerror(errno));
-        close(commsocks[0]);
-        close(commsocks[1]);
-        close(connsock);
-        return -ERR;
-    }
-
-    if (commsocket > 0)
-    {
-        if (send_message(commsocket, &conndata, sizeof(struct newconn_data)) < 0)
-        {
-            syslog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
-            pthread_cancel(conndata.th);
-            close(commsocks[0]);
-            close(commsocks[1]);
-            close(connsock);
-            return -ERR;
-        }
     }
 
     syslog(LOG_INFO, "Nueva conexión creada con éxito.");

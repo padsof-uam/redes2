@@ -1,6 +1,6 @@
 GCC = gcc
 CFLAGS = -ggdb -Wall -pedantic -ansi
-E_LIBS = 
+E_LIBS = -pthread
 TARGET = main
 LIB = 
 INCLUDES = -I./includes/

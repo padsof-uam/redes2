@@ -48,6 +48,7 @@ int send_message(int socket, const void *msg, ssize_t len)
 ssize_t rcv_message(int socket, void **buffer)
 {
     char *internal_buf = NULL;
+    char* realloc_retval;
     size_t buf_size = INITIAL_RECEIVE_BUFFER;
     ssize_t read_bytes = 0;
     ssize_t batch_bytes = 0;
@@ -64,10 +65,17 @@ ssize_t rcv_message(int socket, void **buffer)
         if (batch_bytes == buf_size - read_bytes) /* Hemos leído todo lo que podemos leer, reservamos más */
         {
             buf_size *= 2;
-            internal_buf = reallocf(internal_buf, buf_size * sizeof(char)); /* Liberamos memoria en caso de error con reallocf */
+            realloc_retval = realloc(internal_buf, buf_size * sizeof(char)); /* Liberamos memoria en caso de error con reallocf */
 
-            if (!internal_buf)
+            if (!realloc_retval)
+            {
+                free(internal_buf);
                 return -ERR_MEM;
+            }
+            else
+            {
+                internal_buf = realloc_retval;
+            }
         }
 
         read_bytes += batch_bytes;

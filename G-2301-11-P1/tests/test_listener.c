@@ -4,10 +4,14 @@
 #include <stdio.h>
 
 /* BEGIN TESTS */
-int t_Server_open_socket() {
+int t_server_openclose() {
 	int handler = Server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
-	
 	mu_assert("Server won't open", handler !=- ERR_SOCK);
+
+	if(Server_close_communication(handler) != OK)
+	{
+		mu_sysfail("close error");
+	}
 
 	mu_end;
 }
@@ -20,7 +24,7 @@ int test_listener_suite(int* errors, int* success) {
 
 	printf("Begin listener suite.\n");
 /* BEGIN TEST EXEC */
-	mu_run_test(t_Server_open_socket);
+	mu_run_test(t_server_openclose);
 	
 /* END TEST EXEC */
 	printf("End listener suite. %d/%d\n\n", tests_passed, tests_run);

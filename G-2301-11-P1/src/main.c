@@ -20,7 +20,6 @@ int main(int argc, char const *argv[])
 	int sk[2];
 	int listener_commsock;
 	pthread_t listener_th;
-	fd_set fds;
 	int nfds;
 
 	if(daemonize(LOG_ID) != OK)
@@ -37,7 +36,7 @@ int main(int argc, char const *argv[])
 
 	listener_commsock = sk[0];
 
-	if(spawn_listener_thread(&listener_th, IRC_PORT, sk[1], NULL) < 0)
+	if(spawn_listener_thread(&listener_th, IRC_PORT, sk[1]) < 0)
 	{
 		syslog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));
 		return EXIT_FAILURE;
@@ -47,11 +46,6 @@ int main(int argc, char const *argv[])
 
 	while(1)
 	{
-		FD_ZERO(&fds);
-		FD_SET(listener_commsock, &fds);
-
-		/* set all fd for threads. */
-
 		
 	}
 

@@ -1,3 +1,4 @@
+#include "test_list.h"
 #include "test_poller.h"
 #include "test_listener.h"
 #include "test_listener.h"
@@ -50,6 +51,8 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("list", argc, argv))
+		run += test_list_suite(&error, &success);
 	if(include_test("poller", argc, argv))
 		run += test_poller_suite(&error, &success);
 	if(include_test("listener", argc, argv))

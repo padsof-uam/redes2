@@ -1,5 +1,4 @@
 #include "poller.h"
-
 #include <stdlib.h>
 #include <string.h>
 

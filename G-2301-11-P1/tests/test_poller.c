@@ -18,6 +18,7 @@ int t_pollfds_remove__moves_last() {
 	mu_assert_eq(pfds->len, 4, "len was not modified");
 	mu_end;
 }
+
 int t_pollfds_add__normal_add__adds_fds() {
 	int flags = 12;
 	struct pollfds* pfds = pollfds_init(flags);

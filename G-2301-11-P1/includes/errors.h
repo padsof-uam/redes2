@@ -12,7 +12,7 @@
 #define ERR_HUP 16
 #define ERR_SOCK 32
 #define ERR_MEM 64
-
+#define ERR_RANGE 128
 #define ERR 1
 
 #endif

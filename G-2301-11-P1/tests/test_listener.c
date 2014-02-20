@@ -44,14 +44,17 @@ int test_listener_suite(int* errors, int* success) {
 	int tests_run = 0;
 	int tests_passed = 0;
 
-	printf("Begin listener suite.\n");
+	printf("Begin test_listener suite.\n");
 /* BEGIN TEST EXEC */
 	mu_run_test(t_Server_close_communication__close_noconnected_socket);
 	mu_run_test(t_Server_close_communication__close_connected_socket);
 	mu_run_test(t_server_open_socket__opensocket);
 	
 /* END TEST EXEC */
-	printf("End listener suite. %d/%d\n\n", tests_passed, tests_run);
+	if(tests_passed == tests_run)
+		printf("End test_listener suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+	else
+		printf("End test_listener suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

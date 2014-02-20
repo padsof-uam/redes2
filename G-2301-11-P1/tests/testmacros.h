@@ -1,10 +1,12 @@
 /* Base: http://www.jera.com/techinfo/jtns/jtn002.html */
 
+#include "termcolor.h"
+
 #define MU_PASSED 1
 #define MU_ERR 0
 
 #define mu_assert(message, test) do { if (!(test)) { mu_fail(message); } } while (0)
-#define mu_perror(message) printf("Error %s: %s\n", __FUNCTION__, message);
+#define mu_perror(message) printf(TBOLD TRED "Error %s: " TRESET "%s\n", __FUNCTION__, message);
 #define mu_psyserror(message) do { perror(message); mu_perror(message); } while (0)
 #define mu_fail(message) do { mu_perror(message); return MU_ERR; } while(0)
 #define mu_end return MU_PASSED

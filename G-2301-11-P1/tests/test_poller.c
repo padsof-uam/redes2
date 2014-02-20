@@ -81,7 +81,10 @@ int test_poller_suite(int* errors, int* success) {
 	mu_run_test(t_pollfds_setcapacity__capacity_is_inferior__notchanged);
 	
 /* END TEST EXEC */
-	printf("End test_poller suite. %d/%d\n\n", tests_passed, tests_run);
+	if(tests_passed == tests_run)
+		printf("End test_poller suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+	else
+		printf("End test_poller suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

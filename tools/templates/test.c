@@ -3,6 +3,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "termcolor.h"
+
 int include_test(const char *testname, int argc, const char **argv)
 {
     int is_including = 0;
@@ -36,7 +38,7 @@ int main(int argc, const char** argv) {
 /* END TEST REGION */
 	time(&t);
 	printf("\nEnd test run %s.", ctime(&t));
-	printf("%d tests run. %d success, %d errors.\n", run, success, error);
+	printf("Run %d." TGREEN " %d success, "TRED "%d errors.\n" TRESET, run, success, error);
 
 	return 0;
 }

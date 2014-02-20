@@ -6,21 +6,13 @@
 #include "test_messager.h"
 #include "test_commparser.h"
 #include "test_daemonize.h"
+#include "termcolor.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <strings.h>
 
-
-/*void *reallocf(void *p, size_t s)
-{
-    void *tmp = realloc(p, s);
-    if(tmp) return tmp;
-    free(p);
-    return NULL;
-}
-*/
 int include_test(const char *testname, int argc, const char **argv)
 {
     int is_including = 0;
@@ -66,8 +58,8 @@ int main(int argc, const char **argv)
 
     /* END TEST REGION */
     time(&t);
-    printf("End test run %s.\n", ctime(&t));
-    printf("Run %d. %d success, %d errors.\n", run, success, error);
+    printf("End test run %s", ctime(&t));
+    printf("Run %d." TGREEN " %d success, "TRED "%d errors.\n" TRESET, run, success, error);
 
     return 0;
 }

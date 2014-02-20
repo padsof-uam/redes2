@@ -206,13 +206,16 @@ int test_daemonize_suite(int *errors, int *success)
     int tests_run = 0;
     int tests_passed = 0;
 
-    printf("Begin daemon suite.\n");
+    printf("Begin test_daemonize suite.\n");
     /* BEGIN TEST EXEC */
     mu_run_test(t_hangs_on_init);
     mu_run_test(t_no_fds_open);
 
     /* END TEST EXEC */
-    printf("End daemon suite. %d/%d\n", tests_passed, tests_run);
+    if(tests_passed == tests_run)
+        printf("End test_daemonize suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+    else
+        printf("End test_daemonize suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
 
     *errors += (tests_run - tests_passed);
     *success += tests_passed;

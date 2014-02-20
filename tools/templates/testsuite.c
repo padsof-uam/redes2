@@ -16,7 +16,11 @@ int _testsuite__suite(int* errors, int* success) {
 /* BEGIN TEST EXEC */
 	
 /* END TEST EXEC */
-	printf("End _testsuite_ suite. %d/%d\n\n", tests_passed, tests_run);
+	if(tests_passed == tests_run)
+		printf("End _testsuite_ suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+	else
+		printf("End _testsuite_ suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
+
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

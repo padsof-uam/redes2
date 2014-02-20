@@ -219,7 +219,10 @@ int test_messager_suite(int *errors, int *success)
     mu_run_test(t_send_message__msg_is_null__returns_err);
 
     /* END TEST EXEC */
-    printf("End test_messager suite. %d/%d\n\n", tests_passed, tests_run);
+    if(tests_passed == tests_run)
+        printf("End test_messager suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+    else
+        printf("End test_messager suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
 
     *errors += (tests_run - tests_passed);
     *success += tests_passed;

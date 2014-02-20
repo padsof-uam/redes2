@@ -53,7 +53,11 @@ int test_list_suite(int* errors, int* success) {
 	mu_run_test(t_list_complete_test);
 	
 /* END TEST EXEC */
-	printf("End test_list suite. %d/%d\n\n", tests_passed, tests_run);
+	if(tests_passed == tests_run)
+		printf("End test_list suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+	else
+		printf("End test_list suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
+
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

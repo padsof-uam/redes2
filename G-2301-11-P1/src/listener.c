@@ -164,7 +164,7 @@ void *thread_listener(void *data)
         /* Esperamos indefinidamente hasta que haya datos en algún socket */
         if (poll(fds, 2, -1) < 0)
         {
-            syslog(LOG_NOTICE, "Error al llamar a select: %s", strerror(errno));
+            syslog(LOG_NOTICE, "Error al llamar a poll: %s", strerror(errno));
         }
         else
         {

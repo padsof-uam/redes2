@@ -68,8 +68,15 @@ int main(int argc, char const *argv[])
 		}
 
 		fds_len = pfds->len; /* Evitamos iterar por posibles nuevos descriptores */
+		
+		if(ready_fds && (pfds->fds[0].revents & POLLIN)) /* El socket de comunicación con listener es el primero */
+		{
+			/* Cuidado con POLLERR! */
+			add_new_connection(pfds, listener_commsock);
+			ready_fds--;
+		}
 
-		for(i = 0; i < fds_len && ready_fds > 0; i++)
+		for(i = 1; i < fds_len && ready_fds > 0; i++)
 		{
 			if(pfds->fds[i].revents & POLLERR) /* algo malo ha pasado. Cerramos */
 			{
@@ -79,10 +86,7 @@ int main(int argc, char const *argv[])
 			else if(pfds->fds[i].revents & POLLIN) /* Datos en el socket */
 			{
 				ready_fds--;
-				if(pfds->fds[i].fd == listener_commsock)
-					add_new_connection(pfds, listener_commsock);
-				else
-					receive_parse_message(pfds->fds[i].fd);
+					receive_parse_message(pfds->fds[i].fd); 
 			}
 		}
 	}

@@ -3,7 +3,7 @@
 - Crear la función del hilo de envío de datos. (Víctor)
 - Pensar cómo cerrar conexiones.
 - Crear la estructura de cola para comunicación entre hilos, encapsulando sincronización. (Guille)
-- Implementar diccionario (Guille)
+X Implementar diccionario (Guille)
 - Crear las estructuras de datos correspondientes a IRC: (Víctor)
 	· Mapa socket -> usuario.
 	· Datos usuario (struct).

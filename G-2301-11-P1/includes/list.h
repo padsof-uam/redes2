@@ -1,13 +1,9 @@
-#include <stdlib.h>
-#include "errors.h"
-#include "list_helpers.h"
-
 #ifndef LIST_H
 #define LIST_H
 
-typedef void* (*duplicator)(const void*);
-typedef void (*destructor)(void*);
-typedef int (*comparator)(const void*, const void *);
+#include <stdlib.h>
+#include "errors.h"
+#include "list_helpers.h"
 
 typedef struct {
 	void** array;

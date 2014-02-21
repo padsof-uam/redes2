@@ -20,13 +20,14 @@
 
 int main(int argc, char const *argv[])
 {
-	struct pollfds* pfds;
 	list* todelete_list;
-	int sk[2];
 	int listener_commsock;
+	int sk[2];
 	pthread_t listener_th;
-	int ready_fds, i, fds_len;
+	struct pollfds* pfds;
 	int errnum = 0;
+	int ready_fds, i, fds_len;
+
 
 	if(daemonize(LOG_ID) != OK)
 	{

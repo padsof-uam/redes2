@@ -3,7 +3,7 @@
 #include "strings.h"
 #include "list_helpers.h"
 
-list* list_new(duplicator dp, destructor ds)
+list* list_new()
 {
 	list* l = NULL;
 
@@ -18,13 +18,11 @@ list* list_new(duplicator dp, destructor ds)
 		l->capacity = 4;
 
 	l->count = 0;
-	l->destruct = ds;
-	l->duplicate = dp;
 
 	return l;
 }
 
-void list_destroy(list* ls)
+void list_destroy(list* ls, destructor dc)
 {
 	int i;
 	if(ls != NULL)
@@ -33,8 +31,8 @@ void list_destroy(list* ls)
 		{
 			for(i = 0; i < ls->capacity; i++)
 			{
-				if(ls->array[i] != NULL)
-					ls->destruct(ls->array[i]);
+				if(ls->array[i] != NULL && dc != NULL)
+					dc(ls->array[i]);
 			}
 
 			free(ls->array);
@@ -76,15 +74,13 @@ static int _increase_capacity(list* ls)
 	return _set_capacity(ls, ls->capacity * 2);
 }
 
-int list_add(list* ls, const void* element)
+int list_add(list* ls, void* element)
 {
 	return list_insert(ls, element, ls->count);
 }
 
-int list_insert(list* ls, const void* element, int index)
+int list_insert(list* ls, void* element, int index)
 {
-	void* copy;
-
 	if(index > ls->capacity)
 	{
 		return ERR;
@@ -96,12 +92,7 @@ int list_insert(list* ls, const void* element, int index)
 			return ERR;
 	}
 
-	copy = ls->duplicate(element);
-
-	if(ls->array[index] != NULL)
-		ls->destruct(ls->array[index]);
-
-	ls->array[index] = copy;
+	ls->array[index] = element;
 
 	ls->count++;
 

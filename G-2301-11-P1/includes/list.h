@@ -9,15 +9,13 @@ typedef struct {
 	void** array;
 	int count;
 	int capacity;
-	duplicator duplicate;
-	destructor destruct;
 } list;
 
-list* list_new(duplicator dp, destructor ds);
-void list_destroy(list* ls);
+list* list_new();
+void list_destroy(list* ls, destructor dc);
 int list_clear(list* ls);
-int list_add(list* ls, const void* element);
-int list_insert(list* ls, const void* element, int index);
+int list_add(list* ls, void* element);
+int list_insert(list* ls, void* element, int index);
 int list_remove(list* ls, int element);
 int list_find(list* ls, comparator comp, void * element);
 int list_count(list* ls);

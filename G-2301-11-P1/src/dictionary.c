@@ -7,11 +7,10 @@
 static void _destroy_kvpair(dictionary* dic, kv_pair* pair)
 {
 	dic->key_des(pair->key);
-	dic->val_des(pair->value);
 	free(pair);
 }
 
-dictionary* dic_new(duplicator key_dp, destructor key_dc, duplicator val_dup, destructor val_dc, comparator comp, hash_function hash)
+dictionary* dic_new(duplicator key_dp, destructor key_dc, comparator comp, hash_function hash)
 {
 	dictionary* dic = NULL;
 
@@ -33,8 +32,6 @@ dictionary* dic_new(duplicator key_dp, destructor key_dc, duplicator val_dup, de
 	dic->key_comp = comp;
 	dic->key_des = key_dc;
 	dic->key_dup = key_dp;
-	dic->val_des = val_dc;
-	dic->val_dup = val_dup;
 	dic->hash = hash;
 
 	return dic;
@@ -125,7 +122,7 @@ kv_pair* _dic_lookup(dictionary* dic, const void* key, void* value, int create)
 			return NULL;
 
 		pair->key = dic->key_dup(key);
-		pair->value = dic->val_dup(value);
+		pair->value = value;
 		pair->next = dic->symtab[h];
 		dic->symtab[h] = pair;
 
@@ -135,7 +132,7 @@ kv_pair* _dic_lookup(dictionary* dic, const void* key, void* value, int create)
 	return pair;
 }
 
-void dic_destroy(dictionary* dic)
+void dic_destroy(dictionary* dic, destructor dc)
 {
 	int i;
 	kv_pair* to_destroy; 
@@ -148,6 +145,10 @@ void dic_destroy(dictionary* dic)
 		while(to_destroy != NULL)
 		{
 			next = to_destroy->next;
+
+			if(dc != NULL)
+				dc(to_destroy->value);
+
 			_destroy_kvpair(dic, to_destroy);
 			dic->items--;
 			to_destroy = next;
@@ -189,9 +190,8 @@ int dic_iterate(dictionary* dic, iterator_action action, void* pass_through)
 int dic_update(dictionary* dic, const void* key, void* value)
 {
 	kv_pair* pair = _dic_lookup(dic, key, value, 1);
-
-	dic->val_des(pair->value);	
-	pair->value = dic->val_dup(value);
+	
+	pair->value = value;
 	
 	return OK;
 }
@@ -215,13 +215,13 @@ static unsigned int int_hash(const dictionary* dic, const void* key)
 	return *n % dic->n_hash;	
 }
 
-dictionary* dic_new_withstr(duplicator dp, destructor dc)
+dictionary* dic_new_withstr()
 {
-	return dic_new(str_duplicator, free, dp, dc, str_comparator, str_hash);
+	return dic_new(str_duplicator, free, str_comparator, str_hash);
 }
 
-dictionary* dic_new_withint(duplicator dp, destructor dc)
+dictionary* dic_new_withint()
 {
-	return dic_new(int_duplicator, free, dp, dc, int_comparator, int_hash);
+	return dic_new(int_duplicator, free, int_comparator, int_hash);
 }
 

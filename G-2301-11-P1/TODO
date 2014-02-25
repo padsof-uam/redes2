@@ -10,3 +10,10 @@ X Implementar diccionario (Guille)
 	· Mapa socket -> usuario.
 	· Datos usuario (struct).
 	· Canales activos (lista de usuarios en cada uno). Plantear búsqueda.
+
+
+receiver_thdata
+
+si hay POLLERR en la comunicación?
+
+MAX_IRC_SIZE

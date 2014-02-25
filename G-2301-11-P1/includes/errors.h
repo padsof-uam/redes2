@@ -15,5 +15,6 @@
 #define ERR_RANGE 128
 #define ERR 1
 
+#define MAX_IRC_SIZE 2555
 #endif
 #pragma GCC diagnostic pop

@@ -15,7 +15,7 @@ void* thread_receive(void * st){
 	int ready_fds, i, fds_len;
 	int errnum = 0;
 	int sk_new_connection;
-	char message[MAX_IRC_SIZE];
+	char *message;
 
 
 	if(socketpair(PF_LOCAL, SOCK_STREAM, 0, sk) < 0)
@@ -30,7 +30,7 @@ void* thread_receive(void * st){
 
 	while(1)
 	{
-		ready_fds = pollfds_poll(pfds, 1000); /* Esperamos 1 segundo antes de volver. */
+		ready_fds = pollfds_poll(pfds, 10); /* Esperamos 10 milisegundos antes de volver. */
 
 		if(ready_fds == -1)
 		{
@@ -46,13 +46,18 @@ void* thread_receive(void * st){
 		fds_len = pfds->len; /* Evitamos iterar por posibles nuevos descriptores */
 		
 		if (ready_fds){
+			
+			/* El socket de comunicación con listener es el primero por definición*/
+
 			if (pfds->fds[0].revents & POLLERR){
 				/*
 					¿Qué hacemos en caso de error?
 				*/
-			}else if(pfds->fds[0].revents & POLLIN) /* El socket de comunicación con listener es el primero por definición*/
+				syslog(LOG_ERR, "Error %d en la comunicación receiver-listener: %s",errnum,strerror(errno));
+				errnum++;
+			}
+			else if(pfds->fds[0].revents & POLLIN) 
 			{
-				/* Cuidado con POLLERR! */
 				add_new_connection(pfds, sk_new_connection);
 				ready_fds--;
 			}
@@ -77,8 +82,43 @@ void* thread_receive(void * st){
 
 }
 
-int spawn_receiver_thread(pthread_t * recv_thread){
+int spawn_receiver_thread(pthread_t * recv_thread/*Más campos que pueda recibir*/){
+	struct receiver_thdata thdata;
+	if (pthread_create(recv_thread, NULL, thread_receive, &thdata))
+	{
+		syslog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));
+		return -ERR;
+	}
+	else
+	{
+		syslog(LOG_INFO, "Hilo receptor de mensajes creado");
+	}
 
-	pthread_create(recv_thread, NULL/*const pthread_attr_t *restrict __attr*/, thread_receive, NULL);
+	return OK;
+}
+
+int add_new_connection(struct pollfds* pfds, int listener_sk)
+{
+	return pollfds_add(pfds, listener_sk);
+}
+int remove_connection(struct pollfds* pfds, int fd)
+{
+	return pollfds_remove(pfds, fd);
+}
+int receive_parse_message(int fd,char * message)
+{
+	int size_read;
+	message = (void *) calloc(MAX_IRC_SIZE, sizeof(char));
+	size_read = recv(fd, message,MAX_IRC_SIZE,0);
+	if ( size_read == -1 )
+	{
+		syslog(LOG_ERR, "Error al recibir mensaje de la conexión %d. -- %s",fd,strerror(errno));
+		return -ERR;
+	}
+	syslog(LOG_INFO, "Leidos %d bytes de la conexión: %d",size_read,fd);
+	return OK;
+}
+int send_to_main(void * main_process, const char * message){
+	/*Aquí va lo de la cola de sistema molona*/
 	return OK;
 }

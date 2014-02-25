@@ -32,7 +32,7 @@ struct pollfds *pollfds_init(short default_flags)
 /**
  * Set the capacity for the dynamic struct list.
  * @param  capacity New capacity.
- * @return OK if correct, ERR if error.
+ * @return OK if correct, -ERR if error.
  */
 int pollfds_setcapacity(struct pollfds *pfds, int capacity)
 {
@@ -44,7 +44,7 @@ int pollfds_setcapacity(struct pollfds *pfds, int capacity)
     new_fds_list = realloc(pfds->fds, capacity * sizeof(struct pollfd));
 
     if (!new_fds_list)
-        return ERR;
+        return -ERR;
 
     pfds->fds = new_fds_list;
     pfds->capacity = capacity;
@@ -61,7 +61,7 @@ int pollfds_add(struct pollfds *pfds, int fd)
 {
     if (pfds->len == pfds->capacity)
         if (pollfds_setcapacity(pfds, 2 * pfds->capacity))
-            return ERR;
+            return -ERR;
 
     pfds->fds[pfds->len].fd = fd;
     pfds->fds[pfds->len].events = pfds->flags;
@@ -85,7 +85,7 @@ int pollfds_remove(struct pollfds *pfds, int fd)
             break;
 
     if (i == pfds->len)
-        return ERR;
+        return -ERR;
 
     pfds->len--;
     memcpy(pfds->fds + i, pfds->fds + pfds->len, sizeof(struct pollfd));

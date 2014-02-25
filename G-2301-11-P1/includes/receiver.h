@@ -21,8 +21,8 @@ void* thread_receive(void * st);
 
 /**
 * Crea un hilo que se encarga de gestionar la recepción en las comunicaciones.
-* @param	spawn_receiver_thread 	Identidifacor del hilo creado.
-* @return 							Código de error.
+* @param	recv_thread 	Identidifacor del hilo creado.
+* @return 					Código de error.
 */
 
 int spawn_receiver_thread(pthread_t * recv_thread);
@@ -46,7 +46,7 @@ int remove_connection(struct pollfds* pfds, int fd);
 /**
 * Recibe y lee los mensajes de una conexión.
 * @param 	fd			El socket listo para ser leido.
-* @param 	message		Cadena a rellenar con la información leída.
+* @param 	message		Cadena a rellenar con la información leída (puntero no inicializado).
 * @return 				Código de error.
 */
 int receive_parse_message(int fd,char * message);

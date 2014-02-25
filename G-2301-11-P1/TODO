@@ -1,6 +1,6 @@
 - Modificar listener_thread para usar pthread_cleanup_push.
 
-- Crear la función del hilo de recepción de datos (sacarla de main). (Víctor)
+/ Crear la función del hilo de recepción de datos (sacarla de main). (Víctor)
 
 - Crear la función del hilo de envío de datos. (Víctor)
 - Pensar cómo cerrar conexiones.
@@ -12,8 +12,20 @@ X Implementar diccionario (Guille)
 	· Canales activos (lista de usuarios en cada uno). Plantear búsqueda.
 
 
-receiver_thdata
 
-si hay POLLERR en la comunicación?
+Dudas de deJuan
+· receiver_thdata (argumentos que necesita la función del reciever)
 
-MAX_IRC_SIZE
+· si hay POLLERR en la comunicación? receiver.c:51
+
+· MAX_IRC_SIZE. 
+
+· Lo de devolver -ERR... no termino de ver xk. Además hay que tener cuidado con hacerlo siempre igual (poller.c devuelve ERR).
+
+· WTF
+			if(errnum >= MAX_ERR_THRESHOLD)
+				break; /* Demasiados errores, salimos */
+			else
+				continue;
+
+· Para enviar mensajes necesito más información de como va la cola. ¿sender tiene una pollfds distinta que el receiver? 

@@ -53,6 +53,4 @@ void* thread_listener(void* data);
 int create_new_connection_thread(int listen_sock, int commsocket);
 
 
-int send_to_main(void * main_process, const char * message);
-
 #endif

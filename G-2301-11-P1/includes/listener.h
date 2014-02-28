@@ -22,8 +22,28 @@ struct newconn_data {
 	int commsocket;
 };
 
+/**
+* Función encargada de abrir un socket en un puerto, 
+* con una longitud de la cola determinada.
+* @param 	port		puerto en el que estará el socket.
+* @param	max_long	longitud máxima de la cola de mensajes del socket.
+* @return 	Un valor negativo en caso de error o el handler del socket
+*			en caso de éxito.
+*/
 int server_open_socket(int port, int max_long);
+
+/**
+* Función encargada de aceptar una conexión en un socket.
+* @param	handler 	Identificador del socket.
+* @return 	Un valor negativo en caso de error o el handler del socket
+*			en caso de éxito.
+*/
 int server_listen_connect(int handler);
+/**
+* Función encargada de cerrar la conexión.
+* @param	handler 	Identificador del socket a cerrar.
+* @return	OK/ERR.
+*/
 int server_close_communication(int handler);
 
 /**
@@ -38,7 +58,8 @@ int spawn_listener_thread(pthread_t* pth, int port, int commsocket);
 
 /**
  * Función que se encarga de escuchar las conexiones entrandes.
- * @param data 	Estructura listener_thdata con los datos necesarios.
+ * @param 	data 		Estructura listener_thdata con los datos necesarios.
+ * @return	***********************************************
  */
 void* thread_listener(void* data);
 

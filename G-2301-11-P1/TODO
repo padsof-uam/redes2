@@ -1,10 +1,10 @@
 - Modificar listener_thread para usar pthread_cleanup_push.
 
-/ Crear la función del hilo de recepción de datos (sacarla de main). (Víctor)
+X Crear la función del hilo de recepción de datos (sacarla de main). (Víctor)
 
-- Crear la función del hilo de envío de datos. (Víctor)
-- Pensar cómo cerrar conexiones.
-- Crear la estructura de cola para comunicación entre hilos, encapsulando sincronización. (Guille)
+X Crear la función del hilo de envío de datos. (Víctor)
+- Pensar cómo cerrar conexiones. (¿señales para cerrar los hilos y que el handler cierre todo?)
+X Crear la estructura de cola para comunicación entre hilos, encapsulando sincronización. (Guille)
 X Implementar diccionario (Guille)
 - Crear las estructuras de datos correspondientes a IRC: (Víctor)
 	· Mapa socket -> usuario.

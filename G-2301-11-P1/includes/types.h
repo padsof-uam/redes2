@@ -1,11 +1,15 @@
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "dictionary.h"
 #include "list.h"
+
 
 #ifndef COMMSTRUCTS_H
 #define COMMSTRUCTS_H
 
 #define MAX_IRC_MSG 512
+#define MAX_ERR_THRESHOLD 5
 
 struct irc_globdata {
 	dictionary* fd_user_map;

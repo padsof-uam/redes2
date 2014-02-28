@@ -20,8 +20,7 @@ void* thread_receive(void * st){
 /** De qué tipo tiene que ser????*/
 
 	char * msg_recv = (char *) calloc(150, sizeof(char));
-
-	char *message;
+	char * message = (void *) calloc(MAX_IRC_MSG, sizeof(char));
 	struct receiver_thdata * recv_data = (struct receiver_thdata *) st;
 
 
@@ -82,6 +81,10 @@ void* thread_receive(void * st){
 		}
 	} 
 
+	free(pfds);
+	free(msg_recv);
+	free(message);
+
 	return NULL;
 }
 
@@ -113,7 +116,6 @@ int remove_connection(struct pollfds* pfds, int fd)
 int receive_parse_message(int fd,char * message)
 {
 	int size_read;
-	message = (void *) calloc(MAX_IRC_MSG, sizeof(char));
 	size_read = recv(fd, message,MAX_IRC_MSG,0);
 	if ( size_read == -1 )
 	{

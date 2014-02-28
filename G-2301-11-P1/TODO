@@ -14,18 +14,7 @@ X Implementar diccionario (Guille)
 
 
 Dudas de deJuan
-· receiver_thdata (argumentos que necesita la función del reciever)
 
-· si hay POLLERR en la comunicación? receiver.c:51
+recv qué tipo de mensaje se espera? un char* vale?
 
-· MAX_IRC_SIZE. 
-
-· Lo de devolver -ERR... no termino de ver xk. Además hay que tener cuidado con hacerlo siempre igual (poller.c devuelve ERR).
-
-· WTF
-			if(errnum >= MAX_ERR_THRESHOLD)
-				break; /* Demasiados errores, salimos */
-			else
-				continue;
-
-· Para enviar mensajes necesito más información de como va la cola. ¿sender tiene una pollfds distinta que el receiver? 
+el void * de mensajes de la cola puede ser lo que quiera? el man parece que dice que sea msgbuf...

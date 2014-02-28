@@ -4,12 +4,17 @@
 #include "errors.h"
 #include <pthread.h>
 #include "poller.h"
+#include "types.h"
 
 #define MAX_ERR_THRESHOLD 5
 
 struct receiver_thdata{
 	int socket;
-	/*Algo mas?*/
+	int queue;
+};
+
+struct info_new_connection{
+	int socket;
 };
 
 /**
@@ -25,7 +30,7 @@ void* thread_receive(void * st);
 * @return 					Código de error.
 */
 
-int spawn_receiver_thread(pthread_t * recv_thread);
+int spawn_receiver_thread(pthread_t * recv_thread,int fd,int queue);
 
 /**
 * Añade una nueva conexión a la estructura pollfds dinámica.
@@ -57,6 +62,7 @@ int receive_parse_message(int fd,char * message);
 * @param 	message			El mensage para ser enviado al proceso principal (sin ser parseado).
 * @return 					Código de error.
 */
-int send_to_main(void * main_process, const char * message);
+
+int send_to_main(int fd_main,int fd, char * message);
 
 #endif

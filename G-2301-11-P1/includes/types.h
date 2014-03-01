@@ -1,6 +1,9 @@
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "dictionary.h"
 #include "list.h"
+
 
 #ifndef COMMSTRUCTS_H
 #define COMMSTRUCTS_H
@@ -10,6 +13,7 @@
 #define MAX_NAME_LEN 100
 #define MAX_CHAN_LEN 200
 #define MAX_TOPIC_LEN 500
+#define MAX_ERR_THRESHOLD 5
 
 typedef enum  { 
 	chan_op = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 

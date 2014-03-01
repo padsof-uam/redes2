@@ -19,11 +19,10 @@ recv qué tipo de mensaje se espera? un char* vale?
 
 el void * de mensajes de la cola puede ser lo que quiera? el man parece que dice que sea msgbuf...
 
-Collejas:
+=== Cambios Guille sobre cosas De Juan
 
-int send_message(int fd, char * message,int len) {
-	send(fd, message, len, 0);
-	return OK;
-}
+== receiver.c:send_to_main
 
-Hala, send siempre funciona de puta madre, ¿no?
+Lo que enviamos a través de la cola es un msg_sockcommdata, que tiene el msgtype que necesita lo de la cola.
+
+Pero ahí el fallo importante es usar strlen para sacar la longitud del mensaje. Puede ser que la cadena no acabe en \0. Tenemos que usar la longitud de datos leídos desde el socket.

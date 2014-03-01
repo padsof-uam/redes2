@@ -7,21 +7,20 @@
 #include <stdlib.h>
 #include "receiver.h"
 #include "types.h"
+#include "messager.h"
 
 void *thread_receive(void *st)
 {
-
     struct pollfds *pfds;
-
+    int msglen;
     int ready_fds, i, fds_len;
     int errnum = 0;
-
     int sk_new_connection;
 
     /** De qué tipo tiene que ser????*/
 
     char *msg_recv = (char *) calloc(150, sizeof(char));
-    char *message = (void *) calloc(MAX_IRC_MSG, sizeof(char));
+    char *message;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
 
 
@@ -74,8 +73,12 @@ void *thread_receive(void *st)
             else if (pfds->fds[i].revents & POLLIN) /* Datos en el socket */
             {
                 ready_fds--;
-                receive_parse_message(pfds->fds[i].fd, message);
-                send_to_main(recv_data->queue , pfds->fds[0].fd , message);
+                msglen = rcv_message(pfds->fds[i].fd, (void **)&message);
+
+                if (msglen > 0)
+                    send_to_main(recv_data->queue, pfds->fds[0].fd, message, msglen);
+                else
+                	syslog(LOG_WARNING, "error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
             }
         }
     }
@@ -115,26 +118,13 @@ int remove_connection(struct pollfds *pfds, int fd)
     return pollfds_remove(pfds, fd);
 }
 
-int receive_parse_message(int fd, char *message)
+int send_to_main(int queue, int fd, char *message, int msglen)
 {
-    int size_read;
-    size_read = recv(fd, message, MAX_IRC_MSG, 0);
-    if ( size_read == -1 )
-    {
-        syslog(LOG_ERR, "Error al recibir mensaje de la conexión %d. -- %s", fd, strerror(errno));
-        return -ERR;
-    }
-    syslog(LOG_INFO, "Leidos %d bytes de la conexión: %d", size_read, fd);
-    return OK;
-}
+    struct msg_sockcommdata data_to_send;
 
-int send_to_main(int queue, int fd, char *message)
-{
-    struct sockcomm_data data_to_send;
-
-    strcpy(data_to_send.data, message);
-    data_to_send.fd = fd;
-    data_to_send.len = strlen(message);
+    strcpy(data_to_send.scdata.data, message);
+    data_to_send.scdata.fd = fd;
+    data_to_send.scdata.len = msglen;
 
     /*msgsnd utiliza una estructura msgbuf o es un ejemplo de estructura a usar?*/
     if (!msgsnd(queue, &data_to_send, sizeof(data_to_send), 0))

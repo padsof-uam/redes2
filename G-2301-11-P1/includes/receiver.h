@@ -57,12 +57,13 @@ int remove_connection(struct pollfds *pfds, int fd);
 */
 int receive_parse_message(int fd, char *message);
 
+/* TODO: Documentar esto bien y poner los parámetros bien */
 /**
 * Envía la información al proceso principal.
 * @param    main_process    Estructura con toda la información necesaria para comunicarse con el proceso principal.
 * @param    message         El mensage para ser enviado al proceso principal (sin ser parseado).
 * @return                   Código de error.
 */
-int send_to_main(int fd_main, int fd, char *message);
+int send_to_main(int fd_main, int fd, char *message, int msglen);
 
 #endif

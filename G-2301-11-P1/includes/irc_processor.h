@@ -17,5 +17,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata
  */
 char* irc_msgsep(char* str, int len);
 
+void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
+
 #endif
 

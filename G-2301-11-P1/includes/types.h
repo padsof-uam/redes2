@@ -49,6 +49,7 @@ struct irc_msgdata {
 	struct sockcomm_data* msgdata;
 	struct irc_globdata* globdata;
 	char* msg;
+	list* msg_tosend;
 };	
 
 struct sockcomm_data {

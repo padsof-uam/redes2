@@ -1,5 +1,5 @@
 #ifndef RECEIVER_H
-#define RECEIVER_H 
+#define RECEIVER_H
 
 #include "errors.h"
 #include <pthread.h>
@@ -8,61 +8,61 @@
 
 #define MAX_ERR_THRESHOLD 5
 
-struct receiver_thdata{
-	int socket;
-	int queue;
+struct receiver_thdata
+{
+    int socket;
+    int queue;
 };
 
-struct info_new_connection{
-	int socket;
+struct info_new_connection
+{
+    int socket;
 };
 
 /**
 * Función que empieza a ejecutar el hilo receptor.
-* @param 	st	La información necesaria, en forma de *********************************
-* @return 	**********************************************************
+* @param    st  La información necesaria, en forma de *********************************
+* @return   **********************************************************
 */
-void* thread_receive(void * st);
+void *thread_receive(void *st);
 
 /**
 * Crea un hilo que se encarga de gestionar la recepción en las comunicaciones.
-* @param	recv_thread 	Identidifacor del hilo creado.
-* @return 					Código de error.
+* @param    recv_thread     Identidifacor del hilo creado.
+* @return                   Código de error.
 */
-
-int spawn_receiver_thread(pthread_t * recv_thread,int fd,int queue);
+int spawn_receiver_thread(pthread_t *recv_thread, int fd, int queue);
 
 /**
 * Añade una nueva conexión a la estructura pollfds dinámica.
-* @param	pfds 		La estructura a la que añadir la conexión.
-* @param	listener_sk El socket listo para ser leido con la información de la nueva conexión.
-* @return				Código de error.
+* @param    pfds        La estructura a la que añadir la conexión.
+* @param    listener_sk El socket listo para ser leido con la información de la nueva conexión.
+* @return               Código de error.
 */
-int add_new_connection(struct pollfds* pfds, int listener_sk);
+int add_new_connection(struct pollfds *pfds, int listener_sk);
 
 /**
 * Elimina una conexión de la estructura pollfds.
-* @param 	pfds 	La estructura a la que eliminar la conexión.
-* @param 	fd 		El identificador de la conexión para ser cerrada.
-* @return 			Código de error.
+* @param    pfds    La estructura a la que eliminar la conexión.
+* @param    fd      El identificador de la conexión para ser cerrada.
+* @return           Código de error.
 */
-int remove_connection(struct pollfds* pfds, int fd);
+int remove_connection(struct pollfds *pfds, int fd);
 
 /**
 * Recibe y lee los mensajes de una conexión.
-* @param 	fd			El socket listo para ser leido.
-* @param 	message		Cadena a rellenar con la información leída (puntero no inicializado).
-* @return 				Código de error.
+* @param    fd          El socket listo para ser leido.
+* @param    message     Cadena a rellenar con la información leída (puntero no inicializado).
+* @return               Código de error.
 */
-int receive_parse_message(int fd,char * message);
+int receive_parse_message(int fd, char *message);
 
 /**
 * Envía la información al proceso principal.
-* @param 	main_process	Estructura con toda la información necesaria para comunicarse con el proceso principal.
-* @param 	message			El mensage para ser enviado al proceso principal (sin ser parseado).
-* @return 					Código de error.
+* @param    main_process    Estructura con toda la información necesaria para comunicarse con el proceso principal.
+* @param    message         El mensage para ser enviado al proceso principal (sin ser parseado).
+* @return                   Código de error.
 */
-
-int send_to_main(int fd_main,int fd, char * message);
+int send_to_main(int fd_main, int fd, char *message);
 
 #endif

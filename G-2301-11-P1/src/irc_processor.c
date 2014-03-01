@@ -4,10 +4,30 @@
 #include <sys/syslog.h>
 #include <string.h>
 
+const char* _irc_cmds[] = {
+	"PRIVMSG",
+	"NICK",
+	"USER",
+	"QUIT",
+	"JOIN",
+	"PART",
+	"TOPIC",
+	"NAMES",
+	"LIST",
+	"KICK",
+	"TIME",
+	"NOTICE",
+	"PONG",
+	"USERS"
+};
+
+cmd_action _irc_actions[] = {
+	irc_privmsg
+};
+
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
 {
     struct irc_msgdata ircdata;
-    char crlf[] = "\r\n";
     char* msg;
     char* msg_end;
     ircdata.globdata = gdata;
@@ -15,13 +35,8 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
 
     msg = data->data;
 
-    while((msg_end = strnstr(msg, crlf, MAX_IRC_MSG)) != NULL)
+    while((msg_end = irc_msgsep(msg, MAX_IRC_MSG)) != NULL)
     {
-    	*msg_end = '\0';
-    	msg_end++;
-    	*msg_end = '\0';
-    	msg_end++;
-
     	ircdata.msg = msg;
 
     	if (parse_exec_command(msg, _irc_cmds, _irc_actions, sizeof(_irc_actions), &ircdata) == -1)
@@ -31,10 +46,33 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
 	}
 }
 
+char* irc_msgsep(char* str, int len)
+{
+	char crlf[] = "\r\n";
+    char* msgend;
+
+    if(!str)
+    	return NULL;
+
+    msgend = strnstr(str, crlf, len);
+
+    if(msgend)
+    {
+    	/* Quitamos el \r\n */
+    	*msgend = '\0';
+    	msgend++;
+    	*msgend = '\0';
+    	msgend++; 
+    }
+
+    return msgend;
+}
+
+
 int irc_privmsg(void *data)
 {
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
-	char separators[] = "";
+	char separators[] = ",";
 	char* param_str = strchr(ircdata->msgdata->data, ' ');
 	char *param_str_end, *receiver, *msgstart;
 

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+args=${@:2}
+cmd="bin/test"
+valgrind_opts=""
+
+if ! make test ; then
+	read -p "==== Compilation failed. Run previous tests? (y/n) " yn
+
+	if [ $yn = "n" ]; then
+		exit
+	fi
+fi
+
+if [ "$1" = "gdb" ]; then
+	cmd="lldb $cmd ${@:2}"
+elif [ "$1" = "valgrind" ]; then
+	cmd="valgrind $valgrind_opts $cmd ${@:2}"
+else
+	cmd="$cmd ${@:1}"
+fi
+
+echo "Running $cmd..."
+$cmd
+
+

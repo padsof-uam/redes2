@@ -41,7 +41,8 @@ struct ircuser {
 struct irc_globdata {
 	dictionary* fd_user_map;
 	dictionary* nick_user_map;
-	dictionary* chan_list;
+	dictionary* chan_map;
+	list* chan_list;
 };
 
 struct irc_msgdata {

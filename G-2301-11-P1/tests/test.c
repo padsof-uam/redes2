@@ -1,3 +1,4 @@
+#include "test_irc_processor.h"
 #include "test_dictionary.h"
 #include "test_list.h"
 #include "test_poller.h"
@@ -44,6 +45,8 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("irc_processor", argc, argv))
+		run += test_irc_processor_suite(&error, &success);
 	if(include_test("dictionary", argc, argv))
 		run += test_dictionary_suite(&error, &success);
 	if(include_test("list", argc, argv))

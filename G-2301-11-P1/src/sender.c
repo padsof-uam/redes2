@@ -42,6 +42,7 @@ void * thread_send(void * st){
 		else{
 
 			strncpy(message, tosend.data, tosend.len);
+			/* TODO control de errores. */
 			send_message(tosend.fd, message,tosend.len);
 		}
 	}
@@ -50,7 +51,3 @@ void * thread_send(void * st){
 	return NULL;
 }
 
-int send_message(int fd, char * message,int len){
-	send(fd, message, len, 0);
-	return OK;
-}

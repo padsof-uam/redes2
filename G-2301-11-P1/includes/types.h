@@ -4,7 +4,6 @@
 #include "dictionary.h"
 #include "list.h"
 
-
 #ifndef COMMSTRUCTS_H
 #define COMMSTRUCTS_H
 
@@ -42,7 +41,7 @@ struct ircuser {
 struct irc_globdata {
 	dictionary* fd_user_map;
 	dictionary* nick_user_map;
-	list* chan_list;
+	dictionary* chan_list;
 };
 
 struct irc_msgdata {

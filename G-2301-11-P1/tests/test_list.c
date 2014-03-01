@@ -37,7 +37,7 @@ int t_list_complete_test() {
 
 	mu_assert_eq(count, 0, "count after clear invalid");
 
-	list_destroy(l);
+	list_destroy(l, NULL);
 
 	mu_end;
 }

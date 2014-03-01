@@ -18,3 +18,12 @@ Dudas de deJuan
 recv qué tipo de mensaje se espera? un char* vale?
 
 el void * de mensajes de la cola puede ser lo que quiera? el man parece que dice que sea msgbuf...
+
+Collejas:
+
+int send_message(int fd, char * message,int len) {
+	send(fd, message, len, 0);
+	return OK;
+}
+
+Hala, send siempre funciona de puta madre, ¿no?

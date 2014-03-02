@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 #ifndef IRC_CODES_H
 #define IRC_CODES_H
 
@@ -121,3 +124,6 @@
 #define RPL_ADMINEMAIL 259
 
 #endif
+
+#pragma GCC diagnostic pop
+

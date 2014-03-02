@@ -63,4 +63,13 @@ struct msg_sockcommdata {
 	struct sockcomm_data scdata;
 };
 
+typedef enum {
+	MASTER_STOP_REQ, CHILD_CRITICAL_ERR
+} master_commcode;
+
+struct msg_mastercomm {
+	long msgtype;
+	master_commcode code;
+};
+
 #endif

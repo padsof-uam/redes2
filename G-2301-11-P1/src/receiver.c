@@ -90,11 +90,12 @@ void *thread_receive(void *st)
     return NULL;
 }
 
-int spawn_receiver_thread(pthread_t *recv_thread, int fd, int queue)
+int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue)
 {
     struct receiver_thdata thdata;
     thdata.queue = queue;
-    thdata.socket = fd;
+    thdata.socket = commsock;
+
     if (pthread_create(recv_thread, NULL, thread_receive, &thdata))
     {
         syslog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));

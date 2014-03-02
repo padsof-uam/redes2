@@ -40,7 +40,7 @@ int daemonize(const char *log_id)
     _log_id = strdup(log_id);
     umask(0);
     _open_log();
-    setlogmask (LOG_UPTO (LOG_INFO));
+    setlogmask (LOG_UPTO (LOG_DEBUG));
 
     if (signal(SIGTTOU, SIG_IGN))
     {
@@ -68,7 +68,7 @@ int daemonize(const char *log_id)
     }
 #endif 
 
-    if (signal(SIGCHLD, finish_daemon))
+    if (signal(SIGCHLD, SIG_IGN))  
     {
         syslog(LOG_ERR, "Error en la captura de SIGCHLD");
         return -ERR;
@@ -76,8 +76,14 @@ int daemonize(const char *log_id)
 
 
     pid = unlink_proc();
-    if (pid > 0) exit(EXIT_SUCCESS);
-    if (pid < 0) exit(EXIT_FAILURE);
+    if (pid > 0) 
+    {
+        printf("Daemon creado en %d\n", pid);
+        exit(EXIT_SUCCESS);
+    }
+
+    if (pid < 0) 
+        exit(EXIT_FAILURE);
 
     syslog(LOG_INFO, "Hijo creado como lider de la sesión");
 

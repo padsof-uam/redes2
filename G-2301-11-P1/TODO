@@ -1,17 +1,7 @@
-- Modificar listener_thread para usar pthread_cleanup_push.
+- Implementar las funciones de IRC que no están implementadas.
+	De momento sólo está PRIVMSG. Hay un buen número a implementar pero no debería ser difícil. Para enviar mensajes, fíjate en cómo está hecha irc_privmsg. Lo que hacemos es crear el mensaje (estructura sockcomm_data) y lo metemos en una lista. De esta forma enviamos todos los mensajes a la vez y no tenemos que preocuparnos de cómo mandarlos desde las funciones específicas de IRC.
 
-X Crear la función del hilo de recepción de datos (sacarla de main). (Víctor)
-
-X Crear la función del hilo de envío de datos. (Víctor)
-- Pensar cómo cerrar conexiones. (¿señales para cerrar los hilos y que el handler cierre todo?)
-X Crear la estructura de cola para comunicación entre hilos, encapsulando sincronización. (Guille)
-X Implementar diccionario (Guille)
-- Crear las estructuras de datos correspondientes a IRC: (Víctor)
-	· Mapa socket -> usuario.
-	· Datos usuario (struct).
-	· Canales activos (lista de usuarios en cada uno). Plantear búsqueda.
-
-
+	También faltan algunas funciones para acceder a los campos de IRC, como las listas de usuarios y diccionarios. El lunes te lo explico mejor, pero la idea es tener varias estructuras apuntando a los mismos datos en memoria para acceder más rápidamente. Por ejemplo, si queremos recorrer todos los canales usamos la lista. Si lo que queremos es buscar uno concreto, hay que usar un diccionario. Para que todo sea transparente, hay que crear funciones para esas tareas concretas, como por ejemplo irc_user_bynick en irc_core.c.
 
 Dudas de deJuan
 
@@ -21,8 +11,22 @@ el void * de mensajes de la cola puede ser lo que quiera? el man parece que dice
 
 === Cambios Guille sobre cosas De Juan
 
-== receiver.c:send_to_main
+== receiver.c: commit 7ae47b8
 
 Lo que enviamos a través de la cola es un msg_sockcommdata, que tiene el msgtype que necesita lo de la cola.
 
 Pero ahí el fallo importante es usar strlen para sacar la longitud del mensaje. Puede ser que la cadena no acabe en \0. Tenemos que usar la longitud de datos leídos desde el socket.
+
+Además, deberíamos usar rcv_message, que es una función que ya está hecha y preparada para recibir mensajes.
+
+== sender.c
+
+Error muy sutil: la estructura con la que pasas datos al hijo está en la pila. Se destruye cuando sale la función.
+
+=== Otras cosas
+
+Hay que crear mensajes KILL desde el hilo de recepción de datos para controlar la salida de conexiones.
+
+Usar colas POSIX (mqueue) si las cosas no van rápido.
+
+

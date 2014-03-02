@@ -15,7 +15,7 @@ struct proc_thdata
     msg_process pfun;
 };
 
-int create_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun)
+int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun)
 {
     struct proc_thdata *thdata = malloc(sizeof(struct proc_thdata));
     thdata->rcv_qid = rcv_qid;
@@ -51,7 +51,7 @@ void *proc_thread_entrypoint(void *data)
         {
             if (msgrcv(thdata->rcv_qid, &msg, sizeof(struct msg_sockcommdata), 0, 0) != -1)
             {
-                thdata->pfun(thdata->snd_qid, &msg.scdata);
+                thdata->pfun(thdata->snd_qid, &msg.scdata, &gdata);
             }
             else
             {

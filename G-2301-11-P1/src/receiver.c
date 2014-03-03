@@ -146,7 +146,7 @@ int send_to_main(int queue, int fd, char *message, int msglen)
     struct msg_sockcommdata data_to_send;
 
     data_to_send.msgtype = 1;
-    strcpy(data_to_send.scdata.data, message);
+    strncpy(data_to_send.scdata.data, message, MAX_IRC_MSG);
     data_to_send.scdata.fd = fd;
     data_to_send.scdata.len = msglen;
 

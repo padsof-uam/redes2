@@ -13,6 +13,7 @@
 #include "messager.h"
 #include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
 
 static int _server_close_socket(int handler)
 {
@@ -56,7 +57,6 @@ static int _link_socket_port(int port, int handler)
 
 static int _set_queue_socket(int handler, int long_max)
 {
-
     if (listen(handler, long_max) == -1)
     {
         syslog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
@@ -68,7 +68,6 @@ static int _set_queue_socket(int handler, int long_max)
 
 int server_open_socket(int port, int max_long)
 {
-
     int handler = _server_open_socket();
     if (handler == -ERR_SOCK)
     {
@@ -76,7 +75,8 @@ int server_open_socket(int port, int max_long)
         return -ERR_SOCK;
     }
 
-    _link_socket_port(port, handler);
+    if(_link_socket_port(port, handler) != OK)
+        return -ERR_SOCK;
 
     if ( _set_queue_socket(handler, max_long) != OK)
         return -ERR_SOCK;
@@ -101,11 +101,6 @@ int server_listen_connect(int handler)
         syslog(LOG_ERR, "Error aceptando conexiones, %d", errno);
         return -ERR_SOCK;
     }
-
-    /*
-    - Qué hacemos con handler_accepted¿? Es el socket de la nueva conexión. El enunciado dice devolver código de error
-    - ¿Cómo gestionar más d euna conexión?
-    */
 
     return handler_accepted;
 
@@ -158,7 +153,8 @@ void *thread_listener(void *data)
 
     if (listen_sock < 0)
     {
-        syslog(LOG_CRIT, "No se puede abrir un socket de escucha en %d con long. cola %d: %s", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        syslog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha en %d con long. cola %d: %s.", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        kill(getpid(), SIGTERM); /* Salimos */
         pthread_exit(NULL);
     }
     else

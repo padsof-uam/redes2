@@ -74,16 +74,17 @@ int daemonize(const char *log_id)
         return -ERR;
     }
 
-
+#ifndef NODAEMON
     pid = unlink_proc();
     if (pid > 0) 
     {
-        printf("Daemon creado en %d\n", pid);
+        printf("Daemon creado: PID %d\n", pid);
         exit(EXIT_SUCCESS);
     }
 
     if (pid < 0) 
         exit(EXIT_FAILURE);
+#endif
 
     syslog(LOG_INFO, "Hijo creado como lider de la sesión");
 

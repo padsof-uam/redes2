@@ -11,7 +11,6 @@ int spawn_sender_thread (pthread_t *sender_thread, int queue)
 {
     struct sender_thdata* thdata = malloc(sizeof(struct sender_thdata));
 
-
     thdata->queue = queue;
 
     if (pthread_create(sender_thread, NULL, thread_send, thdata))
@@ -26,12 +25,22 @@ int spawn_sender_thread (pthread_t *sender_thread, int queue)
     return OK;
 }
 
+static void send_cleanup(void * data)
+{
+    syslog(LOG_DEBUG, "sender: limpiando");
+
+    free(data);
+}
+
 void *thread_send(void *st)
 {
     int retval, errnum = 0;
     struct sender_thdata *recv_data = (struct sender_thdata *) st;
-    struct sockcomm_data tosend;
-    char *message = (char *) calloc(MAX_IRC_MSG, sizeof(char));
+    struct msg_sockcommdata tosend;
+    char message[MAX_IRC_MSG];
+    int size;
+
+    pthread_cleanup_push(send_cleanup, recv_data);
 
     syslog(LOG_NOTICE, "Hilo de envío iniciado.");
 
@@ -47,19 +56,20 @@ void *thread_send(void *st)
                 break; /* Demasiados errores, salimos */
         }
         else
-        {
-            strncpy(message, tosend.data, tosend.len);
-		    if(send_message(tosend.fd, message, tosend.len) < 0)
+        {   
+            size = tosend.scdata.len > MAX_IRC_MSG ? MAX_IRC_MSG : tosend.scdata.len;
+            strncpy(message, tosend.scdata.data, size);
+		    if(send_message(tosend.scdata.fd, message, size) < 0)
 		    {
 		    	/* Política para reintentar? */
 		    	syslog(LOG_WARNING, "Error enviando mensaje: %s", strerror(errno));
 		    }
         }
     }
-    free(message);
-    free(recv_data);
 
     syslog(LOG_NOTICE, "Hilo de envío saliendo.");
+
+    pthread_cleanup_pop(0);
 
     return NULL;
 }

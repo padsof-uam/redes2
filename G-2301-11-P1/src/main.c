@@ -186,6 +186,7 @@ int main(int argc, char const *argv[])
 		irc_exit(EXIT_FAILURE);
 	}
 
+	/* sleep(50); */
 	if(spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
 	{
 		syslog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));

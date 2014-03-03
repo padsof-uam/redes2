@@ -33,6 +33,8 @@ int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun
 
 static void _proc_thread_cleanup(void *thdata)
 {
+    syslog(LOG_DEBUG, "proc: limpiando.");
+
     free(thdata);
 }
 
@@ -40,18 +42,20 @@ void *proc_thread_entrypoint(void *data)
 {
     struct proc_thdata *thdata = (struct proc_thdata *) data;
     struct msg_sockcommdata msg;
-    struct irc_globdata gdata;
+    struct irc_globdata* gdata; 
+
+    gdata = irc_init();
 
     pthread_cleanup_push(_proc_thread_cleanup, thdata);
-    pthread_cleanup_push((void (*)(void *))irc_destroy, &gdata);
+    pthread_cleanup_push((void (*)(void *))irc_destroy, gdata);
 
-    if (irc_init(&gdata) == OK)
+    if (gdata)
     {
         while (1)
         {
             if (msgrcv(thdata->rcv_qid, &msg, sizeof(struct msg_sockcommdata), 0, 0) != -1)
             {
-                thdata->pfun(thdata->snd_qid, &msg.scdata, &gdata);
+                thdata->pfun(thdata->snd_qid, &msg.scdata, gdata);
             }
             else
             {

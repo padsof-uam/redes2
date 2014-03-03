@@ -45,9 +45,16 @@ final: all docs pack
 
 ### Compilation
 
+debug: CFLAGS += -DDEBUG 
 debug: $(TARGET)
+
+no-daemon: CFLAGS += -DDEBUG
+no-daemon: CFLAGS += -DNODAEMON
+no-daemon: $(TARGET)
+
 scan: clean
 	@scan-build make
+	
 $(OBJS): | $(OBJDIR)
 
 ## Dependencies

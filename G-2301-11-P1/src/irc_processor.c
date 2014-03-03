@@ -9,6 +9,7 @@
 
 const char* _irc_cmds[] = {
 	"PRIVMSG",
+	"PING",
 	"NICK",
 	"USER",
 	"QUIT",
@@ -25,7 +26,8 @@ const char* _irc_cmds[] = {
 };
 
 cmd_action _irc_actions[] = {
-	irc_privmsg
+	irc_privmsg,
+	irc_ping
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -138,6 +140,20 @@ int irc_privmsg(void *data)
 		if(msg_tosend)
 			list_add(ircdata->msg_tosend, msg_tosend);
 	}
+
+	return OK;
+}
+
+int irc_ping(void *data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct sockcomm_data* msg_tosend = malloc(sizeof(struct sockcomm_data));
+
+	strcpy(msg_tosend->data, "PONG\r\n");
+	msg_tosend->len = strlen(msg_tosend->data);
+	msg_tosend->fd = ircdata->msgdata->fd;
+
+	list_add(ircdata->msg_tosend, msg_tosend);
 
 	return OK;
 }

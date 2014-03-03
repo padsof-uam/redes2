@@ -4,17 +4,22 @@
 
 #include <string.h>
 
-int irc_init(struct irc_globdata* gdata)
+struct irc_globdata* irc_init()
 {
+	struct irc_globdata* gdata = malloc(sizeof(struct irc_globdata));
+
+	if(!gdata)
+		return NULL;
+
 	gdata->chan_map = dic_new_withstr();
 	gdata->fd_user_map = dic_new_withint();
 	gdata->nick_user_map = dic_new_withstr();
 	gdata->chan_list = list_new();
 
 	if(!(gdata->chan_list && gdata->fd_user_map && gdata->nick_user_map && gdata->chan_list))
-		return ERR_MEM; /* Fallo en la reserva */
-	else
-		return OK;
+		irc_destroy(gdata);
+
+	return gdata;
 }
 
 struct ircuser* irc_user_bynick(struct irc_globdata* gdata, const char* nick)
@@ -31,6 +36,9 @@ static void _chan_destructor(void* ptr)
 
 void irc_destroy(struct irc_globdata* data)
 {
+	if(!data)
+		return;
+
 	if(data->chan_list)
 		list_destroy(data->chan_list, NULL); /* Liberamos la estructura de lista, no la memoria de cada canal */
 

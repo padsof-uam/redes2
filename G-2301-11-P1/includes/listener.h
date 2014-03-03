@@ -16,10 +16,7 @@ typedef void* (*connection_handler)(void*);
 struct listener_thdata {
 	int port;
 	int commsocket;
-};
-
-struct newconn_data {
-	int commsocket;
+	int listen_sock;
 };
 
 /**

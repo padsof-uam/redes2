@@ -5,6 +5,7 @@
 #include "commparser.h"
 
 int irc_privmsg(void* data);
+int irc_ping(void* data);
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata* gdata);
 

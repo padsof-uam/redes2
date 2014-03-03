@@ -8,6 +8,14 @@
 #include "receiver.h"
 #include "types.h"
 #include "messager.h"
+#include "listener.h"
+
+static void receive_cleanup(void* data)
+{
+    syslog(LOG_DEBUG, "receiver: limpiando.");
+
+    free(data);
+}
 
 void *thread_receive(void *st)
 {
@@ -16,20 +24,21 @@ void *thread_receive(void *st)
     int ready_fds, i, fds_len;
     int errnum = 0;
     int sk_new_connection;
-
-    /** De qué tipo tiene que ser????*/
-
-    char *msg_recv = (char *) calloc(150, sizeof(char));
+    char *buffer;
     char *message;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
-
 
     pfds = pollfds_init(POLLERR | POLLIN);
     pollfds_add(pfds, recv_data->socket);
 
+    pthread_cleanup_push((void(*)(void*))pollfds_destroy, pfds);
+    pthread_cleanup_push(receive_cleanup, recv_data);
+
+    syslog(LOG_DEBUG, "Hilo de recepción iniciado.");
+
     while (1)
     {
-        ready_fds = pollfds_poll(pfds, 10); /* Esperamos 10 milisegundos antes de volver. */
+        ready_fds = pollfds_poll(pfds, 0); 
 
         if (ready_fds == -1)
         {
@@ -56,9 +65,16 @@ void *thread_receive(void *st)
             }
             else if (pfds->fds[0].revents & POLLIN)
             {
-                recv(pfds->fds[0].fd, &msg_recv, sizeof(msg_recv), 0);
-                sk_new_connection = atoi(msg_recv);
-                add_new_connection(pfds, sk_new_connection);
+                if (rcv_message(pfds->fds[0].fd, (void **)&buffer) < 0)
+                {
+                    syslog(LOG_ERR, "Error recibiendo mensaje a través de commsock: %s", strerror(errno));
+                }
+                else
+                {
+                    sk_new_connection = (int)(*buffer);
+                    add_new_connection(pfds, sk_new_connection);
+                    free(buffer);
+                }
                 ready_fds--;
             }
         }
@@ -67,6 +83,7 @@ void *thread_receive(void *st)
         {
             if (pfds->fds[i].revents & POLLERR) /* algo malo ha pasado. Cerramos */
             {
+                syslog(LOG_NOTICE, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                 i--; /* Reexploramos este elemento */
             }
@@ -76,27 +93,32 @@ void *thread_receive(void *st)
                 msglen = rcv_message(pfds->fds[i].fd, (void **)&message);
 
                 if (msglen > 0)
-                    send_to_main(recv_data->queue, pfds->fds[0].fd, message, msglen);
+                    send_to_main(recv_data->queue, pfds->fds[i].fd, message, msglen);
                 else
-                	syslog(LOG_WARNING, "error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
+                    syslog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
+                
+                if(message)
+                    free(message);
             }
         }
     }
 
-    free(pfds);
-    free(msg_recv);
-    free(message);
+    syslog(LOG_DEBUG, "Hilo de recepción saliendo.");
+
+    pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);
 
     return NULL;
 }
 
 int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue)
 {
-    struct receiver_thdata thdata;
-    thdata.queue = queue;
-    thdata.socket = commsock;
+    struct receiver_thdata* thdata = malloc(sizeof(struct receiver_thdata));
 
-    if (pthread_create(recv_thread, NULL, thread_receive, &thdata))
+    thdata->queue = queue;
+    thdata->socket = commsock;
+
+    if (pthread_create(recv_thread, NULL, thread_receive, thdata))
     {
         syslog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));
         return -ERR;
@@ -123,17 +145,17 @@ int send_to_main(int queue, int fd, char *message, int msglen)
 {
     struct msg_sockcommdata data_to_send;
 
+    data_to_send.msgtype = 1;
     strcpy(data_to_send.scdata.data, message);
     data_to_send.scdata.fd = fd;
     data_to_send.scdata.len = msglen;
 
-    /*msgsnd utiliza una estructura msgbuf o es un ejemplo de estructura a usar?*/
-    if (!msgsnd(queue, &data_to_send, sizeof(data_to_send), 0))
+    if (msgsnd(queue, &data_to_send, sizeof(data_to_send), 0) == -1)
     {
         if (errno == EIDRM)
             syslog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");
         else
-            syslog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal.");
+            syslog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal: %s", strerror(errno));
     }
 
     return OK;

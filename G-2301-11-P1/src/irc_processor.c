@@ -43,11 +43,13 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
 
     msg = data->data;
 
+    data->data[data->len] = '\0';
+
     while((msg_end = irc_msgsep(msg, MAX_IRC_MSG)) != NULL)
     {
     	ircdata.msg = msg;
 
-    	if (parse_exec_command(msg, _irc_cmds, _irc_actions, sizeof(_irc_actions), &ircdata) == -1)
+    	if (parse_exec_command(msg, _irc_cmds, _irc_actions, (sizeof(_irc_actions) / sizeof(cmd_action)), &ircdata) == -1)
         	syslog(LOG_WARNING, "Error parsing command %s", data->data);
 
         msg = msg_end;

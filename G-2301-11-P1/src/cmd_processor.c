@@ -24,9 +24,11 @@ int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun
 
     if (pthread_create(pth, NULL, proc_thread_entrypoint, thdata) < 0 )
     {
-        syslog(LOG_CRIT, "Could not start proc_thread: %s", strerror(errno));
+        syslog(LOG_CRIT, "No se ha podido iniciar proc_thread: %s", strerror(errno));
         return ERR;
     }
+
+    syslog(LOG_DEBUG, "Hilo de procesado iniciado.");
 
     return OK;
 }
@@ -48,6 +50,8 @@ void *proc_thread_entrypoint(void *data)
 
     pthread_cleanup_push(_proc_thread_cleanup, thdata);
     pthread_cleanup_push((void (*)(void *))irc_destroy, gdata);
+
+    syslog(LOG_DEBUG, "Hilo de procesado iniciado.");
 
     if (gdata)
     {

@@ -3,12 +3,6 @@
 
 	También faltan algunas funciones para acceder a los campos de IRC, como las listas de usuarios y diccionarios. El lunes te lo explico mejor, pero la idea es tener varias estructuras apuntando a los mismos datos en memoria para acceder más rápidamente. Por ejemplo, si queremos recorrer todos los canales usamos la lista. Si lo que queremos es buscar uno concreto, hay que usar un diccionario. Para que todo sea transparente, hay que crear funciones para esas tareas concretas, como por ejemplo irc_user_bynick en irc_core.c.
 
-Dudas de deJuan
-
-recv qué tipo de mensaje se espera? un char* vale?
-
-el void * de mensajes de la cola puede ser lo que quiera? el man parece que dice que sea msgbuf...
-
 === Cambios Guille sobre cosas De Juan
 
 == receiver.c: commit 7ae47b8
@@ -30,3 +24,12 @@ Hay que crear mensajes KILL desde el hilo de recepción de datos para controlar 
 Usar colas POSIX (mqueue) si las cosas no van rápido.
 
 
+;;;;
+
+strnstr 
+
+==== Pondría el commit, pero me entero más poniendo una fecha xD 4/03-10:00
+
+Estoy definiendo funciones implícitas que habrá que hacer, pero voy a ver cuántas necesito en cada función para ver si se pueden hacer genéricas.
+
+Pues solo he hecho nick parece xD

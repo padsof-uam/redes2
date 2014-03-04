@@ -20,5 +20,10 @@ char* irc_msgsep(char* str, int len);
 
 void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 
+
+/**
+Faltan:
+*/
+static void _irc_answer_err(struct irc_msgdata * gdata, int errcode);
 #endif
 

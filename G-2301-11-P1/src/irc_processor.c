@@ -209,7 +209,7 @@ int irc_nick(void *data)
 	else
 	{
 		/* ¿Esta posibilidad acaso existe? */
-		_irc_answer_err(ircdata, ERR);
+		_irc_answer_err(ircdata, ERR_UNKNOWNCOMMAND);
 	}
 
 	/*Toquetear los diccionarios acorde a esto*/
@@ -221,7 +221,7 @@ int irc_nick(void *data)
 		{ 
 			/* Caso de asignar nick a un usuario. */
 			/* Implicit function. ¿Está ya creado el usuario? ¿WTF? Mirar User */
-			irc_add_user(ircdata->globdata, new_nick);
+			irc_add_user_bynick(ircdata->globdata, new_nick);
 		}
 		else
 		{ 
@@ -231,7 +231,24 @@ int irc_nick(void *data)
 			{
 				_irc_answer_err(ircdata,ERR_ERRONEUSNICKNAME);
 			}
-			strcpy(old_user->nick, new_nick);
+
+			new_user = malloc(sizeof(struct ircuser));
+
+			if (!new_user)
+			{
+				return ERR_MEM;
+			}
+
+			new_user->fd = old_user->fd;
+			strcpy(new_user->nick, new_nick);
+			strcpy(new_user->name, old_user->name);
+			new_user->is_away = old_user->is_away;
+
+			/* Eliminamos el anterior e insertamos el nuevo. */
+			irc_rm_user(ircdata->globdata, old_nick);
+			irc_add_user(ircdata->globdata, new_user);
+
+			/* ¿free(new_user);?*/
 		}
 	}
 	else{

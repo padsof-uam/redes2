@@ -15,8 +15,10 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata
  */
 char* irc_msgsep(char* str, int len);
 char* irc_remove_prefix(char* msg);
+int irc_parse_paramlist(char* msg, char** params, size_t max_params);
 void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 struct sockcomm_data* irc_build_errmsg(int errcode);
 int irc_create_welcome_messages(struct ircuser* user, list* msgqueue);
+int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* message);
 #endif
 

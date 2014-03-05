@@ -149,8 +149,29 @@ int irc_user(void *data)
 	return OK;
 }
 
+int irc_quit(void* data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct ircuser* user;
+	char* bye_msg;
+	char* params[1];
+
+	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
+	if(!user)
+		return ERR_NOTFOUND;
+
+	if(irc_parse_paramlist(ircdata->msg, params, 1) == 0)
+		bye_msg = user->nick; /* Mensaje de salida por defecto */
+	else
+		bye_msg = params[0];
+
+	irc_create_quit_messages(user, ircdata->msg_tosend, bye_msg);
+
+	return OK;
+}
+
 /** Pendientes **/
-int irc_quit(void* data);
 int irc_join(void* data);
 int irc_part(void* data);
 int irc_topic(void* data);

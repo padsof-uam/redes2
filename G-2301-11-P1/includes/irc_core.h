@@ -5,6 +5,7 @@
 
 struct irc_globdata* irc_init();
 struct ircuser* irc_user_bynick(struct irc_globdata* gdata, const char* nick);
+struct ircuser* irc_user_byid(struct irc_globdata* gdata, int id);
 int irc_set_usernick(struct irc_globdata* data, int id, const char* nick);
 int irc_create_user(struct irc_globdata* data, int id);
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);

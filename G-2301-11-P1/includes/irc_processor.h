@@ -16,11 +16,6 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata
 char* irc_msgsep(char* str, int len);
 char* irc_remove_prefix(char* msg);
 void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
-
-
-/**
-Faltan:
-*/
-void _irc_answer_err(struct irc_msgdata * gdata, int errcode);
+struct sockcomm_data* irc_build_errmsg(int errcode);
 #endif
 

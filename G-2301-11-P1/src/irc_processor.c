@@ -29,7 +29,20 @@ const char* _irc_cmds[] = {
 
 cmd_action _irc_actions[] = {
 	irc_privmsg,
-	irc_ping
+	irc_ping,
+	irc_nick,
+	irc_user,
+	irc_quit,
+	irc_join,
+	irc_part,
+	irc_topic,
+	irc_names,
+	irc_list,
+	irc_kick,
+	irc_time,
+	irc_notice,
+	irc_pong,
+	irc_users
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)

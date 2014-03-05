@@ -1,12 +1,35 @@
 #include "test_irc_funs.h"
 #include "testmacros.h"
+#include "irc_funs.h"
+#include "irc_core.h"
+#include "irc_processor.h"
+#include "types.h"
+
+#include <string.h>
 #include <stdio.h>
 
+static list* _process_message(cmd_action action, struct irc_globdata* gdata, int fd, char* message)
+{
+	struct irc_msgdata data;
 
+	data.globdata = gdata;
+	data.msg_tosend = list_new();
+	data.msg = message;
+	data.msgdata = malloc(sizeof(struct sockcomm_data));
+	data.msgdata->fd = fd;
+	strcpy(data.msgdata->data, message);
+	data.msgdata->len = strlen(message);
+
+	action(&data);
+
+	free(data.msgdata);
+	return data.msg_tosend;
+}
 
 /* BEGIN TESTS */
 int t_irc_quit__message_provided__message_transmitted() {
-
+	struct irc_globdata* irc = irc_init();
+	
 	mu_end;
 }
 int t_irc_quit__no_message_provided__msg_is_nick() {

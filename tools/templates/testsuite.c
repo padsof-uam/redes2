@@ -1,5 +1,6 @@
 #include "_testsuite_.h"
 #include "testmacros.h"
+#include "termcolor.h"
 #include <stdio.h>
 
 

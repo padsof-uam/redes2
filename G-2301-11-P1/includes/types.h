@@ -54,7 +54,7 @@ struct irc_msgdata {
 
 struct sockcomm_data {
 	int fd;
-	char data[MAX_IRC_MSG];
+	char data[MAX_IRC_MSG + 1];
 	ssize_t len;
 };
 

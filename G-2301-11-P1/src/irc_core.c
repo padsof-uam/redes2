@@ -123,16 +123,14 @@ int irc_cuser_inchannel(struct ircchan * channel, struct ircuser * user){
 }
 
 
-int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , char * ret_topic, list * ret_users){
+int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel){
 
-	struct ircchan * channel = irc_channel_byname(data, channel_name);
+	channel = irc_channel_byname(data, channel_name);
 	
 	if (!channel)
 	{
 		channel = irc_channel_create(channel_name,1);
 	}
-	ret_topic = NULL;
-	ret_users = NULL;
 
 	if (!irc_user_inchannel(channel,user)==OK && strcmp(key,channel->key))
 	{
@@ -164,9 +162,6 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		{
 			return ERR;
 		}
-
-		ret_topic = strdup(channel->topic);
-		ret_users = channel->users;
 
 		return OK;
 	}

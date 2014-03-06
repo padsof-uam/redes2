@@ -126,6 +126,7 @@ int irc_user(void *data)
 int irc_join(void * data)
 {
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct ircchan * channel;
 	char topic[MAX_TOPIC_LEN],bye_msg[MAX_IRC_MSG+1];
 	char * params[2];
 	char * chan_name, *aux_name,*key,*aux_key;
@@ -170,7 +171,7 @@ int irc_join(void * data)
 			aux_key++;
 		}
 
-		retval = irc_channel_adduser(ircdata->globdata, chan_name , user , key, topic ,users);
+		retval = irc_channel_adduser(ircdata->globdata, chan_name , user , key,channel);
 
 		/*	Respuesta al cliente:	*/
 

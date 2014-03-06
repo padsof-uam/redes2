@@ -13,6 +13,7 @@
 #include "messager.h"
 #include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
 
 static int _server_close_socket(int handler)
 {
@@ -47,7 +48,7 @@ static int _link_socket_port(int port, int handler)
 
     if (bind(handler, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in) ) == -1)
     {
-        syslog(LOG_ERR, "Error asociando puerto con socket.");
+        syslog(LOG_ERR, "Error asociando puerto con socket: %s", strerror(errno));
         return -ERR_SOCK;
     }
 
@@ -56,7 +57,6 @@ static int _link_socket_port(int port, int handler)
 
 static int _set_queue_socket(int handler, int long_max)
 {
-
     if (listen(handler, long_max) == -1)
     {
         syslog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
@@ -68,7 +68,6 @@ static int _set_queue_socket(int handler, int long_max)
 
 int server_open_socket(int port, int max_long)
 {
-
     int handler = _server_open_socket();
     if (handler == -ERR_SOCK)
     {
@@ -76,7 +75,8 @@ int server_open_socket(int port, int max_long)
         return -ERR_SOCK;
     }
 
-    _link_socket_port(port, handler);
+    if(_link_socket_port(port, handler) != OK)
+        return -ERR_SOCK;
 
     if ( _set_queue_socket(handler, max_long) != OK)
         return -ERR_SOCK;
@@ -102,11 +102,6 @@ int server_listen_connect(int handler)
         return -ERR_SOCK;
     }
 
-    /*
-    - Qué hacemos con handler_accepted¿? Es el socket de la nueva conexión. El enunciado dice devolver código de error
-    - ¿Cómo gestionar más d euna conexión?
-    */
-
     return handler_accepted;
 
 }
@@ -118,11 +113,11 @@ int server_close_communication(int handler)
 
 int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
 {
-    struct listener_thdata thdata;
-    thdata.commsocket = commsocket;
-    thdata.port = port;
+    struct listener_thdata* thdata = malloc(sizeof(struct listener_thdata));
+    thdata->commsocket = commsocket;
+    thdata->port = port;
 
-    if (pthread_create(pth, NULL, thread_listener, &thdata))
+    if (pthread_create(pth, NULL, thread_listener, thdata))
     {
         syslog(LOG_CRIT, "Error creando thread de escucha: %s", strerror(errno));
         return -ERR;
@@ -134,6 +129,16 @@ int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
     }
 }
 
+void listener_cleanup(void* data)
+{
+    struct listener_thdata *thdata = (struct listener_thdata *) data;
+    
+    syslog(LOG_NOTICE, "listener: limpiando.");
+    server_close_communication(thdata->listen_sock);
+
+    free(thdata);
+}
+
 void *thread_listener(void *data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
@@ -141,16 +146,20 @@ void *thread_listener(void *data)
     struct pollfd fds[2];
     char *commbuf;
 
+    syslog(LOG_NOTICE, "Hilo de escucha creado.");
     listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE);
+    thdata->listen_sock = listen_sock;
+    pthread_cleanup_push(listener_cleanup, thdata);
 
     if (listen_sock < 0)
     {
-        syslog(LOG_CRIT, "No se puede abrir un socket de escucha en %d con long. cola %d: %s", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        syslog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha en %d con long. cola %d: %s.", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        kill(getpid(), SIGTERM); /* Salimos */
         pthread_exit(NULL);
     }
     else
     {
-        syslog(LOG_INFO, "Puerto de escucha abierto en %d", thdata->port);
+        syslog(LOG_NOTICE, "Puerto de escucha abierto en %d", thdata->port);
     }
 
     fds[0].events = POLLIN;
@@ -183,20 +192,24 @@ void *thread_listener(void *data)
                     else
                         syslog(LOG_NOTICE, "Mensaje no reconocido en commsocket: %d", commbuf[0]);
                 }
+
+                free(commbuf);
             }
         }
     }
 
-    server_close_communication(listen_sock);
     syslog(LOG_INFO, "Hilo listener saliendo.");
+
+    pthread_cleanup_pop(0);
+
     pthread_exit(0);
 }
 
 int create_new_connection_thread(int listen_sock, int commsocket)
 {
     int connsock;
-    struct newconn_data conndata;
 
+    syslog(LOG_NOTICE, "Nueva conexión recibida.");
     connsock = server_listen_connect(listen_sock);
 
     if (connsock < 0)
@@ -205,13 +218,13 @@ int create_new_connection_thread(int listen_sock, int commsocket)
         return -ERR;
     }
 
-    if (send_message(commsocket, &conndata, sizeof(struct newconn_data)) < 0)
+    if (send_message(commsocket, &connsock, sizeof(int)) < 0)
     {
         syslog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
         server_close_communication(connsock);
         return -ERR;
     }
 
-    syslog(LOG_INFO, "Nueva conexión creada con éxito.");
+    syslog(LOG_NOTICE, "Nueva conexión creada con éxito.");
     return OK;
 }

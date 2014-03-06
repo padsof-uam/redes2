@@ -104,7 +104,7 @@ int irc_user(void *data)
 {
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;	
 	char * params[1];
-	int retval;
+	struct ircuser * user;
 
 	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
 	{
@@ -112,7 +112,7 @@ int irc_user(void *data)
 		return ERR;
 	}
 
-	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 	if (strlen(params[0])>= MAX_NAME_LEN)
 	{
 		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
@@ -131,7 +131,6 @@ int irc_join(void * data)
 	char * params[2];
 	char * chan_name, *aux_name,*key,*aux_key;
 	struct ircuser * user;
-	list * users = list_new();
 	int retval = OK;
 
 	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)

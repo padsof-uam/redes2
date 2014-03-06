@@ -28,6 +28,11 @@ struct ircuser* irc_user_bynick(struct irc_globdata* gdata, const char* nick)
 	return (struct ircuser*) dic_lookup(gdata->nick_user_map, nick);
 }
 
+struct ircuser* irc_user_byid(struct irc_globdata* gdata, const int id)
+{
+	return (struct ircuser*) dic_lookup(gdata->fd_user_map, &id);
+}
+
 static void _chan_destructor(void* ptr)
 {
 	struct ircchan* chan = (struct ircchan*) ptr;
@@ -89,7 +94,8 @@ struct ircuser* irc_register_user(struct irc_globdata* data, int id)
 		return NULL; /* ID ya en la base de datos */
 
 	user = malloc(sizeof(struct ircuser));
-	bzero(user, sizeof(struct ircuser)); /* Ponemos todos los datos a 0 */
+
+	bzero(user, sizeof(struct ircuser)); /* Ponemos todos los datos a */
 	
 	user->fd = id;
 	user->channels = list_new();
@@ -117,7 +123,7 @@ void irc_delete_user(struct irc_globdata* data, struct ircuser* user)
 	free(user);
 }
 
-int irc_cuser_inchannel(struct ircchan * channel, struct ircuser * user){
+short irc_user_inchannel(struct ircchan * channel, struct ircuser * user){
 	/*	De momento, nunca estamos en ningún canal.	*/
 	return ERR_NOTFOUND;
 }

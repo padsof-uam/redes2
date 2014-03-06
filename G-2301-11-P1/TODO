@@ -39,6 +39,10 @@ rellenar irc_build_msg con las cadenas a partir de los errores. ¿Incluimos el s
 
 Falta:
 - Completar irc_user_inchannel. ¿Pertenencia a una lista?
+- Hacer irc_channbyname
+- irc_channel_create
+- paramlist
+- irc_user_byid
 
 
 Dudas:

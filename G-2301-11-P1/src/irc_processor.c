@@ -4,6 +4,7 @@
 #include "irc_codes.h"
 #include "irc_funs.h"
 
+#include <string.h>
 #include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
@@ -154,7 +155,7 @@ struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
 
 char * _irc_errmsg(int errcode){
 
-	char * err_msg;
+	char * err_msg = strdup("ASDF");
 	switch(errcode){
 			case ERR_NOSUCHNICK:
 

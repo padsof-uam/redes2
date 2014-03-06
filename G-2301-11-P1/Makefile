@@ -1,5 +1,5 @@
 GCC = gcc
-CFLAGS = -ggdb -Wall -pedantic -ansi
+CFLAGS = -ggdb -Wall -pedantic -ansi -D_SVID_SOURCE
 E_LIBS = -pthread
 TARGET = main
 LIB = 

@@ -12,5 +12,5 @@ struct ircuser* irc_register_user(struct irc_globdata* data, int id);
 void irc_destroy(struct irc_globdata* data);
 int irc_channel_part(struct irc_globdata* data, struct irchannel* channel, struct ircuser* user);
 void irc_delete_user(struct irc_globdata* data, struct ircuser* user);
-
+struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name);
 #endif

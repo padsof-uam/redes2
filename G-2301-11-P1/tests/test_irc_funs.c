@@ -29,7 +29,21 @@ static list* _process_message(cmd_action action, struct irc_globdata* gdata, int
 /* BEGIN TESTS */
 int t_irc_quit__message_provided__message_transmitted() {
 	struct irc_globdata* irc = irc_init();
-	
+	struct ircchan* chan = irc_register_channel(irc, "testchan");
+	list* output;
+	struct sockcomm_data* msg;
+
+	list_add(chan->users, irc_register_user(irc, 1));
+	list_add(chan->users, irc_register_user(irc, 2));
+
+	irc_set_usernick(irc, 1, "pepe");
+
+	output = _process_message(irc_quit, irc, 1, "Bye");
+
+	mu_assert_eq(list_count(output), 1, "Incorrect number of generated messages.");
+	msg = list_at(output, 0);
+
+	mu_assert_streq(msg->data, ":pepe QUIT :Bye", message)
 	mu_end;
 }
 int t_irc_quit__no_message_provided__msg_is_nick() {

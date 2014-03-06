@@ -1,0 +1,208 @@
+#include "irc_funs.h"
+#include "irc_core.h"
+#include "irc_codes.h"
+#include "types.h"
+#include "irc_processor.h"
+
+#include <sys/syslog.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+
+static struct sockcomm_data* _irc_build_msg_for(const char* receiver, const char* text, struct irc_msgdata* irc)
+{
+	struct sockcomm_data* scdata = malloc(sizeof(struct sockcomm_data));
+	struct ircuser* dest = irc_user_bynick(irc->globdata, receiver);
+
+	if(dest && !dest->is_away)
+	{
+		scdata->fd = dest->fd;
+		scdata->len = sprintf(scdata->data, "PRIVMSG %s: %s", receiver, text);
+	}
+	else
+	{
+		/* TODO: Pues eso */
+		syslog(LOG_WARNING, "Deberíamos plantearnos controlar este caso.");
+	}
+
+	return scdata;
+}
+
+int irc_privmsg(void *data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct sockcomm_data* msg_tosend;
+	char separators[] = ",";
+	char* param_str = strchr(ircdata->msgdata->data, ' ');
+	char *param_str_end, *receiver, *msgstart;
+
+	if(param_str == NULL)
+		return ERR_PARSE;
+
+	param_str++; /* Apuntamos a la posición de inicio de los parámetros */
+	param_str_end = strchr(param_str, ' ');
+	*param_str_end = '\0'; /* Marcamos fin de la lista de parámetros */
+	param_str_end++;
+	msgstart = strchr(param_str_end, ':');
+
+	if(msgstart == NULL)
+		return ERR_PARSE;
+
+	msgstart++; /* Marcamos inicio del texto del mensaje */
+
+	while((receiver = strsep(&param_str, separators)) != NULL)
+	{
+		msg_tosend = _irc_build_msg_for(receiver, msgstart, ircdata);
+
+		if(msg_tosend)
+			list_add(ircdata->msg_tosend, msg_tosend);
+	}
+
+	return OK;
+}
+
+int irc_ping(void *data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct sockcomm_data* msg_tosend = malloc(sizeof(struct sockcomm_data));
+
+	strcpy(msg_tosend->data, "PONG\r\n");
+	msg_tosend->len = strlen(msg_tosend->data);
+	msg_tosend->fd = ircdata->msgdata->fd;
+
+	list_add(ircdata->msg_tosend, msg_tosend);
+
+	return OK;
+}
+
+int irc_nick(void *data)
+{
+	int retval;
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	char * new_nick[1];
+
+	if (!irc_parse_paramlist(ircdata->msg,new_nick, 1)){
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND));
+		return ERR;
+	}
+
+	retval = irc_set_usernick(ircdata->globdata, ircdata->msgdata->fd, new_nick[0]);
+	
+	if (retval != OK)
+	{
+		if(retval == ERR_NOTFOUND)
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
+		else if(retval == ERR_REPEAT)
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION));
+		else
+			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
+	}	
+	
+	return OK;
+}
+
+int irc_user(void *data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;	
+	char * params[1];
+	int retval;
+
+	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS));
+		return ERR;
+	}
+
+	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if (strlen(params[0])>= MAX_NAME_LEN)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
+		return ERR;
+	}
+
+	strcpy(user->name,params[0]);
+	return OK;
+}
+
+int irc_join(void * data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	char* bye_msg;
+	char * params[2];
+	char * chan_name ,*key;
+	struct ircuser * user;
+	struct ircchan * channel;
+	int retval = OK;
+
+	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)
+	{
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS));
+		return ERR;
+	}
+
+	/* Llamamos a irc_channel_part que añade al canal si no forma parte, y si forma
+	parte, le añade si puede y sino devuelve código de error pertinente. */
+
+	/*	Falta: rellenar params pertinentemente */
+
+	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if(!user)
+		return ERR_NOTFOUND;
+
+	while(!chan_name){
+
+		chan_name = strchr(params[0], ',');
+
+		if (!chan_name)
+			chan_name = params[0];
+
+		chan_name++; /* Los canales siempre empiezan con un # o un & */
+
+		if (params[1] != NULL)
+			key = strchr(params[1], ',');
+
+		if (!key)
+			key = params[1];
+
+		channel = irc_channel_byname(ircdata->globdata,chan_name);
+		/* Si no tiene clave no hace nada. */
+		retval = irc_channel_adduser(ircdata->globdata, channel , user , key);
+		if (retval != OK)
+			list_add(ircdata->msg_tosend, irc_build_errmsg(retval));
+	}
+
+	return retval;
+}
+
+int irc_quit(void* data)
+{
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct ircuser* user;
+	char* bye_msg;
+	char* params[1];
+
+	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
+	if(!user)
+		return ERR_NOTFOUND;
+
+	if(irc_parse_paramlist(ircdata->msg, params, 1) == 0)
+		bye_msg = user->nick; /* Mensaje de salida por defecto */
+	else
+		bye_msg = params[0];
+
+	irc_create_quit_messages(user, ircdata->msg_tosend, bye_msg);
+
+	return OK;
+}
+
+/** Pendientes **/
+int irc_part(void* data);
+int irc_topic(void* data);
+int irc_names(void* data);
+int irc_list(void* data);
+int irc_kick(void* data);
+int irc_time(void* data);
+int irc_notice(void* data);
+int irc_pong(void* data);
+int irc_users(void* data);

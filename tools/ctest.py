@@ -34,7 +34,7 @@ def addtesttosuite(suite_file, testname):
 
 	for line in suite_contents:	
 		if in_test_region:
-			suite.write("int t_{0}() {{\n\n\tmu_end;\n}}\n".format(testname))
+			suite.write("int t_{0}() {{\n\n\tmu_fail(\"Not implemented\");\n\tmu_end;\n}}\n".format(testname))
 			in_test_region = False
 		elif in_test_exec_region:
 			suite.write("\tmu_run_test(t_{0});\n".format(testname))

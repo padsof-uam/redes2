@@ -1,7 +1,6 @@
 #include "irc_funs.h"
 #include "irc_core.h"
 #include "irc_codes.h"
-#include "types.h"
 #include "irc_processor.h"
 
 #include <sys/syslog.h>
@@ -82,7 +81,7 @@ int irc_nick(void *data)
 	char * new_nick[1];
 
 	if (!irc_parse_paramlist(ircdata->msg,new_nick, 1)){
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata->msgdata->fd,NULL));
 		return ERR;
 	}
 
@@ -91,9 +90,9 @@ int irc_nick(void *data)
 	if (retval != OK)
 	{
 		if(retval == ERR_NOTFOUND)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
 		else if(retval == ERR_REPEAT)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata->msgdata->fd,NULL));
 		else
 			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
 	}	
@@ -109,14 +108,14 @@ int irc_user(void *data)
 
 	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
 		return ERR;
 	}
 
 	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 	if (strlen(params[0])>= MAX_NAME_LEN)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
 		return ERR;
 	}
 
@@ -127,51 +126,66 @@ int irc_user(void *data)
 int irc_join(void * data)
 {
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
-	char* bye_msg;
+	char topic[MAX_TOPIC_LEN],bye_msg[MAX_IRC_MSG+1];
 	char * params[2];
-	char * chan_name ,*key;
+	char * chan_name, *aux_name,*key,*aux_key;
 	struct ircuser * user;
-	struct ircchan * channel;
+	list * users = list_new();
 	int retval = OK;
 
 	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)
 	{
-		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS));
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
 		return ERR;
 	}
 
-	/* Llamamos a irc_channel_part que añade al canal si no forma parte, y si forma
-	parte, le añade si puede y sino devuelve código de error pertinente. */
-
-	/*	Falta: rellenar params pertinentemente */
 
 	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 	if(!user)
+	{
+		sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
+		irc_build_errmsg(ERR_NOTFOUND, ircdata->msgdata->fd,bye_msg);
 		return ERR_NOTFOUND;
+	}
+	chan_name = params[0];
+	key = params[1];
 
 	while(!chan_name){
 
-		chan_name = strchr(params[0], ',');
+		aux_name = strchr(chan_name, ',');
+		if (!aux_name)
+		{
+			*aux_name='\0';
+			aux_name++;
+		}
 
-		if (!chan_name)
-			chan_name = params[0];
+		if(!key)
+			aux_key = strchr(key,',');
+		else
+			aux_key = NULL;
+		
+		if (!aux_key)
+		{
+			*aux_key='\0';
+			aux_key++;
+		}
 
-		chan_name++; /* Los canales siempre empiezan con un # o un & */
+		retval = irc_channel_adduser(ircdata->globdata, chan_name , user , key, topic ,users);
 
-		if (params[1] != NULL)
-			key = strchr(params[1], ',');
+		/*	Respuesta al cliente:	*/
 
-		if (!key)
-			key = params[1];
+		if(retval != OK) /* Pasando de interpretar errores... ¿no? */
+			sprintf(bye_msg, "No te has podido unir al canal %s, porque %s",chan_name,_irc_errmsg(retval));
+		else
+			sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ",chan_name,topic);
+		
+		list_add(ircdata->msg_tosend, irc_build_errmsg(0, ircdata->msgdata->fd, bye_msg));
 
-		channel = irc_channel_byname(ircdata->globdata,chan_name);
-		/* Si no tiene clave no hace nada. */
-		retval = irc_channel_adduser(ircdata->globdata, channel , user , key);
-		if (retval != OK)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(retval));
+		chan_name = aux_name;
+		key = aux_key;
 	}
 
-	return retval;
+	return OK;
 }
 
 int irc_quit(void* data)

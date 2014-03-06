@@ -56,6 +56,9 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
 
+    if(irc_user_byid(gdata, data->fd) == NULL)
+    	irc_register_user(gdata, data->fd);
+    
     msg = data->data;
     msg[MAX_IRC_MSG] = '\0';
     msg = irc_remove_prefix(msg);

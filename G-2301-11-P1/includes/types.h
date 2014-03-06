@@ -48,10 +48,10 @@ struct ircuser {
 };
 
 struct irc_globdata {
-	dictionary* fd_user_map;
-	dictionary* nick_user_map;
-	dictionary* chan_map;
-	list* chan_list;
+	dictionary* fd_user_map; /* Mapa desc. fichero conexión -> Estructura usuario de la conexión */
+	dictionary* nick_user_map; /* Mapa nick de usuario -> Estructura usuario correspondiente */
+	dictionary* chan_map; /* Mapa nombre de canal -> Estructura canal */
+	list* chan_list; /* Lista de canales */
 };
 
 struct irc_msgdata {

@@ -13,10 +13,6 @@ void irc_destroy(struct irc_globdata* data);
 int irc_channel_part(struct irc_globdata* data, struct ircchan* channel, struct ircuser* user);
 void irc_delete_user(struct irc_globdata* data, struct ircuser* user);
 
-/*	Falta:	 */
-
-char * _irc_errmsg(int err);
-
 /**
 * Añade un usuario a un canal.
 * En caso de crearse un canal, el argumento key es descartado. Se tendrá que ejecutar mode después.
@@ -32,6 +28,8 @@ char * _irc_errmsg(int err);
 */
 int irc_channel_adduser(struct irc_globdata* data, char* channel, struct ircuser* user, char * key , char * ret_topic, list * ret_users);
 
+/*	Falta:	 */
+
 /**
 * Busca el canal por nombre.
 * @param 	data	La estructura que contiene los diccionarios.
@@ -40,5 +38,17 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel, struct ircuser
 */
 
 struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name);
+
+
+/**
+* Busca al usuario en el canal.
+* @param	channel 	Canal en el que buscar al usuario.
+* @param	user 		Usuario a ser buscado.
+* @return 	OK si se ha encontrado, ERR_NOTFOUND si no.
+*/
+short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
+
+
+struct ircchan * irc_channel_create(char * name, int modes);
 
 #endif

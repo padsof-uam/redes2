@@ -1,6 +1,7 @@
 #include "irc_core.h"
 #include "dictionary.h"
 #include "list.h"
+#include "irc_codes.h"
 
 #include <string.h>
 
@@ -116,3 +117,62 @@ void irc_delete_user(struct irc_globdata* data, struct ircuser* user)
 	free(user);
 }
 
+int irc_cuser_inchannel(struct ircchan * channel, struct ircuser * user){
+	/*	De momento, nunca estamos en ningún canal.	*/
+	return ERR_NOTFOUND;
+}
+
+
+int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , char * ret_topic, list * ret_users){
+
+	struct ircchan * channel = irc_channel_byname(data, channel_name);
+	
+	if (!channel)
+	{
+		channel = irc_channel_create(channel_name,1);
+	}
+	ret_topic = NULL;
+	ret_users = NULL;
+
+	if (!irc_user_inchannel(channel,user)==OK && strcmp(key,channel->key))
+	{
+
+				/*	logical OR	*/
+		if (channel->mode | chan_invite){
+			if (!dic_lookup(channel->invited_users, user->nick))
+				return ERR_INVITEONLYCHAN;
+		}
+
+		if (list_count(channel->users)>=MAX_MEMBERS_IN_CHANNEL)
+			return ERR_CHANNELISFULL;
+
+		if (list_count(user->channels)>=MAX_CHANNELES_USER)
+		{
+			return ERR_TOOMANYCHANNELS;
+		}
+		/*
+		Comrprobados: 
+			- Contraseña
+		 	- Invitados
+		 	- Already in channel
+		 	- Demasiada gente
+		 	- too many chanels;
+		¿Falta algo?
+		 	*/
+
+		if((list_add(channel->users, user) != OK) ||  (list_add(user->channels, channel) != OK))
+		{
+			return ERR;
+		}
+
+		ret_topic = strdup(channel->topic);
+		ret_users = channel->users;
+
+		return OK;
+	}
+	else if (strcmp(key,channel->key))
+		return ERR_BADCHANNELKEY;
+	else
+		return ERR_ALREADYREGISTRED;
+
+}

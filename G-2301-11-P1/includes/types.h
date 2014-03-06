@@ -8,10 +8,16 @@
 #define COMMSTRUCTS_H
 
 #define MAX_IRC_MSG 512
+
 #define MAX_NICK_LEN 9
 #define MAX_NAME_LEN 100
 #define MAX_CHAN_LEN 200
+#define MAX_KEY_LEN 50
 #define MAX_TOPIC_LEN 500
+
+#define MAX_MEMBERS_IN_CHANNEL 100
+#define MAX_CHANNELES_USER 10
+
 #define MAX_ERR_THRESHOLD 5
 
 typedef enum  { 
@@ -27,7 +33,9 @@ struct ircchan {
 	char name[MAX_CHAN_LEN + 1];
 	char topic[MAX_TOPIC_LEN + 1];
 	chan_mode mode;
-	list* users;
+	list* users; /* Lista de usuarios. */
+	dictionary* invited_users;
+	char key[MAX_KEY_LEN+1];
 };
 
 struct ircuser {
@@ -36,7 +44,7 @@ struct ircuser {
 	char name[MAX_NAME_LEN + 1];
 	short is_away;
 	user_mode mode;
-	list* channels;
+	list* channels; /* Lista de canales. */
 };
 
 struct irc_globdata {

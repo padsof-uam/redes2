@@ -132,7 +132,6 @@ char* irc_remove_prefix(char* msg)
 struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
 
 	struct sockcomm_data * msg_answer = malloc(sizeof(struct sockcomm_data));
-	char bye_msg[MAX_IRC_MSG+1];
 
 
 	msg_answer->fd = fd;

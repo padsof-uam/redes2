@@ -132,3 +132,159 @@ char* irc_remove_prefix(char* msg)
 }
 
 
+struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
+
+	struct sockcomm_data * msg_answer = malloc(sizeof(struct sockcomm_data));
+	char bye_msg[MAX_IRC_MSG+1];
+
+
+	msg_answer->fd = fd;
+
+	if (msg != NULL)
+	{
+		strncpy(msg_answer->data,msg,MAX_IRC_MSG);
+		msg_answer->len = strlen(msg_answer->data+1);
+		return msg_answer;
+	}
+	else{
+		switch(errcode){
+			case ERR_NOSUCHNICK:
+
+				break;
+			case ERR_NOSUCHSERVER:
+
+				break;
+			case ERR_NOSUCHCHANNEL:
+
+				break;
+			case ERR_CANNOTSENDTOCHAN:
+
+				break;
+			case ERR_TOOMANYCHANNELS:
+
+				break;
+			case ERR_WASNOSUCHNICK:
+
+				break;
+			case ERR_TOOMANYTARGETS:
+
+				break;
+			case ERR_NOORIGIN:
+
+				break;
+			case ERR_NORECIPIENT:
+
+				break;
+			case ERR_NOTEXTTOSEND:
+
+				break;
+			case ERR_NOTOPLEVEL:
+
+				break;
+			case ERR_WILDTOPLEVEL:
+
+				break;
+			case ERR_UNKNOWNCOMMAND:
+
+				break;
+			case ERR_NOMOTD:
+
+				break;
+			case ERR_NOADMININFO:
+
+				break;
+			case ERR_FILEERROR:
+
+				break;
+			case ERR_NONICKNAMEGIVEN:
+
+				break;
+			case ERR_ERRONEUSNICKNAME:
+
+				break;
+			case ERR_NICKNAMEINUSE:
+
+				break;
+			case ERR_NICKCOLLISION:
+
+				break;
+			case ERR_USERNOTINCHANNEL:
+
+				break;
+			case ERR_NOTONCHANNEL:
+
+				break;
+			case ERR_USERONCHANNEL:
+
+				break;
+			case ERR_NOLOGIN:
+
+				break;
+			case ERR_SUMMONDISABLED:
+
+				break;
+			case ERR_USERSDISABLED:
+
+				break;
+			case ERR_NOTREGISTERED:
+
+				break;
+			case ERR_NEEDMOREPARAMS:
+
+				break;
+			case ERR_ALREADYREGISTRED:
+
+				break;
+			case ERR_NOPERMFORHOST:
+
+				break;
+			case ERR_PASSWDMISMATCH:
+
+				break;
+			case ERR_YOUREBANNEDCREEP:
+
+				break;
+			case ERR_KEYSET:
+
+				break;
+			case ERR_CHANNELISFULL:
+
+				break;
+			case ERR_UNKNOWNMODE:
+
+				break;
+			case ERR_INVITEONLYCHAN:
+
+				break;
+			case ERR_BANNEDFROMCHAN:
+
+				break;
+			case ERR_BADCHANNELKEY:
+
+				break;
+			case ERR_NOPRIVILEGES:
+
+				break;
+			case ERR_CHANOPRIVSNEEDED:
+
+				break;
+			case ERR_CANTKILLSERVER:
+
+				break;
+			case ERR_NOOPERHOST:
+
+				break;
+			case ERR_UMODEUNKNOWNFLAG:
+
+				break;
+			case ERR_USERSDONTMATCH:
+
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	return msg_answer;
+}

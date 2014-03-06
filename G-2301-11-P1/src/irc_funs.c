@@ -1,7 +1,6 @@
 #include "irc_funs.h"
 #include "irc_core.h"
 #include "irc_codes.h"
-#include "types.h"
 #include "irc_processor.h"
 
 #include <sys/syslog.h>
@@ -79,72 +78,112 @@ int irc_nick(void *data)
 {
 	int retval;
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
-	char* old_nick,*new_nick;
-	struct ircuser* new_user,*old_user;
+	char * new_nick[1];
 
-	if (!strncasecmp(ircdata->msgdata->data, "NICK", 4*sizeof(char)))
-	{
-		new_nick = strchr(ircdata->msgdata->data, ' ');	
-		new_nick++;
-		old_nick=NULL;
-	}
-	else if (!strncasecmp(ircdata->msgdata->data, ":", sizeof(char)))
-	{
-		old_nick = ircdata->msgdata->data;
-		/* Ignoramos los ':' */
-		old_nick++;
-
-		new_nick = strchr(ircdata->msgdata->data, ' ');
-		/* Este caso no debería ser posible, porque en new_nick está el comando NICK*/
-		if (!new_nick)	/* Implicit function */
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NONICKNAMEGIVEN));
-		
-		/* Sustituimos el ' ' por \0 para marcar el final de la cadena. */
-		old_nick[new_nick-old_nick-1]='\0';
-
-
-		/* new_nick[0]=' ', por lo que incrementamos 1 para obtener algo útil de strchr*/
-		new_nick++;
-		new_nick = strchr(ircdata->msgdata->data, ' ');
-		if (!new_nick)
-		{ 
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NONICKNAMEGIVEN));
-		}
-		else
-		{
-			new_nick++;
-			if (strlen(new_nick) >= MAX_NICK_LEN)
-			{
-				/* No se si es este error... NICKNAME inválido (demasiado largo) */		
-				list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
-			}
-		}
-	}
-	else
-	{
-		/* ¿Esta posibilidad acaso existe? */
+	if (!irc_parse_paramlist(ircdata->msg,new_nick, 1)){
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata->msgdata->fd,NULL));
+		return ERR;
 	}
 
-	retval = irc_set_usernick(ircdata->globdata, ircdata->msgdata->fd, new_nick);
+	retval = irc_set_usernick(ircdata->globdata, ircdata->msgdata->fd, new_nick[0]);
 	
 	if (retval != OK)
 	{
 		if(retval == ERR_NOTFOUND)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
 		else if(retval == ERR_REPEAT)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata->msgdata->fd,NULL));
 		else
-			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick);
-	}
-	
+			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
+	}	
 	
 	return OK;
 }
 
 int irc_user(void *data)
 {
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;	
+	char * params[1];
+	int retval;
+
+	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		return ERR;
+	}
+
+	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if (strlen(params[0])>= MAX_NAME_LEN)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
+		return ERR;
+	}
+
+	strcpy(user->name,params[0]);
+	return OK;
+}
+
+int irc_join(void * data)
+{
 	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
-	struct sockcomm_data* msg_tosend = malloc(sizeof(struct sockcomm_data));
+	char topic[MAX_TOPIC_LEN],bye_msg[MAX_IRC_MSG+1];
+	char * params[2];
+	char * chan_name, *aux_name,*key,*aux_key;
+	struct ircuser * user;
+	list * users = list_new();
+	int retval = OK;
+
+	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)
+	{
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		return ERR;
+	}
+
+
+	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if(!user)
+	{
+		sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
+		irc_build_errmsg(ERR_NOTFOUND, ircdata->msgdata->fd,bye_msg);
+		return ERR_NOTFOUND;
+	}
+	chan_name = params[0];
+	key = params[1];
+
+	while(!chan_name){
+
+		aux_name = strchr(chan_name, ',');
+		if (!aux_name)
+		{
+			*aux_name='\0';
+			aux_name++;
+		}
+
+		if(!key)
+			aux_key = strchr(key,',');
+		else
+			aux_key = NULL;
+		
+		if (!aux_key)
+		{
+			*aux_key='\0';
+			aux_key++;
+		}
+
+		retval = irc_channel_adduser(ircdata->globdata, chan_name , user , key, topic ,users);
+
+		/*	Respuesta al cliente:	*/
+
+		if(retval != OK) /* Pasando de interpretar errores... ¿no? */
+			sprintf(bye_msg, "No te has podido unir al canal %s, porque %s",chan_name,_irc_errmsg(retval));
+		else
+			sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ",chan_name,topic);
+		
+		list_add(ircdata->msg_tosend, irc_build_errmsg(0, ircdata->msgdata->fd, bye_msg));
+
+		chan_name = aux_name;
+		key = aux_key;
+	}
 
 	return OK;
 }
@@ -172,7 +211,6 @@ int irc_quit(void* data)
 }
 
 /** Pendientes **/
-int irc_join(void* data);
 int irc_part(void* data);
 int irc_topic(void* data);
 int irc_names(void* data);

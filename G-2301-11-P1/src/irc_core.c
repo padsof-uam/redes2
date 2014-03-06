@@ -116,4 +116,3 @@ void irc_delete_user(struct irc_globdata* data, struct ircuser* user)
 	free(user);
 }
 
-

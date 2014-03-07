@@ -31,6 +31,13 @@ struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name
 */
 int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel);
 
+/**
+* Busca al usuario en el canal.
+* @param	channel 	Canal en el que buscar al usuario.
+* @param	user 		Usuario a ser buscado.
+* @return 	OK si se ha encontrado, ERR_NOTFOUND si no.
+*/
+short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 
 /***************************************************************************
 								Falta:	 
@@ -46,13 +53,6 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name);
 
 
-/**
-* Busca al usuario en el canal.
-* @param	channel 	Canal en el que buscar al usuario.
-* @param	user 		Usuario a ser buscado.
-* @return 	OK si se ha encontrado, ERR_NOTFOUND si no.
-*/
-short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 
 
 struct ircchan * irc_channel_create(char * name, int modes);

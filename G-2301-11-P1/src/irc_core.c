@@ -77,7 +77,7 @@ int irc_set_usernick(struct irc_globdata* data, int id, const char* nick)
 	user_samenick = dic_lookup(data->nick_user_map, nick);
 
 	if(user_samenick != NULL) /* Hay alguien con el mismo nick*/
-		return ERR_REPEAT;
+		return ERR_NICKCOLLISION;
 
 	dic_remove(data->nick_user_map, user->nick); /* Eliminamos el nick viejo del dic. */
 	strncpy(user->nick, nick, MAX_NICK_LEN); /* Copiamos el nuevo a la estructura */
@@ -123,13 +123,35 @@ void irc_delete_user(struct irc_globdata* data, struct ircuser* user)
 	free(user);
 }
 
-short irc_user_inchannel(struct ircchan * channel, struct ircuser * user){
-	/*	De momento, nunca estamos en ningún canal.	*/
-	return ERR_NOTFOUND;
+int irc_compare_user(const void * user1, const void * user2)
+{
+	struct ircuser * first = (struct ircuser *) user1;
+	struct ircuser *second = (struct ircuser *) user2;
+	return strcmp(first->nick, second->nick);
+}
+
+int nick_compare(const void * nick1, const void * nick2)
+{
+	return OK;
+}
+
+short irc_user_inchannel(struct ircchan * channel, struct ircuser * user)
+{
+	if(list_find(channel->users, irc_compare_user, (void *)user ) == -1)
+	//if(list_find(channel->users, strcmp, (void *)user->nick ) == -1)
+		return ERR_NOTFOUND;
+	else
+		return OK;
 }
 
 
-int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel){
+struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name)
+{
+	return dic_lookup(data->chan_map, name);
+}
+
+int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel)
+{
 
 	channel = irc_channel_byname(data, channel_name);
 	
@@ -138,11 +160,14 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		channel = irc_channel_create(channel_name,1);
 	}
 
-	if (!irc_user_inchannel(channel,user)==OK && strcmp(key,channel->key))
+	/*	¿strcmp(NULL,NULL) = 0. 
+	Si el canal no tiene clave, el argumento clave también es nulo.	*/
+
+	if (irc_user_inchannel(channel,user) == ERR_NOTFOUND && ((channel->key == NULL) || strcmp(key,channel->key) == 0) )
 	{
 
-				/*	logical OR	*/
-		if (channel->mode | chan_invite){
+		if (channel->mode | chan_invite)
+		{
 			if (!dic_lookup(channel->invited_users, user->nick))
 				return ERR_INVITEONLYCHAN;
 		}
@@ -154,6 +179,7 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		{
 			return ERR_TOOMANYCHANNELS;
 		}
+
 		/*
 		Comrprobados: 
 			- Contraseña
@@ -161,14 +187,15 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		 	- Already in channel
 		 	- Demasiada gente
 		 	- too many chanels;
-		¿Falta algo?
 		 	*/
 
-		if((list_add(channel->users, user) != OK) ||  (list_add(user->channels, channel) != OK))
+		if(list_add(channel->users, user) != OK) 
+			return ERR;
+		else if (list_add(user->channels, channel) != OK)
 		{
+			list_remove_last(channel->users);
 			return ERR;
 		}
-
 		return OK;
 	}
 	else if (strcmp(key,channel->key))

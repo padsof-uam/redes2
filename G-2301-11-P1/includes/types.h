@@ -44,14 +44,14 @@ struct ircuser {
 	char name[MAX_NAME_LEN + 1];
 	short is_away;
 	user_mode mode;
-	list* channels; /* Lista de canales. */
+	list* channels; /* Lista de canales*/
 };
 
 struct irc_globdata {
-	dictionary* fd_user_map; /* Mapa desc. fichero conexión -> Estructura usuario de la conexión */
-	dictionary* nick_user_map; /* Mapa nick de usuario -> Estructura usuario correspondiente */
-	dictionary* chan_map; /* Mapa nombre de canal -> Estructura canal */
-	list* chan_list; /* Lista de canales */
+	dictionary* fd_user_map;
+	dictionary* nick_user_map;
+	dictionary* chan_map;
+	list* chan_list;
 };
 
 struct irc_msgdata {

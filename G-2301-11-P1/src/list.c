@@ -129,6 +129,11 @@ int list_find(list* ls, comparator comp, void * element)
 	return -1;
 }
 
+int list_remove_last(list *ls)
+{
+	return list_remove(ls, ls->count-1);
+}
+
 int list_remove(list* ls, int element)
 {
 	if(element < 0 || element >= ls->count)

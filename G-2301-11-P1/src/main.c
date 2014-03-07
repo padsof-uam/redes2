@@ -20,6 +20,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/file.h>
+#include <time.h>
 
 #define IRC_PORT 6667
 #define LOG_ID "redirc"
@@ -84,6 +85,10 @@ static int send_kill_signal()
     int max_ms_wait = 5000;
     int ms_wait_interval = 200;
     int ms_waited = 0;
+    struct timespec ts;
+
+    ts.tv_nsec = ms_wait_interval * 1000;
+    ts.tv_sec = 0;
 
     pid_file = fopen(PID_FILE, "r");
 
@@ -107,7 +112,8 @@ static int send_kill_signal()
         if (kill(pid, 0) == -1) /* Devuelve -1 si el proceso ya ha salido */
             return OK;
 
-        usleep(ms_wait_interval);
+        nanosleep(&ts, NULL);
+        ms_waited += ms_wait_interval;
     }
 
     printf("Forzando salida con SIGKILL.\n");

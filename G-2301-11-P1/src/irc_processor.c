@@ -170,10 +170,43 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
+static struct sockcomm_data* _irc_quit_message(const char* name, const char* message, int fd)
+{
+    struct sockcomm_data* smsg = malloc(sizeof(struct sockcomm_data*));
+
+    smsg->fd = fd;
+    smsg->len = snprintf(smsg->data, MAX_IRC_MSG, ":%s QUIT :%s", name, message);
+
+    return smsg;
+}
+
+int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* message)
+{
+    int i, j;
+    int chan_count, user_count;
+    list* user_list;
+    struct ircuser* target;
+
+    chan_count = list_count(user->channels);
+
+    for(i = 0; i < chan_count; i++)
+    {
+        user_list = list_at(user->channels, i);
+        user_count = list_count(user_list);
+
+        for(j = 0; j < user_count; j++)
+        {
+            target = list_at(user_list, j);
+            list_add(msgqueue, _irc_quit_message(user->name, message, user->fd));
+        }
+    }
+
+    return OK;
+}
+
 
 struct sockcomm_data *irc_build_errmsg(int errcode, struct irc_msgdata *irc , char *msg)
 {
-
     struct sockcomm_data *msg_answer = malloc(sizeof(struct sockcomm_data));
     char retval[MAX_IRC_MSG];
 

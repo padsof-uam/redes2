@@ -21,6 +21,6 @@ int list_remove_last(list *ls);
 int list_find(list* ls, comparator comp, void * element);
 int list_count(list* ls);
 void* list_at(list* ls, int index);
-
+int list_remove_element(list* ls, comparator comp, void* element);
 
 #endif

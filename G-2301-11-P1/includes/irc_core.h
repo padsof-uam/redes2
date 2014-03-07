@@ -20,10 +20,22 @@ void irc_destroy(struct irc_globdata* data);
  * @return	OK/ERR
  */	
 int irc_channel_part(struct irc_globdata* data, struct ircchan* channel, struct ircuser* user);
+
+/**
+ * Elimina a un usuario del sistema.
+ * @param data Datos de IRC.
+ * @param user Usuario a eliminar. Se libera la memoria del usuario.
+ */
 void irc_delete_user(struct irc_globdata* data, struct ircuser* user);
+
+
+/**
+ * Crea un canal y lo añade al sistema.
+ * @param  data Datos IRC.
+ * @param  name Nombre del canal.
+ * @return      Estructura de canal.
+ */
 struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name);
-
-
 
 /**
 * Añade un usuario a un canal.
@@ -48,22 +60,13 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 */
 short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 
-/***************************************************************************
-								Falta:	 
-***************************************************************************/
-
 /**
 * Busca el canal por nombre.
 * @param 	data	La estructura que contiene los diccionarios.
 * @param	name	Nombre del canal que buscar.
 * @return	El ircchan correspondiente, o NULL en caso de no existir.
 */
-
 struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name);
 
-
-
-
-struct ircchan * irc_channel_create(char * name, int modes);
 
 #endif

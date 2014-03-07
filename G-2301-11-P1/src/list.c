@@ -145,3 +145,18 @@ int list_remove(list* ls, int element)
 
 	return OK;
 }
+
+int list_remove_element(list* ls, comparator comp, void* element)
+{
+	int index;
+
+	index = list_find(ls, comp, element);
+
+	if(index != -1)
+	{
+		list_remove(ls, index);
+		return OK;
+	}
+
+	return ERR_NOTFOUND;
+}

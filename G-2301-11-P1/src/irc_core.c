@@ -2,7 +2,6 @@
 #include "dictionary.h"
 #include "list.h"
 #include "irc_codes.h"
-#include <string.h>
 
 #include <string.h>
 
@@ -148,13 +147,10 @@ struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name)
 
 int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel)
 {
-
 	channel = irc_channel_byname(data, channel_name);
 	
 	if (!channel)
-	{
-		channel = irc_channel_create(channel_name,1);
-	}
+		return ERR_NOSUCHCHANNEL;
 
 	if (irc_user_inchannel(channel,user) == ERR_NOTFOUND && ((channel->key == NULL) || strcmp(key,channel->key) == 0) )
 	{
@@ -198,3 +194,25 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 
 }
 
+int irc_channel_part(struct irc_globdata* data, struct ircchan* channel, struct ircuser* user)
+{
+	list_remove_element(channel->users, ptr_comparator, user);
+	list_remove_element(user->channels, ptr_comparator, channel);
+
+	return OK;
+}
+
+struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name)
+{
+	struct ircchan* chan = malloc(sizeof(struct ircchan));
+
+	if(!chan)
+		return NULL;
+
+	strncpy(chan->name, name, MAX_CHAN_LEN);
+
+	list_add(data->chan_list, chan);
+	dic_add(data->chan_map, name, chan);
+
+	return chan;
+}

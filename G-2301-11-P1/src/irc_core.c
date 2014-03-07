@@ -127,18 +127,12 @@ int irc_compare_user(const void * user1, const void * user2)
 {
 	struct ircuser * first = (struct ircuser *) user1;
 	struct ircuser *second = (struct ircuser *) user2;
-	return strcmp(first->nick, second->nick);
-}
-
-int nick_compare(const void * nick1, const void * nick2)
-{
-	return OK;
+	return strncmp(first->nick, second->nick,MAX_NICK_LEN);
 }
 
 short irc_user_inchannel(struct ircchan * channel, struct ircuser * user)
 {
 	if(list_find(channel->users, irc_compare_user, (void *)user ) == -1)
-	//if(list_find(channel->users, strcmp, (void *)user->nick ) == -1)
 		return ERR_NOTFOUND;
 	else
 		return OK;
@@ -159,9 +153,6 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 	{
 		channel = irc_channel_create(channel_name,1);
 	}
-
-	/*	¿strcmp(NULL,NULL) = 0. 
-	Si el canal no tiene clave, el argumento clave también es nulo.	*/
 
 	if (irc_user_inchannel(channel,user) == ERR_NOTFOUND && ((channel->key == NULL) || strcmp(key,channel->key) == 0) )
 	{

@@ -14,6 +14,8 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata
  * @return     Puntero al primer carácter después del CRLF
  */
 char* irc_msgsep(char* str, int len);
+
+
 char* irc_remove_prefix(char* msg);
 
 /**
@@ -28,6 +30,8 @@ char* irc_remove_prefix(char* msg);
  * @return            Número de parámetros leídos.
  */
 int irc_parse_paramlist(char* msg, char** params, size_t max_params);
+
+
 void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 
 /**
@@ -38,7 +42,14 @@ void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 *						Si este argumento no es NULL, se enviará este mensaje descartando el código de error correspondiente.
 * @return	La estructura rellena, lista para ser encolada o para ser añadida a la lista de mensaje por enviar.
 */
-struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg);
+struct sockcomm_data* irc_build_errmsg(int errcode, struct irc_msgdata * irc,char * msg);
+
+
+/**
+* 
+* 
+*/
+void _irc_numeric_reponse(struct irc_globdata * irc,int errcode,char * retval);
 
 /**
 * Recibe un código de error y devuelve una frase interpretando el error.

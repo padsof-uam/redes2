@@ -133,30 +133,39 @@ char* irc_remove_prefix(char* msg)
 }
 
 
-struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
+struct sockcomm_data* irc_build_errmsg(int errcode, struct irc_msgdata *irc ,char * msg){
 
 	struct sockcomm_data * msg_answer = malloc(sizeof(struct sockcomm_data));
 
-	msg_answer->fd = fd;
+	char retval[MAX_IRC_MSG];
+
+	msg_answer->fd = irc->msgdata->fd;
 
 	if (msg != NULL)
 	{
-		strncpy(msg_answer->data,msg,MAX_IRC_MSG);
+		_irc_numeric_reponse(irc->globdata, OK, retval);
+		snprintf(msg_answer->data, MAX_IRC_MSG, "%s %s",retval,msg);
 		msg_answer->len = strlen(msg_answer->data+1);
 		return msg_answer;
 	}
 	else{
-		strncpy(msg_answer->data,_irc_errmsg(errcode),MAX_IRC_MSG);
+		_irc_numeric_reponse(irc->globdata,errcode,retval);
+		strncpy(msg_answer->data,retval,MAX_IRC_MSG);
 		msg_answer->len = strlen(_irc_errmsg(errcode));
 	}
 
 	return msg_answer;
 }
 
+void _irc_numeric_reponse(struct irc_globdata * irc,int errcode,char * retval){
+	sprintf(retval, ":%s %d %s",irc->servername,errcode,_irc_errmsg(errcode));
+}
+
 char * _irc_errmsg(int errcode){
 
-	char * err_msg = strdup("ASDF");
 	switch(errcode){
+			case OK:
+				return " ";
 			case ERR_NOSUCHNICK:
 
 				break;
@@ -291,7 +300,6 @@ char * _irc_errmsg(int errcode){
 				break;
 
 			default:
-				break;
+				return "Rellena este error";
 		}
-	return err_msg;
 }

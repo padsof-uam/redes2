@@ -43,7 +43,7 @@ int t_irc_quit__message_provided__message_transmitted() {
 	mu_assert_eq(list_count(output), 1, "Incorrect number of generated messages.");
 	msg = list_at(output, 0);
 
-	mu_assert_streq(msg->data, ":pepe QUIT :Bye", message)
+	mu_assert_streq(msg->data, ":pepe QUIT :Bye", "Bad message");
 	mu_end;
 }
 int t_irc_quit__no_message_provided__msg_is_nick() {

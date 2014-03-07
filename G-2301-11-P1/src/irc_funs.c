@@ -81,7 +81,7 @@ int irc_nick(void *data)
 	char * new_nick[1];
 
 	if (!irc_parse_paramlist(ircdata->msg,new_nick, 1)){
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata,NULL));
 		return ERR;
 	}
 
@@ -90,9 +90,9 @@ int irc_nick(void *data)
 	if (retval != OK)
 	{
 		if(retval == ERR_NOTFOUND)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata,NULL));
 		else if(retval == ERR_REPEAT)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata->msgdata->fd,NULL));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata,NULL));
 		else
 			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
 	}	
@@ -108,14 +108,14 @@ int irc_user(void *data)
 
 	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata,NULL));
 		return ERR;
 	}
 
 	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 	if (strlen(params[0])>= MAX_NAME_LEN)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata,NULL));
 		return ERR;
 	}
 
@@ -135,7 +135,7 @@ int irc_join(void * data)
 
 	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)
 	{
-		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata,NULL));
 		return ERR;
 	}
 
@@ -144,7 +144,7 @@ int irc_join(void * data)
 	if(!user)
 	{
 		sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
-		irc_build_errmsg(ERR_NOTFOUND, ircdata->msgdata->fd,bye_msg);
+		irc_build_errmsg(ERR_NOTFOUND,ircdata,bye_msg);
 		return ERR_NOTFOUND;
 	}
 	chan_name = params[0];
@@ -179,7 +179,7 @@ int irc_join(void * data)
 		else
 			sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ",chan_name,topic);
 		
-		list_add(ircdata->msg_tosend, irc_build_errmsg(0, ircdata->msgdata->fd, bye_msg));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(0,ircdata, bye_msg));
 
 		chan_name = aux_name;
 		key = aux_key;
@@ -211,12 +211,39 @@ int irc_quit(void* data)
 }
 
 /** Pendientes **/
-int irc_part(void* data);
-int irc_topic(void* data);
-int irc_names(void* data);
-int irc_list(void* data);
-int irc_kick(void* data);
-int irc_time(void* data);
-int irc_notice(void* data);
-int irc_pong(void* data);
-int irc_users(void* data);
+int irc_part(void* data)
+{
+	return OK;
+}
+int irc_topic(void* data)
+{
+	return OK;
+}
+int irc_names(void* data)
+{
+	return OK;
+}
+int irc_list(void* data)
+{
+	return OK;
+}
+int irc_kick(void* data)
+{
+	return OK;
+}
+int irc_time(void* data)
+{
+	return OK;
+}
+int irc_notice(void* data)
+{
+	return OK;
+}
+int irc_pong(void* data)
+{
+	return OK;
+}
+int irc_users(void* data)
+{
+	return OK;
+}

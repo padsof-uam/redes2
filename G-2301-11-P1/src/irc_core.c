@@ -2,6 +2,7 @@
 #include "dictionary.h"
 #include "list.h"
 #include "irc_codes.h"
+#include <string.h>
 
 #include <string.h>
 

@@ -70,7 +70,7 @@ static int write_pid()
     pid_file = fopen(PID_FILE, "w");
 
     if (!pid_file)
-        return -ERR;
+        return ERR;
 
     fprintf(pid_file, "%d\n", getpid());
     fclose(pid_file);
@@ -93,18 +93,18 @@ static int send_kill_signal()
     pid_file = fopen(PID_FILE, "r");
 
     if (!pid_file)
-        return -ERR;
+        return ERR;
 
     read = fscanf(pid_file, "%d", &pid);
     fclose(pid_file);
 
     if (read < 1)
-        return -ERR;
+        return ERR;
 
     if (kill(pid, SIGTERM) == -1)
     {
         perror("kill");
-        return -ERR;
+        return ERR;
     }
 
     while (ms_waited < max_ms_wait)

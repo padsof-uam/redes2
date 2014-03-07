@@ -2,6 +2,7 @@
 #include "dictionary.h"
 #include "list.h"
 #include "irc_codes.h"
+#include <string.h>
 
 #include <string.h>
 
@@ -127,12 +128,7 @@ int irc_compare_user(const void * user1, const void * user2)
 {
 	struct ircuser * first = (struct ircuser *) user1;
 	struct ircuser *second = (struct ircuser *) user2;
-	return strcmp(first->nick, second->nick);
-}
-
-int nick_compare(const void * nick1, const void * nick2)
-{
-	return OK;
+	return strncmp(first->nick, second->nick,MAX_NICK_LEN);
 }
 
 short irc_user_inchannel(struct ircchan * channel, struct ircuser * user)
@@ -149,6 +145,7 @@ struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name)
 	return dic_lookup(data->chan_map, name);
 }
 
+
 int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel)
 {
 
@@ -158,9 +155,6 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 	{
 		channel = irc_channel_create(channel_name,1);
 	}
-
-	/*	¿strcmp(NULL,NULL) = 0. 
-	Si el canal no tiene clave, el argumento clave también es nulo.	*/
 
 	if (irc_user_inchannel(channel,user) == ERR_NOTFOUND && ((channel->key == NULL) || strcmp(key,channel->key) == 0) )
 	{
@@ -203,3 +197,4 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		return ERR_ALREADYREGISTRED;
 
 }
+

@@ -45,7 +45,6 @@ Falta:
 - irc_user_byid
 
 
-Dudas:
-- ircuser->channels es una lista de canales no? No de nombres de canales
-- irccjan->users es lista de usuarios o de nombres?¿?
+- ircuser->channels es una lista de canales 
+- irccjan->users es lista de usuarios 
 

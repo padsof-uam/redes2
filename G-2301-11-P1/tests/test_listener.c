@@ -32,7 +32,7 @@ int t_Server_close_communication__close_connected_socket() {
 
 int t_server_open_socket__opensocket() {
 	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
-	mu_assert("Server won't open", handler !=- ERR_SOCK);
+	mu_assert("Server won't open", handler !=ERR_SOCK);
 
 	close(handler);
 	mu_end;

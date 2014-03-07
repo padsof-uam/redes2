@@ -8,6 +8,7 @@
 #define COMMSTRUCTS_H
 
 #define MAX_IRC_MSG 512
+#define MAX_SERVER_NAME 100
 
 #define MAX_NICK_LEN 9
 #define MAX_NAME_LEN 100
@@ -52,6 +53,7 @@ struct irc_globdata {
 	dictionary* nick_user_map;
 	dictionary* chan_map;
 	list* chan_list;
+	char servername[MAX_SERVER_NAME];
 };
 
 struct irc_msgdata {

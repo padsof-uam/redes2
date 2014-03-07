@@ -81,7 +81,7 @@ int irc_nick(void *data)
 	char * new_nick[1];
 
 	if (!irc_parse_paramlist(ircdata->msg,new_nick, 1)){
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_UNKNOWNCOMMAND,ircdata,NULL));
 		return ERR;
 	}
 
@@ -90,9 +90,9 @@ int irc_nick(void *data)
 	if (retval != OK)
 	{
 		if(retval == ERR_NOTFOUND)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata,NULL));
 		else if(retval == ERR_REPEAT)
-			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata->msgdata->fd,NULL));
+			list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NICKCOLLISION,ircdata,NULL));
 		else
 			syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
 	}	
@@ -108,14 +108,14 @@ int irc_user(void *data)
 
 	if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata,NULL));
 		return ERR;
 	}
 
 	user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 	if (strlen(params[0])>= MAX_NAME_LEN)
 	{
-		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_ERRONEUSNICKNAME,ircdata,NULL));
 		return ERR;
 	}
 
@@ -135,7 +135,7 @@ int irc_join(void * data)
 
 	if(irc_parse_paramlist(ircdata->msg, params, 2)==0)
 	{
-		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata->msgdata->fd,NULL));
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NEEDMOREPARAMS,ircdata,NULL));
 		return ERR;
 	}
 
@@ -144,7 +144,7 @@ int irc_join(void * data)
 	if(!user)
 	{
 		sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
-		irc_build_errmsg(ERR_NOTFOUND, ircdata->msgdata->fd,bye_msg);
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NOTFOUND,ircdata,bye_msg));
 		return ERR_NOTFOUND;
 	}
 	chan_name = params[0];
@@ -179,7 +179,7 @@ int irc_join(void * data)
 		else
 			sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ",chan_name,topic);
 		
-		list_add(ircdata->msg_tosend, irc_build_errmsg(0, ircdata->msgdata->fd, bye_msg));
+		list_add(ircdata->msg_tosend, irc_build_errmsg(0,ircdata, bye_msg));
 
 		chan_name = aux_name;
 		key = aux_key;
@@ -210,13 +210,76 @@ int irc_quit(void* data)
 	return OK;
 }
 
+int irc_part(void* data)
+{
+	int retval;
+	char * channel_name,*aux;
+	char * params[1];
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if (!user)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NOTREGISTERED, ircdata, NULL));
+		return ERR_NOTREGISTERED;
+	}
+	struct ircchan * channel;
+
+
+	irc_parse_paramlist(ircdata->msg, params, 1);
+	channel_name = params[0];
+	while(!channel_name){
+		aux = strchr(channel_name, ',');
+		if(!aux){
+			aux++;
+			*aux='\0';
+		}
+		channel = irc_channel_byname(ircdata->globdata, channel_name);
+		if (!channel)
+			list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NOSUCHCHANNEL, ircdata, NULL));
+		else if(irc_user_inchannel(channel, user) != OK)
+			list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_USERNOTINCHANNEL, ircdata, NULL));
+		else{ 
+			retval = irc_channel_part(ircdata->globdata, channel, user);
+			if( retval != OK)
+				syslog(LOG_ALERT, "No se ha podido eliminar al usuario %s del canal %s",user->nick,channel->name);
+			
+		}
+		channel_name = aux;
+	}	
+
+	return OK;
+}
+
 /** Pendientes **/
-int irc_part(void* data);
-int irc_topic(void* data);
-int irc_names(void* data);
-int irc_list(void* data);
-int irc_kick(void* data);
-int irc_time(void* data);
-int irc_notice(void* data);
-int irc_pong(void* data);
-int irc_users(void* data);
+int irc_topic(void* data)
+{
+	return OK;
+}
+int irc_names(void* data)
+{
+	return OK;
+}
+int irc_list(void* data)
+{
+	return OK;
+}
+int irc_kick(void* data)
+{
+	return OK;
+}
+int irc_time(void* data)
+{
+	return OK;
+}
+int irc_notice(void* data)
+{
+	return OK;
+}
+int irc_pong(void* data)
+{
+	return OK;
+}
+int irc_users(void* data)
+{
+	return OK;
+}

@@ -45,33 +45,33 @@ int daemonize(const char *log_id)
     if (signal(SIGTTOU, SIG_IGN))
     {
         syslog(LOG_ERR, "Error en la captura de SIGTTOU");
-        return -ERR;
+        return ERR;
     }
 
     if (signal(SIGTTIN, SIG_IGN))
     {
         syslog(LOG_ERR, "Error en la captura de SIGTTIN");
-        return -ERR;
+        return ERR;
     }
 
     if (signal(SIGTSTP, SIG_IGN))
     {
         syslog(LOG_ERR, "Error en la captura de SIGTSTP");
-        return -ERR;
+        return ERR;
     }
 
 #ifndef __APPLE__
     if (signal(SIGPWR, finish_daemon))
     {
         syslog(LOG_ERR, "Error en la captura de SIGPWR");
-        return -ERR;
+        return ERR;
     }
 #endif 
 
     if (signal(SIGCHLD, SIG_IGN))  
     {
         syslog(LOG_ERR, "Error en la captura de SIGCHLD");
-        return -ERR;
+        return ERR;
     }
 
 #ifndef NODAEMON
@@ -109,7 +109,7 @@ int unlink_proc()
     pid = fork();
 
     if (pid < 0)
-        return -ERR;
+        return ERR;
     else if (pid > 0)
         return pid;
 
@@ -121,7 +121,7 @@ int unlink_proc()
     if (signal(SIGHUP, SIG_IGN))
     {
         syslog(LOG_ERR, "Error en la captura de SIGTSTP");
-        return -ERR;
+        return ERR;
     }
 
     return 0;
@@ -150,7 +150,7 @@ int close_open_fds()
     }
     else
     {
-        return -ERR;
+        return ERR;
     }
 
     return OK;

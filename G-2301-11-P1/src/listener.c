@@ -21,7 +21,7 @@ static int _server_close_socket(int handler)
     if (close(handler) < 0)
     {
         syslog(LOG_ERR, "Error cerrando el socket, %d", errno);
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
     return OK;
 }
@@ -32,7 +32,7 @@ static int _server_open_socket()
     if (handler == -1)
     {
         syslog(LOG_ERR, "Error en la creación de socket");
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
     return handler;
 }
@@ -50,7 +50,7 @@ static int _link_socket_port(int port, int handler)
     if (bind(handler, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in) ) == -1)
     {
         syslog(LOG_ERR, "Error asociando puerto con socket: %s", strerror(errno));
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
 
     return OK;
@@ -61,7 +61,7 @@ static int _set_queue_socket(int handler, int long_max)
     if (listen(handler, long_max) == -1)
     {
         syslog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
     return OK;
 }
@@ -70,17 +70,17 @@ static int _set_queue_socket(int handler, int long_max)
 int server_open_socket(int port, int max_long)
 {
     int handler = _server_open_socket();
-    if (handler == -ERR_SOCK)
+    if (handler == ERR_SOCK)
     {
         syslog(LOG_ERR, "Error al abrir el socket");
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
 
     if(_link_socket_port(port, handler) != OK)
-        return -ERR_SOCK;
+        return ERR_SOCK;
 
     if ( _set_queue_socket(handler, max_long) != OK)
-        return -ERR_SOCK;
+        return ERR_SOCK;
 
     fcntl(handler, F_SETFL, O_NONBLOCK);
     /*
@@ -100,7 +100,7 @@ int server_listen_connect(int handler)
     if ( handler_accepted == -1)
     {
         syslog(LOG_ERR, "Error aceptando conexiones, %d", errno);
-        return -ERR_SOCK;
+        return ERR_SOCK;
     }
 
     return handler_accepted;
@@ -121,7 +121,7 @@ int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
     if (pthread_create(pth, NULL, thread_listener, thdata))
     {
         syslog(LOG_CRIT, "Error creando thread de escucha: %s", strerror(errno));
-        return -ERR;
+        return ERR;
     }
     else
     {
@@ -216,14 +216,14 @@ int create_new_connection_thread(int listen_sock, int commsocket)
     if (connsock < 0)
     {
         syslog(LOG_WARNING, "No se ha podido aceptar la conexión: %s", strerror(errno));
-        return -ERR;
+        return ERR;
     }
 
     if (send_message(commsocket, &connsock, sizeof(int)) < 0)
     {
         syslog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
         server_close_communication(connsock);
-        return -ERR;
+        return ERR;
     }
 
     syslog(LOG_NOTICE, "Nueva conexión creada con éxito.");

@@ -121,7 +121,7 @@ int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue)
     if (pthread_create(recv_thread, NULL, thread_receive, thdata))
     {
         syslog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));
-        return -ERR;
+        return ERR;
     }
     else
     {

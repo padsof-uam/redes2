@@ -16,7 +16,7 @@ int spawn_sender_thread (pthread_t *sender_thread, int queue)
     if (pthread_create(sender_thread, NULL, thread_send, thdata))
     {
         syslog(LOG_CRIT, "Error creando hilo sender de mensajes: %s", strerror(errno));
-        return -ERR;
+        return ERR;
     }
     else
     {

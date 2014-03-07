@@ -21,6 +21,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data* data, struct irc_globdata
  */
 char* irc_msgsep(char* str, int len);
 
+<<<<<<< HEAD
 /**
  * Ignora el prefijo de un mensaje IRC.
  * Una llamada con ":pref PRIVMSG" como argumento devolverá un puntero
@@ -29,6 +30,9 @@ char* irc_msgsep(char* str, int len);
  * @param  msg Puntero al mensaje.
  * @return     Puntero al inicio del mensaje con el prefijo ignorado.
  */
+=======
+
+>>>>>>> 0ebc431552ddc46e85f8c301d0a00118affb4f30
 char* irc_remove_prefix(char* msg);
 
 /**
@@ -60,7 +64,14 @@ int irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 *						Si este argumento no es NULL, se enviará este mensaje descartando el código de error correspondiente.
 * @return	La estructura rellena, lista para ser encolada o para ser añadida a la lista de mensaje por enviar.
 */
-struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg);
+struct sockcomm_data* irc_build_errmsg(int errcode, struct irc_msgdata * irc,char * msg);
+
+
+/**
+* 
+* 
+*/
+void _irc_numeric_reponse(struct irc_globdata * irc,int errcode,char * retval);
 
 /**
 * Recibe un código de error y devuelve una frase interpretando el error.

@@ -40,6 +40,13 @@ void irc_enqueue_msg(struct sockcomm_data* msg, int snd_qid);
 */
 struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg);
 
+/**
+* Recibe un código de error y devuelve una frase interpretando el error.
+* @param 	errcode		Código de error.
+* @return 	Interpretación del error.
+*/
+char * _irc_errmsg (int errcode);
+
 int irc_create_welcome_messages(struct ircuser* user, list* msgqueue);
 int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* message);
 #endif

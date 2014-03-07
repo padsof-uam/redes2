@@ -36,3 +36,16 @@ Estoy definiendo funciones implícitas que habrá que hacer, pero voy a ver cuá
 Interpretación de errores de channel... 
 
 rellenar irc_build_msg con las cadenas a partir de los errores. ¿Incluimos el syslog aquí y así nos olvidamos?
+
+Falta:
+- Completar irc_user_inchannel. ¿Pertenencia a una lista?
+- Hacer irc_channbyname
+- irc_channel_create
+- paramlist
+- irc_user_byid
+
+
+Dudas:
+- ircuser->channels es una lista de canales no? No de nombres de canales
+- irccjan->users es lista de usuarios o de nombres?¿?
+

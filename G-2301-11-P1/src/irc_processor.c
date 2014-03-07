@@ -4,6 +4,7 @@
 #include "irc_codes.h"
 #include "irc_funs.h"
 
+#include <string.h>
 #include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
@@ -135,8 +136,6 @@ char* irc_remove_prefix(char* msg)
 struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
 
 	struct sockcomm_data * msg_answer = malloc(sizeof(struct sockcomm_data));
-	char bye_msg[MAX_IRC_MSG+1];
-
 
 	msg_answer->fd = fd;
 
@@ -147,7 +146,17 @@ struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
 		return msg_answer;
 	}
 	else{
-		switch(errcode){
+		strncpy(msg_answer->data,_irc_errmsg(errcode),MAX_IRC_MSG);
+		msg_answer->len = strlen(_irc_errmsg(errcode));
+	}
+
+	return msg_answer;
+}
+
+char * _irc_errmsg(int errcode){
+
+	char * err_msg = strdup("ASDF");
+	switch(errcode){
 			case ERR_NOSUCHNICK:
 
 				break;
@@ -284,7 +293,5 @@ struct sockcomm_data* irc_build_errmsg(int errcode, int fd,char * msg){
 			default:
 				break;
 		}
-	}
-
-	return msg_answer;
+	return err_msg;
 }

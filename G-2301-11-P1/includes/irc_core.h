@@ -10,6 +10,15 @@ int irc_set_usernick(struct irc_globdata* data, int id, const char* nick);
 int irc_create_user(struct irc_globdata* data, int id);
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);
 void irc_destroy(struct irc_globdata* data);
+
+
+/**
+ * Elimina a un usuario del canal.
+ * @param  data 		La estructura de contiene toda la información.
+ * @param  channel 		El canal de que eliminar al usuario.
+ * @param  user 		El usuario a eliminar del canal.
+ * @return	OK/ERR
+ */	
 int irc_channel_part(struct irc_globdata* data, struct ircchan* channel, struct ircuser* user);
 void irc_delete_user(struct irc_globdata* data, struct ircuser* user);
 struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name);

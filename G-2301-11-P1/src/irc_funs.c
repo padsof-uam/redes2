@@ -144,7 +144,7 @@ int irc_join(void * data)
 	if(!user)
 	{
 		sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
-		irc_build_errmsg(ERR_NOTFOUND,ircdata,bye_msg);
+		list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NOTFOUND,ircdata,bye_msg));
 		return ERR_NOTFOUND;
 	}
 	chan_name = params[0];
@@ -210,11 +210,47 @@ int irc_quit(void* data)
 	return OK;
 }
 
-/** Pendientes **/
 int irc_part(void* data)
 {
+	int retval;
+	char * channel_name,*aux;
+	char * params[1];
+	struct irc_msgdata* ircdata = (struct irc_msgdata*) data;
+	struct ircuser * user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+	if (!user)
+	{
+		list_add(ircdata->msg_tosend, irc_build_errmsg(ERR_NOTREGISTERED, ircdata, NULL));
+		return ERR_NOTREGISTERED;
+	}
+	struct ircchan * channel;
+
+
+	irc_parse_paramlist(ircdata->msg, params, 1);
+	channel_name = params[0];
+	while(!channel_name){
+		aux = strchr(channel_name, ',');
+		if(!aux){
+			aux++;
+			*aux='\0';
+		}
+		channel = irc_channel_byname(ircdata->globdata, channel_name);
+		if (!channel)
+			list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_NOSUCHCHANNEL, ircdata, NULL));
+		else if(irc_user_inchannel(channel, user) != OK)
+			list_add(ircdata->msg_tosend,irc_build_errmsg(ERR_USERNOTINCHANNEL, ircdata, NULL));
+		else{ 
+			retval = irc_channel_part(ircdata->globdata, channel, user);
+			if( retval != OK)
+				syslog(LOG_ALERT, "No se ha podido eliminar al usuario %s del canal %s",user->nick,channel->name);
+			
+		}
+		channel_name = aux;
+	}	
+
 	return OK;
 }
+
+/** Pendientes **/
 int irc_topic(void* data)
 {
 	return OK;

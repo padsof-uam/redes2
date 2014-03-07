@@ -35,7 +35,7 @@ int send_message(int socket, const void *msg, ssize_t len)
         batch_sent = send(socket, buf + sent, len - sent, 0);
 
         if (batch_sent == -1)
-            return -ERR_SOCK;
+            return ERR_SOCK;
 
         sent += batch_sent;
     }
@@ -56,7 +56,7 @@ ssize_t rcv_message(int socket, void **buffer)
     internal_buf = (char *) calloc(buf_size, sizeof(char));
 
     if (!internal_buf)
-        return -ERR_MEM;
+        return ERR_MEM;
 
     while (sock_data_available(socket))
     {
@@ -70,7 +70,7 @@ ssize_t rcv_message(int socket, void **buffer)
             if (!realloc_retval)
             {
                 free(internal_buf);
-                return -ERR_MEM;
+                return ERR_MEM;
             }
             else
             {

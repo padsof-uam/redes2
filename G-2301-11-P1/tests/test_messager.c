@@ -194,12 +194,12 @@ int t_send_message__normal_len__message_sent()
 int t_send_message__negative_len__returns_err()
 {
     char data[3];
-    mu_assert_eq((int)send_message(0, data, -1), -ERR, "didn't return err");
+    mu_assert_eq((int)send_message(0, data, -1), ERR, "didn't return err");
     mu_end;
 }
 int t_send_message__msg_is_null__returns_err()
 {
-    mu_assert_eq((int)sendmsg(0, NULL, 12), -ERR, "didn't return err");
+    mu_assert_eq((int)sendmsg(0, NULL, 12), ERR, "didn't return err");
     mu_end;
 }
 

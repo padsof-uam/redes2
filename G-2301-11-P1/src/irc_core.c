@@ -145,6 +145,7 @@ struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name)
 	return dic_lookup(data->chan_map, name);
 }
 
+
 int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel)
 {
 
@@ -196,3 +197,4 @@ int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ir
 		return ERR_ALREADYREGISTRED;
 
 }
+

@@ -5,6 +5,105 @@
 #include <string.h>
 
 /* BEGIN TESTS */
+int t_irc_parse_paramlist__colon_at_start__ignored() {
+	int pnum = 4;
+	char* params[4];
+	char str[] = ":anice_prefix PRIVMSG a param not";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, 3, "Count incorrect");
+	mu_assert_streq(params[0], "a", "First param incorrect");
+	mu_assert_streq(params[1], "param", "First param incorrect");
+	mu_assert_streq(params[2], "not", "Third param has been modified");
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+int t_irc_parse_paramlist__size_not_enough__params_limited() {
+	int pnum = 2;
+	char* params[3];
+	char str[] = "PRIVMSG a param not enough";
+	int count;
+
+	params[2] = NULL;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, pnum, "Count incorrect");
+	mu_assert_streq(params[0], "a", "First param incorrect");
+	mu_assert_streq(params[1], "param", "First param incorrect");
+	mu_assert("Third param has been modified", !params[2]);
+
+	mu_end;
+}
+int t_irc_parse_paramlist__paramnum_eq_paramsize__fillsall() {
+	int pnum = 3;
+	char* params[3];
+	char str[] = "PRIVMSG a param not";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, pnum, "Count incorrect");
+	mu_assert_streq(params[0], "a", "param incorrect");
+	mu_assert_streq(params[1], "param", "param incorrect");
+	mu_assert_streq(params[2], "not", "param incorrect");
+
+	mu_end;
+}
+int t_irc_parse_paramlist__only_colon_param__params_filled() {
+	int pnum = 3;
+	char* params[3];
+	char str[] = ":anice_prefix PRIVMSG :a param not";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, 1, "Count incorrect");
+	mu_assert_streq(params[0], "a param not", "First param incorrect");
+
+	mu_end;
+}
+int t_irc_parse_paramlist__params_and_colon__params_filled() {
+	int pnum = 5;
+	char* params[5];
+	char str[] = "PRIVMSG two,three b :a param not";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, 3, "Count incorrect");
+	mu_assert_streq(params[0], "two,three", "param incorrect");
+	mu_assert_streq(params[1], "b", "param incorrect");
+	mu_assert_streq(params[2], "a param not", "param incorrect");
+	mu_end;
+}
+int t_irc_parse_paramlist__some_params_no_colon__params_filled() {
+	int pnum = 5;
+	char* params[5];
+	char str[] = "PRIVMSG two,three b";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, 2, "Count incorrect");
+	mu_assert_streq(params[0], "two,three", "param incorrect");
+	mu_assert_streq(params[1], "b", "param incorrect");
+	mu_end;
+}
+int t_irc_parse_paramlist__noparams__returnszero() {
+	int pnum = 5;
+	char* params[5];
+	char str[] = "PRIVMSG";
+	int count;
+
+	count = irc_parse_paramlist(str, params, pnum);
+
+	mu_assert_eq(count, 0, "Count incorrect");
+	mu_end;	
+}
 int t_irc_msgsep__length_limited__no_len_surpassing() {
 	char str[] = "123456\r\n123";
 	char* next = irc_msgsep(str, 3);
@@ -49,6 +148,13 @@ int test_irc_processor_suite(int* errors, int* success) {
 
 	printf("Begin test_irc_processor suite.\n");
 /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_parse_paramlist__colon_at_start__ignored);
+	mu_run_test(t_irc_parse_paramlist__size_not_enough__params_limited);
+	mu_run_test(t_irc_parse_paramlist__paramnum_eq_paramsize__fillsall);
+	mu_run_test(t_irc_parse_paramlist__only_colon_param__params_filled);
+	mu_run_test(t_irc_parse_paramlist__params_and_colon__params_filled);
+	mu_run_test(t_irc_parse_paramlist__some_params_no_colon__params_filled);
+	mu_run_test(t_irc_parse_paramlist__noparams__returnszero);
 	mu_run_test(t_irc_msgsep__length_limited__no_len_surpassing);
 	mu_run_test(t_irc_msgsep__null_str__return_null);
 	mu_run_test(t_irc_msgsep__with_crlf__separation_correct);

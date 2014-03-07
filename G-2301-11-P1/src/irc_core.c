@@ -138,7 +138,6 @@ int nick_compare(const void * nick1, const void * nick2)
 short irc_user_inchannel(struct ircchan * channel, struct ircuser * user)
 {
 	if(list_find(channel->users, irc_compare_user, (void *)user ) == -1)
-	//if(list_find(channel->users, strcmp, (void *)user->nick ) == -1)
 		return ERR_NOTFOUND;
 	else
 		return OK;

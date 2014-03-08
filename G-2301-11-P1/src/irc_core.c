@@ -210,6 +210,7 @@ struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name
 		return NULL;
 
 	strncpy(chan->name, name, MAX_CHAN_LEN);
+	chan->users = list_new();
 
 	list_add(data->chan_list, chan);
 	dic_add(data->chan_map, name, chan);

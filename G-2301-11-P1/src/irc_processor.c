@@ -3,12 +3,14 @@
 #include "irc_core.h"
 #include "irc_codes.h"
 #include "irc_funs.h"
+#include "strings.h"s
 
 #include <string.h>
 #include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <ctype.h>
 
 const char *_irc_cmds[] =
 {
@@ -111,7 +113,12 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
     int param_count = 0;
 
     msg = irc_remove_prefix(msg);
+    msg = strchr(msg, ' ');
 
+    if(!msg) 
+        return 0; /* No hay un espacio detrás del comando -> no hay argumentos. */
+
+    msg++; /* Marcamos al inicio de la lista de parámetros */
     colon = strchr(msg, ':');
 
     if (colon != NULL)
@@ -120,13 +127,18 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
         colon++;
     }
 
-    while ((arg = strsep(&msg, ",")) != NULL && param_count < max_params)
+    while ((arg = strsep(&msg, " ")) != NULL && param_count < max_params)
     {
+        strip(&arg);
+
+        if(strlen(arg) == 0)
+            continue;
+
         params[param_count] = arg;
         param_count++;
     }
 
-    if (param_count < max_params)
+    if (param_count < max_params && colon != NULL)
     {
         params[param_count] = colon;
         param_count++;

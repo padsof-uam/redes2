@@ -18,7 +18,6 @@ int t_irc_parse_paramlist__colon_at_start__ignored() {
 	mu_assert_streq(params[1], "param", "First param incorrect");
 	mu_assert_streq(params[2], "not", "Third param has been modified");
 
-	mu_fail("Not implemented");
 	mu_end;
 }
 int t_irc_parse_paramlist__size_not_enough__params_limited() {

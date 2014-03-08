@@ -26,7 +26,10 @@ TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
 OBJS_NOMAIN := $(filter-out %/$(TARGET).o, $(OBJS))
 
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
+DOC_TEXS+= $(DOCDIR)/latex/refman.tex
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
+
+DOXY_OUTPUTS := $(filter-out $(DOCDIR)/, $(dir $(wildcard $(DOCDIR)/*/)))
 
 P_GROUP = 2301
 P_NUM = 1
@@ -37,7 +40,7 @@ TAR_EXCLUDES= bin Makefile obj doc .tar.gz
 TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
 
 .PRECIOUS: %.o %.d
-.PHONY: debug clean pack
+.PHONY: debug clean pack doxydoc docclean
  
 all: debug test
 
@@ -91,9 +94,9 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
 	@echo "$< -> $@"
 	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-clean: 
+clean: docclean
 	-rm -rf $(OBJDIR) $(BINDIR) $(LIBDIR)
-	@cd $(DOCDIR); latexmk -C # Clean tex files.
+	
 
 ## Libraries
 
@@ -122,11 +125,27 @@ $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(INCS) 
 
 ### Documentation
 
-docs: $(DOC_PDFS)
+docs: doxydoc $(DOC_PDFS)
+
+# Por alguna razón, los manuales no tienen la codificación correcta. Por eso el for ese de ahí.
+doxydoc: 
+	@echo "Building doxygen docs..."
+	@doxygen
+	@echo "Converting files to correct encoding..."
+	@for f in doc/man/man3/*; do \
+		iconv -t latin1 "$$f" > iconv.tmp; \
+		mv iconv.tmp "$$f"; \
+	done
 
 %.pdf: %.tex
 	@echo Latexmk: generating $@
-	cd $(DOCDIR); latexmk -pdf -silent $(notdir $<)
+	@cd $(dir $<); latexmk -pdf -silent $(notdir $<)
+
+docclean:
+	@echo Removing LaTeX files...
+	@cd $(DOCDIR); latexmk -C # Clean tex files.
+	@echo Removing doxygen output...
+	-rm -r $(DOXY_OUTPUTS)
 
 ### Packing
 

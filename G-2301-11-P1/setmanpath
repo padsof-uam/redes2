@@ -1,0 +1,2 @@
+#!/bin/bash
+export MANPATH=$MANPATH:"$(pwd)/doc/man"

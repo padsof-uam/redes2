@@ -3,7 +3,7 @@
 #include "irc_core.h"
 #include "irc_codes.h"
 #include "irc_funs.h"
-#include "strings.h"s
+#include "strings.h"
 
 #include <string.h>
 #include <sys/syslog.h>
@@ -196,6 +196,7 @@ int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* m
 {
     int i, j;
     int chan_count, user_count;
+    struct ircchan* chan;
     list* user_list;
     struct ircuser* target;
 
@@ -203,13 +204,15 @@ int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* m
 
     for(i = 0; i < chan_count; i++)
     {
-        user_list = list_at(user->channels, i);
+        chan = list_at(user->channels, i);
+        user_list = chan->users;
         user_count = list_count(user_list);
 
         for(j = 0; j < user_count; j++)
         {
             target = list_at(user_list, j);
-            list_add(msgqueue, _irc_quit_message(user->name, message, user->fd));
+            if(irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
+                list_add(msgqueue, _irc_quit_message(user->nick, message, user->fd));
         }
     }
 

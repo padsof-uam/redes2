@@ -32,10 +32,12 @@ int t_irc_quit__message_provided__message_transmitted() {
 	struct ircchan* chan = irc_register_channel(irc, "testchan");
 	list* output;
 	struct sockcomm_data* msg;
+	struct ircuser* user = irc_register_user(irc, 1);
 
-	list_add(chan->users, irc_register_user(irc, 1));
+	list_add(chan->users, user);
 	list_add(chan->users, irc_register_user(irc, 2));
-
+	list_add(user->channels, chan);
+	
 	irc_set_usernick(irc, 1, "pepe");
 
 	output = _process_message(irc_quit, irc, 1, "QUIT Bye");
@@ -51,9 +53,11 @@ int t_irc_quit__no_message_provided__msg_is_nick() {
 	struct ircchan* chan = irc_register_channel(irc, "testchan");
 	list* output;
 	struct sockcomm_data* msg;
+	struct ircuser* user = irc_register_user(irc, 1);
 
-	list_add(chan->users, irc_register_user(irc, 1));
+	list_add(chan->users, user);
 	list_add(chan->users, irc_register_user(irc, 2));
+	list_add(user->channels, chan);
 
 	irc_set_usernick(irc, 1, "pepe");
 

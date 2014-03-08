@@ -68,5 +68,6 @@ short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 */
 struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name);
 
+int irc_compare_user(const void * user1, const void * user2);
 
 #endif

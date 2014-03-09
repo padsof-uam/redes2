@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -ggdb -Wall -pedantic -std=c89 -D_SVID_SOURCE
+CFLAGS = -ggdb -Wall -pedantic -D_GNU_SOURCE
 E_LIBS = -lpthread
 
 OBJDIR = obj
@@ -130,7 +130,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $^ $(E_LIBS) -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $^ $(E_LIBS) -o $@ $(LIBS) 
 
 ## Tests
 
@@ -138,7 +138,7 @@ test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $^ $(E_LIBS) -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) $^ $(E_LIBS) -o $@ $(LIBS) 
 
 ### Documentation
 
@@ -160,7 +160,7 @@ doxydoc:
 
 docclean:
 	@echo Removing LaTeX files...
-	@cd $(DOCDIR); latexmk -C # Clean tex files.
+	@cd $(DOCDIR); (which latexmk > /dev/null && latexmk -C) || true # Clean tex files if latexmk is present.
 	@echo Removing doxygen output...
 	@-rm -r $(DOXY_OUTPUTS)
 	

@@ -1,17 +1,18 @@
 #include "listener.h"
+#include "errors.h"
+#include "messager.h"
+#include "listener.h"
+
+#include <errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <strings.h>
-#include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "errors.h"
-#include "listener.h"
 #include <syslog.h>
-#include "messager.h"
+#include <strings.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>

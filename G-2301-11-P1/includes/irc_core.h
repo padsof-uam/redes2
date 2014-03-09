@@ -38,19 +38,14 @@ void irc_delete_user(struct irc_globdata* data, struct ircuser* user);
 struct ircchan* irc_register_channel(struct irc_globdata* data, const char* name);
 
 /**
-* Añade un usuario a un canal.
-* En caso de crearse un canal, el argumento key es descartado. Se tendrá que ejecutar mode después.
-* 	Además, el topic será el nombre del canal y el único usuario pertenciente, el que haya ejecutado JOIN.
-* @param	data		La estructura que contiene los diccionarios.
-* @param 	channel 	El nombre del canal al que queremos añædir el usuario.
-* @param 	user 		El usuario que queremos añadir al canal.
-* @param	key			La clave del canal proporcionada por el usuario. En caso de que el usuario no haya proporcionado ninguna este argumento será NULL.
-* @param 	channel 	Canal en el que se ha añadido el usuario.
-* @param 	ret_users 	Lista de usuarios pertenecientes al canal.
-* @return	Código de error.  Si la clave del canal no coincide, si es un canal para el que se necesita invitación,
-* 								si el usuario ya pertenece son posibles casos de error. Si el canal no existe, se creará.
-*/
-int irc_channel_adduser(struct irc_globdata* data, char* channel_name, struct ircuser* user, char * key , struct ircchan * channel);
+ * Añade un usuario a un canal.
+ * @param  data     Datos de IRC.
+ * @param  chan     Canal.
+ * @param  user     Usuario.
+ * @param  password Contraseña (opcional).
+ * @return          Código de error.
+ */
+int irc_channel_adduser(struct irc_globdata* data, struct ircchan* chan, struct ircuser* user, const char * password);
 
 /**
 * Busca al usuario en el canal.
@@ -66,7 +61,7 @@ short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 * @param	name	Nombre del canal que buscar.
 * @return	El ircchan correspondiente, o NULL en caso de no existir.
 */
-struct ircchan * irc_channel_byname(struct irc_globdata* data, char * name);
+struct ircchan * irc_channel_byname(struct irc_globdata* data, const char * name);
 
 int irc_compare_user(const void * user1, const void * user2);
 

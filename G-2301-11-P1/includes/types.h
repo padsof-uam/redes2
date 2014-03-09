@@ -15,6 +15,7 @@
 #define MAX_CHAN_LEN 200
 #define MAX_KEY_LEN 50
 #define MAX_TOPIC_LEN 500
+#define MAX_AWAYMSG_LEN 100
 
 #define MAX_MEMBERS_IN_CHANNEL 100
 #define MAX_CHANNELES_USER 10
@@ -36,7 +37,8 @@ struct ircchan {
 	chan_mode mode;
 	list* users; /* Lista de usuarios. */
 	dictionary* invited_users;
-	char key[MAX_KEY_LEN+1];
+	char password[MAX_KEY_LEN + 1];
+	short has_password;
 };
 
 struct ircuser {
@@ -44,6 +46,7 @@ struct ircuser {
 	char nick[MAX_NICK_LEN + 1];
 	char name[MAX_NAME_LEN + 1];
 	short is_away;
+	char away_msg[MAX_AWAYMSG_LEN + 1];
 	user_mode mode;
 	list* channels; /* Lista de canales*/
 };

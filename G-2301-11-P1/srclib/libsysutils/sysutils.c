@@ -8,6 +8,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/file.h>
 
 int write_pid(const char* file)
 {

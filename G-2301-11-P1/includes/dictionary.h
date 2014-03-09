@@ -3,7 +3,7 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 
-#define NHASH 757
+#define NHASH 103
 #define MULTIPLIER 31
 
 typedef struct dictionary dictionary;

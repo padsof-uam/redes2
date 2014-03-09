@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
+#include <stdarg.h>
 
 const char *_irc_cmds[] =
 {
@@ -219,38 +221,47 @@ int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* m
     return OK;
 }
 
-
-struct sockcomm_data *irc_build_errmsg(int errcode, struct irc_msgdata *irc , char *msg)
+struct sockcomm_data *irc_build_errmsg(struct irc_msgdata *irc, int errcode, const char *additional_params)
 {
-    struct sockcomm_data *msg_answer = malloc(sizeof(struct sockcomm_data));
-    char retval[MAX_IRC_MSG];
+    return irc_build_errmsg_withtext(irc, errcode, additional_params, irc_errstr(errcode));
+}
 
-    msg_answer->fd = irc->msgdata->fd;
+struct sockcomm_data *irc_build_errmsg_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
+{
+    struct ircuser* user = irc_user_byid(irc->globdata, irc->msgdata->fd);
+    char* nick;
+    char space[2] = "";
 
-    if (msg != NULL)
-    {
-        _irc_numeric_reponse(irc->globdata, OK, retval);
-        snprintf(msg_answer->data, MAX_IRC_MSG, "%s %s", retval, msg);
-        msg_answer->len = strlen(msg_answer->data + 1);
-        return msg_answer;
-    }
+    space[0] = '\0';
+    space[1] = '\0';
+
+    if(user)
+        nick = user->nick;
     else
-    {
-        _irc_numeric_reponse(irc->globdata, errcode, retval);
-        strncpy(msg_answer->data, retval, MAX_IRC_MSG);
-        msg_answer->len = strlen(_irc_errmsg(errcode));
-    }
+        nick = "?";
 
-    return msg_answer;
+    if(!additional_params)
+        additional_params = "";
+    else
+        space[0] = ' ';
+
+    return irc_response_create(irc->msgdata->fd, ":%s %d %s%s%s :%s", irc->globdata->servername, errcode, nick, space, additional_params, text);    
 }
 
-
-void _irc_numeric_reponse(struct irc_globdata *irc, int errcode, char *retval)
+struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
 {
-    sprintf(retval, ":%s %d %s", irc->servername, errcode, _irc_errmsg(errcode));
+    va_list ap;
+    struct sockcomm_data* msg = malloc(sizeof(struct sockcomm_data));
+
+    msg->fd = fd;
+    va_start(ap, fmt_string);
+    msg->len = vsnprintf(msg->data, MAX_IRC_MSG, fmt_string, ap);
+    va_end(ap);
+
+    return msg;
 }
 
-char *_irc_errmsg(int errcode)
+char *irc_errstr(int errcode)
 {
 
     switch (errcode)
@@ -391,4 +402,6 @@ char *_irc_errmsg(int errcode)
     default:
         return "Rellena este error";
     }
+
+    return "Default error";
 }

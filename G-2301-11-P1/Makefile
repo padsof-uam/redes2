@@ -1,25 +1,18 @@
-GCC = gcc
-CFLAGS = -ggdb -Wall -pedantic -ansi -D_SVID_SOURCE
-E_LIBS = -pthread
-TARGET = main
-LIB = 
-INCLUDES = -I./includes/
+include Makefile.inc
 
-OBJDIR = obj
-SRCDIR = src
-INCDIR = includes
-BINDIR = bin
-DOCDIR = doc
-LIBDIR = lib
-LIBSRCDIR = srclib
-TESTDIR = tests
+TARGET = main
+INCLUDES = -I./includes/
 
 INCS := $(wildcard $(INCDIR)/*.h)
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
 
-LIB_SRCS := $(wildcard $(LIBSRCDIR)/*.c)
+LIB_SRCS := $(wildcard $(LIBSRCDIR)/**/*.c)
 LIB_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(LIB_SRCS)))
+LIB_NAMES := $(patsubst $(LIBSRCDIR)/%, %, $(wildcard $(LIBSRCDIR)/*))
+LIBS :=	$(addprefix $(LIBDIR)/, $(addsuffix .a, $(LIB_NAMES)))
+LIB_DEPS := $(addsuffix .deps, $(addprefix $(OBJDIR)/., $(LIB_NAMES)))
+LIB_OBJDIRS := $(addprefix $(OBJDIR)/$(LIBSRCDIR)/, $(LIB_NAMES))
 
 TEST_SRCS := $(wildcard $(TESTDIR)/*.c)
 TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
@@ -62,15 +55,27 @@ $(OBJS): | $(OBJDIR)
 
 ## Dependencies
 
-depend: $(OBJDIR)/.deps
+depend: $(OBJDIR)/.deps $(LIB_DEPS)
 
-$(OBJDIR)/.deps: $(SRCS) $(LIB_SRCS) | $(OBJDIR)
+$(OBJDIR)/.deps: $(SRCS) | $(OBJDIR)
 	@-rm -f $(OBJDIR)/.deps
-	@$(GCC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
+	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
+	@awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' $@ > "$@.0"
+	@mv "$@.0" $@
 	@awk '{printf("$(OBJDIR)/$(SRCDIR)/%s\n", $$0)}' $@ > "$@.0"
 	@mv "$@.0" $@
 
+$(OBJDIR)/.%.deps: $(LIBSRCDIR)/%/*.c | $(OBJDIR)
+	@-rm -f $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $@;
+	@awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' $@ > "$@.0"
+	@mv "$@.0" $@
+	@awk '{printf("$(OBJDIR)/$(LIBSRCDIR)/$*/%s\n", $$0)}' $@ > "$@.0"
+	@mv "$@.0" $@
+	@echo $(LIBDIR)/$*.a: $(patsubst %.c, $(OBJDIR)/%.o, $^) >> $@
+
 -include $(OBJDIR)/.deps
+-include $(LIB_DEPS)
 
 ## Directories
 
@@ -79,6 +84,7 @@ $(OBJDIR):
 	@mkdir -p $(OBJDIR)/$(SRCDIR)
 	@mkdir -p $(OBJDIR)/$(LIBSRCDIR)
 	@mkdir -p $(OBJDIR)/$(TESTDIR)
+	@mkdir -p $(LIB_OBJDIRS)
 
 $(BINDIR):
 	@echo Creating bin directory
@@ -92,36 +98,33 @@ $(LIBDIR):
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
 	@echo "$< -> $@"
-	@$(GCC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean: docclean
+	@echo Clearing build folders...
 	-rm -rf $(OBJDIR) $(BINDIR) $(LIBDIR)
 	
-
 ## Libraries
 
-libr: $(LIBDIR)/$(LIB)
-	@echo $(LIB_OBJS)
-lib/%: $(LIB_OBJS) | $(LIBDIR)
-	@echo $(LIB_OBJS)
-	@echo Creating library $@
-	@ar -r $@ $^ 
+$(LIBDIR)/%.a: | $(LIBDIR) $(OBJDIR)/$(LIBSRCDIR)/%/
+	@echo Building library $*...
+	@$(AR) -r $@ $?
 
 ## Executable
 
 $(TARGET): $(BINDIR)/$(TARGET)
 
-$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend
+$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend $(LIBS)
 	@echo Building final target: $@
-	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIB) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $@ $^ $(E_LIBS)
 
 ## Tests
 
 test: $(BINDIR)/test | $(OBJDIR)
 
-$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(INCS) | $(BINDIR) depend
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(INCS) | $(BINDIR) depend $(LIBS)
 	@echo Building test executable
-	@$(GCC) $(CFLAGS) $(INCLUDES) $(LIB) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $@ $^ $(E_LIBS)
 
 ### Documentation
 
@@ -145,7 +148,9 @@ docclean:
 	@echo Removing LaTeX files...
 	@cd $(DOCDIR); latexmk -C # Clean tex files.
 	@echo Removing doxygen output...
+ifdef $(DOXY_OUTPUTS)
 	-rm -r $(DOXY_OUTPUTS)
+endif
 
 ### Packing
 

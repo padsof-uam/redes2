@@ -109,6 +109,16 @@ generate_file() {
 	echo "Created src/$name.c and includes/$name.h"
 }
 
+create_lib() {
+
+	if [ -z $1 ]; then
+		echo "We need a library name."
+		return
+	fi
+
+	mkdir srclib/lib$1
+}
+
 case $1 in
 	"header")
 		create_header $2
@@ -119,12 +129,16 @@ case $1 in
 	"newprac")
 		create_prac_dir $2
 		;;
+	"lib")
+		create_lib $2
+		;;
 	*)
 		cat << EOF
 Available commands.
 	-header <name>: Create a header file.
 	-file <name>: create file and header.
 	-newprac <name>: create prac dir.
+	-lib <name>: create a new library in the directory
 EOF
 		;;
 esac

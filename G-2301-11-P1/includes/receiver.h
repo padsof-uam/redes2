@@ -8,30 +8,38 @@
 
 #define MAX_ERR_THRESHOLD 5
 
+/**
+ * Estructura que contiene los datos necesarios para el funcionamiento d
+ * 	del hilo de recepción.
+ */
 struct receiver_thdata
 {
-    int socket;
-    int queue;
-};
-
-struct info_new_connection
-{
-    int socket;
+    int socket; /**< Socket de comunicaciones con el hilo de recepción de conexiones */
+    int queue; /**< ID de la cola por donde se enviarán los mensajes */
 };
 
 /**
-* Función que empieza a ejecutar el hilo receptor.
-* @param    st  La información necesaria, en forma de *********************************
-* @return   **********************************************************
-*/
+ * @internal
+ * Punto de entrada para el hilo receptor.
+ * @param    st  La información necesaria, en forma de receiver_thdata
+ * @return   NULL en todo caso.
+ * @see receiver_thdata
+ */
 void *thread_receive(void *st);
 
 /**
-* Crea un hilo que se encarga de gestionar la recepción en las comunicaciones.
-* @param    recv_thread     Identidifacor del hilo creado.
-* @return                   Código de error.
+* Crea un hilo que se encarga de gestionar la recepción de comunicaciones.
+* @param    recv_thread     Identificador del hilo creado.
+* @param    commsock        Socket de comunicaciones con el hilo de recepción de
+*                               conexiones.
+* @param    queue           ID de la cola de comunicaciones con el hilo de procesado
+*                           	de mensajes. Los mensajes enviados a través de esta cola
+*                           	serán del tipo msg_sockcommdata
+* @see 	sockcomm_data
+* @see  msg_sockcommdata
+* @return                   Código de error si algo falló.
 */
-int spawn_receiver_thread(pthread_t *recv_thread, int fd, int queue);
+int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue);
 
 /**
 * Añade una nueva conexión a la estructura pollfds dinámica.
@@ -57,13 +65,14 @@ int remove_connection(struct pollfds *pfds, int fd);
 */
 int receive_parse_message(int fd, char *message);
 
-/* TODO: Documentar esto bien y poner los parámetros bien */
 /**
-* Envía la información al proceso principal.
-* @param    main_process    Estructura con toda la información necesaria para comunicarse con el proceso principal.
-* @param    message         El mensage para ser enviado al proceso principal (sin ser parseado).
-* @return                   Código de error.
-*/
-int send_to_main(int fd_main, int fd, char *message, int msglen);
+ * Envía un paquete recibido al hilo de procesado.
+ * @param  queue   Cola por donde se enviará el mensaje.
+ * @param  fd      Socket que ha generado el mensaje.
+ * @param  message Cadena con el mensaje.
+ * @param  msglen  Longitud del mensaje
+ * @return         Código de error.
+ */
+int send_to_main(int queue, int fd, char *message, int msglen);
 
 #endif

@@ -4,56 +4,66 @@
 #include <poll.h>
 #include "errors.h"
 
-#define DEFAULT_PFDS_LEN 20
+#define DEFAULT_PFDS_LEN 20 /**< Longitud inicial del array de descriptores. */
 
+/**
+ * Estructura que contiene un conjunto dinámico de descriptores 
+ * 	de fichero sobre los que hacer poll.
+ * 	@see poll(2)
+ */
 struct pollfds {
-	struct pollfd* fds;
-	int len;
-	int capacity;
-	short flags;
+	struct pollfd* fds; /**< Lista de pollfds. */
+	int len; /**< Número de descriptores de fichero almacenados */
+	int capacity; /**< Capacidad de la estructura */
+	short flags; /**< Flags por defecto para nuevos descriptores */
 };
 
 /**
- * initialize a dynamic pollfds structure.
- * @param default_flags default flags for new fds.
- * @return pollfds structure.
+ * Inicializa la estructura pollfds.
+ * @param default_flags Flags por defecto para los nuevos pollfd
+ * @return Estructura pollfds creada.
  */
 struct pollfds* pollfds_init(short default_flags);
 
 /**
- * Set the capacity for the dynamic struct list.
- * @param  capacity New capacity.
- * @return error code.
+ * @internal
+ * Aumenta la capacidad de la estructura.
+ * @param  pfds     Estructura.
+ * @param  capacity Nueva capacidad.
+ * @return Código de error
  */
 int pollfds_setcapacity(struct pollfds* pfds, int capacity);
 
 /**
- * Add a file descriptor 
- * @param pfds poll fds structure.
- * @param fd   fd to add.
- * @return error code.
+ * Añade un descriptor.
+ * @param  pfds Estructura.
+ * @param  fd   Descriptor de fichero.
+ * @return      Código OK/ERR
  */
 int pollfds_add(struct pollfds* pfds, int fd);
 
 /**
- * Remove a file descriptor.
- * @param pfds poll fds structure.
- * @param fd   file descriptor.
- * @return error code.
+ * Elimina un descriptor.
+ * @param  pfds Estructura
+ * @param  fd   Descriptor a eliminar.
+ * @return      Código OK/ERR:
  */
 int pollfds_remove(struct pollfds* pfds, int fd);
 
 /**
- * Executes the poll(2) system call.
- * @param  pfds    Poll fds structure
- * @param  timeout Timeout as defined in poll man.
- * @return         fds ready for I/O
+ * Ejecuta la llamada a poll con los descriptores almacenados.
+ * @see poll(2)
+ * @param  pfds    Estructura
+ * @param  timeout Timeout tal y como está definido para poll(2). Si es mayor que cero,
+ *                 	espera ese número de milisegundos. Si es cero, vuelve sin bloquear y
+ *                 	si es -1 espera indefinidamente.
+ * @return         Número de descriptores listos para I/O, el mismo código devuelto por poll(2).
  */
 int pollfds_poll(struct pollfds* pfds, int timeout);
 
 /**
- * Destroy memory and free resources
- * @param pfds poll fds structure
+ * Destruye la estructura y libera los recursos.
+ * @param pfds Estructura.
  */
 void pollfds_destroy(struct pollfds* pfds);
 

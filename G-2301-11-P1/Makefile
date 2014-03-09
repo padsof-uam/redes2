@@ -162,10 +162,8 @@ docclean:
 	@echo Removing LaTeX files...
 	@cd $(DOCDIR); latexmk -C # Clean tex files.
 	@echo Removing doxygen output...
-ifdef $(DOXY_OUTPUTS)
-	-rm -r $(DOXY_OUTPUTS)
-endif
-
+	@-rm -r $(DOXY_OUTPUTS)
+	
 ### Packing
 
 pack: $(DOC_PDFS)

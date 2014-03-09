@@ -4,33 +4,25 @@
 #include <errors.h>
 #include <pthread.h>
 
-struct sender_thdata{
+/** Estructura que se pasará al hilo de envío como argumento */
+struct sender_thdata {
 	int queue;
 };
 
-
 /**
-* Crea el hilo gestor del envío de mensajes en la comunicación.
-* @param	sender_thread		Identificador del hilo creado.
-* @return						Código de error.
-*/
+ * Crea el hilo encargado de enviar mensajes
+ * @param  sender_thread Identificador del hilo.
+ * @param  queue         Cola donde se recibirán los mensajes a enviar.
+ * @see msg_sockcommdata
+ * @return               Código de error si algo sale mal.
+ */
 int spawn_sender_thread (pthread_t * sender_thread,int queue);
 
-
-/** Función que empieza a ejecutar sender.
-* @param 	st	La información necesaria, en forma de *********************************
-* @return 	**********************************************************
-*/
+/**
+ * Punto de entrada para el hilo de envío.
+ * @param  st Datos, como estructura sender_thdata.
+ * @return    NULL en todo caso.
+ */
 void * thread_send(void * st);
 
-/**
-* Función auxiliar encargada de enviar un mensaje por un socket. Esta función permite,
-* en caso de querer añadir funcionlidades (seguridad, cifrado) cambiar simplemente esta función
-* y nada más.
-* @param	fd			identificador del socekt por el que mandar el mensaje.
-* @param 	message 	mensaje a enviar.
-* @param 	len			longitud del mensaje a enviar.
-* @return	Código de error.
-*/
-int send_message(int fd, char * message,int len);
 #endif

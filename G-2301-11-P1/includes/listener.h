@@ -11,12 +11,15 @@
 
 #define COMM_STOP 1
 
-typedef void* (*connection_handler)(void*);
-
+/**
+ * Estructura que almacena los datos necesarios para el funcionamiento
+ * 	del hilo de escucha de nuevas conexiones.
+ */
 struct listener_thdata {
-	int port;
-	int commsocket;
-	int listen_sock;
+	int port; /**< Puerto de escucha */
+	int commsocket; /**< Socket de comunicaciones con el hilo principal. */
+	int listen_sock; /**< Socket de escucha. Se guarda en la 
+						estructura para poder hacer la limpieza con pthread_cleanup */
 };
 
 /**
@@ -56,7 +59,7 @@ int spawn_listener_thread(pthread_t* pth, int port, int commsocket);
 /**
  * Función que se encarga de escuchar las conexiones entrandes.
  * @param 	data 		Estructura listener_thdata con los datos necesarios.
- * @return	***********************************************
+ * @return	Devuelve siempre NULL:
  */
 void* thread_listener(void* data);
 

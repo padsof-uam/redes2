@@ -1,10 +1,12 @@
-#include <sys/socket.h>
 #include "sender.h"
+#include "poller.h"
+#include "types.h"
+#include "messager.h"
+
+#include <sys/socket.h>
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
-#include "poller.h"
-#include "types.h"
 #include <unistd.h>
 
 int spawn_sender_thread (pthread_t *sender_thread, int queue)

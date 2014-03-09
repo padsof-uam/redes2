@@ -7,6 +7,7 @@
 #include "sender.h"
 #include "cmd_processor.h"
 #include "irc_processor.h"
+#include "sysutils.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -31,6 +32,12 @@
 #define PID_FILE "/tmp/redirc.pid"
 #define LOCK_FILE "/tmp/redirc.lock"
 
+/**
+ * Macro para cancelar un hilo si está funcionando.
+ * Deberá existir una variable th_name_running que indique si está funcionando,
+ *     y otra th_name_th con el identificador del hilo (tipo pthread_t).
+ * @param th_name Nombre del hilo.
+ */
 #define irc_pth_exit(th_name) do { if(th_name##_running) pthread_cancel_join(th_name##_th); } while(0)
 #define irc_exit(code) do { retval = code; goto cleanup; } while (0);
 
@@ -63,77 +70,6 @@ static void capture_signal(int sig)
     }
 }
 
-static int write_pid()
-{
-    FILE *pid_file;
-
-    pid_file = fopen(PID_FILE, "w");
-
-    if (!pid_file)
-        return ERR;
-
-    fprintf(pid_file, "%d\n", getpid());
-    fclose(pid_file);
-    return OK;
-}
-
-static int send_kill_signal()
-{
-    FILE *pid_file;
-    pid_t pid;
-    int read;
-    int max_ms_wait = 5000;
-    int ms_wait_interval = 200;
-    int ms_waited = 0;
-    struct timespec ts;
-
-    ts.tv_nsec = ms_wait_interval * 1000;
-    ts.tv_sec = 0;
-
-    pid_file = fopen(PID_FILE, "r");
-
-    if (!pid_file)
-        return ERR;
-
-    read = fscanf(pid_file, "%d", &pid);
-    fclose(pid_file);
-
-    if (read < 1)
-        return ERR;
-
-    if (kill(pid, SIGTERM) == -1)
-    {
-        perror("kill");
-        return ERR;
-    }
-
-    while (ms_waited < max_ms_wait)
-    {
-        if (kill(pid, 0) == -1) /* Devuelve -1 si el proceso ya ha salido */
-            return OK;
-
-        nanosleep(&ts, NULL);
-        ms_waited += ms_wait_interval;
-    }
-
-    printf("Forzando salida con SIGKILL.\n");
-
-    kill(pid, SIGKILL);
-
-    return OK;
-}
-
-int try_getlock()
-{
-    int pid_file = open(LOCK_FILE, O_CREAT | O_RDWR, 0666);
-    int rc = flock(pid_file, LOCK_EX | LOCK_NB);
-    
-    if (rc && EWOULDBLOCK == errno)
-            return 0;
-
-    return 1;
-}
-
 int main(int argc, char const *argv[])
 {
     int comm_socks[2];
@@ -141,14 +77,19 @@ int main(int argc, char const *argv[])
     short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0;
     int rcv_qid = 0, snd_qid = 0, master_qid = 0;
     int retval = EXIT_SUCCESS;
+    int kill_retval;
 
     if (argc > 1 && !strcmp(argv[1], "stop"))
     {
         printf("Parando...\n");
-        if (send_kill_signal() == OK)
+        kill_retval = read_pid_and_kill(PID_FILE);
+        
+        if (kill_retval == 0)
             printf("Daemon parado.\n");
+        else if (kill_retval == 1)
+            printf("El daemon no responde. Salida forzada.\n");
         else
-            printf("No se ha podido parar el daemon.\n");
+            fprintf(stderr, "No se ha podido parar el daemon: %s\n", strerror(errno));
 
         exit(EXIT_SUCCESS);
     }
@@ -162,15 +103,15 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE)
     }
 
-    if(!try_getlock())
+    if (!try_getlock(LOCK_FILE))
     {
-    	syslog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
-    	irc_exit(EXIT_FAILURE);
+        syslog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
+        irc_exit(EXIT_FAILURE);
     }
 
     syslog(LOG_NOTICE, "Daemon empezando.\n");
 
-    if (write_pid() < 0)
+    if (write_pid(PID_FILE) < 0)
     {
         syslog(LOG_ERR, "Error escribiendo en pid_file. Sólo se podrá parar el daemon con kill.");
     }
@@ -211,7 +152,6 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
-    /* sleep(50); */
     if (spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
     {
         syslog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));

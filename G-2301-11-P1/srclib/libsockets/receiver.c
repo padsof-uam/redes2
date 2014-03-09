@@ -156,6 +156,8 @@ int send_to_main(int queue, int fd, char *message, int msglen)
             syslog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");
         else
             syslog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal: %s", strerror(errno));
+        
+        return ERR;
     }
 
     return OK;

@@ -1,12 +1,8 @@
 #include "poller.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-/**
- * initialize a dynamic pollfds structure.
- * @param default_flags default flags for new fds.
- * @return pollfds structure.
- */
 struct pollfds *pollfds_init(short default_flags)
 {
     struct pollfds *pfds = (struct pollfds *) malloc(sizeof(struct pollfds));
@@ -29,11 +25,6 @@ struct pollfds *pollfds_init(short default_flags)
     return pfds;
 }
 
-/**
- * Set the capacity for the dynamic struct list.
- * @param  capacity New capacity.
- * @return OK if correct, ERR if error.
- */
 int pollfds_setcapacity(struct pollfds *pfds, int capacity)
 {
     struct pollfd *new_fds_list = NULL;
@@ -52,11 +43,6 @@ int pollfds_setcapacity(struct pollfds *pfds, int capacity)
     return OK;
 }
 
-/**
- * Add a file descriptor
- * @param pfds poll fds structure.
- * @param fd   fd to add.
- */
 int pollfds_add(struct pollfds *pfds, int fd)
 {
     if (pfds->len == pfds->capacity)
@@ -70,12 +56,6 @@ int pollfds_add(struct pollfds *pfds, int fd)
     return OK;
 }
 
-/**
- * Remove a file descriptor.
- * @param pfds poll fds structure.
- * @param fd   file descriptor.
- * @return error code.
- */
 int pollfds_remove(struct pollfds *pfds, int fd)
 {
     int i;
@@ -93,21 +73,11 @@ int pollfds_remove(struct pollfds *pfds, int fd)
     return OK;
 }
 
-/**
- * Executes the poll(2) system call.
- * @param  pfds    Poll fds structure
- * @param  timeout Timeout as defined in poll man.
- * @return         fds ready for I/O
- */
 int pollfds_poll(struct pollfds *pfds, int timeout)
 {
     return poll(pfds->fds, pfds->len, timeout);
 }
 
-/**
- * Destroy memory and free resources
- * @param pfds poll fds structure
- */
 void pollfds_destroy(struct pollfds *pfds)
 {
     if (pfds)

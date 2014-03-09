@@ -1,4 +1,15 @@
-include Makefile.inc
+CC = cc
+CFLAGS = -ggdb -Wall -pedantic -std=c89 -D_SVID_SOURCE
+E_LIBS = -lpthread
+
+OBJDIR = obj
+SRCDIR = src
+INCDIR = includes
+BINDIR = bin
+DOCDIR = doc
+LIBDIR = lib
+LIBSRCDIR = srclib
+TESTDIR = tests
 
 TARGET = main
 INCLUDES = -I./includes/
@@ -19,10 +30,13 @@ TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
 OBJS_NOMAIN := $(filter-out %/$(TARGET).o, $(OBJS))
 
 DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
-DOC_TEXS+= $(DOCDIR)/latex/refman.tex
+DOC_TEXS += $(DOCDIR)/latex/refman.tex
 DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
 
 DOXY_OUTPUTS := $(filter-out $(DOCDIR)/, $(dir $(wildcard $(DOCDIR)/*/)))
+
+FMT_BOLD := $(shell tput bold)
+FMT_NORM := $(shell tput sgr0)
 
 P_GROUP = 2301
 P_NUM = 1
@@ -107,24 +121,24 @@ clean: docclean
 ## Libraries
 
 $(LIBDIR)/%.a: | $(LIBDIR) $(OBJDIR)/$(LIBSRCDIR)/%/
-	@echo Building library $*...
+	@echo "$(FMT_BOLD)Building library $*... $(FMT_NORM)"
 	@$(AR) -r $@ $?
 
 ## Executable
 
 $(TARGET): $(BINDIR)/$(TARGET)
 
-$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(INCS) | $(BINDIR) depend $(LIBS)
-	@echo Building final target: $@
-	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $@ $^ $(E_LIBS)
+$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) | $(BINDIR) depend $(LIBS)
+	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
+	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $^ $(E_LIBS) -o $@
 
 ## Tests
 
 test: $(BINDIR)/test | $(OBJDIR)
 
-$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(INCS) | $(BINDIR) depend $(LIBS)
-	@echo Building test executable
-	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $@ $^ $(E_LIBS)
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) | $(BINDIR) depend $(LIBS)
+	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
+	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $^ $(E_LIBS) -o $@
 
 ### Documentation
 
@@ -132,7 +146,7 @@ docs: doxydoc $(DOC_PDFS)
 
 # Por alguna razón, los manuales no tienen la codificación correcta. Por eso el for ese de ahí.
 doxydoc: 
-	@echo "Building doxygen docs..."
+	@echo "$(FMT_BOLD)Building doxygen docs... $(FMT_NORM)"
 	@doxygen
 	@echo "Converting files to correct encoding..."
 	@for f in doc/man/man3/*; do \
@@ -141,7 +155,7 @@ doxydoc:
 	done
 
 %.pdf: %.tex
-	@echo Latexmk: generating $@
+	@echo "$(FMT_BOLD)Latexmk: generating $@ $(FMT_NORM)"
 	@cd $(dir $<); latexmk -pdf -silent $(notdir $<)
 
 docclean:

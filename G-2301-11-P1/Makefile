@@ -29,7 +29,7 @@ P_NUM = 1
 P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 
-TAR_EXCLUDES= bin Makefile obj doc .tar.gz
+TAR_EXCLUDES= bin Makefile obj doc .tar.gz .git
 TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
 
 .PRECIOUS: %.o %.d

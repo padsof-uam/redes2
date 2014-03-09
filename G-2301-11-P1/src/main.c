@@ -65,8 +65,8 @@ static void capture_signal(int sig)
 {
     if (sig == SIGTERM)
     {
-        pthread_cond_signal(&stop_cond);
         stop = 1;
+        pthread_cond_signal(&stop_cond);
     }
 }
 
@@ -83,7 +83,7 @@ int main(int argc, char const *argv[])
     {
         printf("Parando...\n");
         kill_retval = read_pid_and_kill(PID_FILE);
-        
+
         if (kill_retval == 0)
             printf("Daemon parado.\n");
         else if (kill_retval == 1)
@@ -182,11 +182,12 @@ int main(int argc, char const *argv[])
 
     syslog(LOG_NOTICE, "Todas las estructuras creadas. Daemon iniciado.");
 
+    /* Nos dedicamos a esperar hasta que nos digan que paramos */
     pthread_mutex_lock(&stop_mutex);
-
-    while (!stop)
-        pthread_cond_wait(&stop_cond, &stop_mutex);
-
+    {
+        while (!stop)
+            pthread_cond_wait(&stop_cond, &stop_mutex);
+    }
     pthread_mutex_unlock(&stop_mutex);
 
     syslog(LOG_NOTICE, "Daemon saliendo...");

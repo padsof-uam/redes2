@@ -184,16 +184,6 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
-static struct sockcomm_data* _irc_quit_message(const char* name, const char* message, int fd)
-{
-    struct sockcomm_data* smsg = malloc(sizeof(struct sockcomm_data*));
-
-    smsg->fd = fd;
-    smsg->len = snprintf(smsg->data, MAX_IRC_MSG, ":%s QUIT :%s", name, message);
-
-    return smsg;
-}
-
 int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* message)
 {
     int i, j;
@@ -214,7 +204,7 @@ int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* m
         {
             target = list_at(user_list, j);
             if(irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
-                list_add(msgqueue, _irc_quit_message(user->nick, message, user->fd));
+                list_add(msgqueue, irc_response_create(target->fd, ":%s QUIT :%s", user->nick, message));
         }
     }
 

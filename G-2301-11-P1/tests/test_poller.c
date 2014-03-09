@@ -16,6 +16,8 @@ int t_pollfds_remove__moves_last() {
 
 	mu_assert_eq(pfds->fds[2].fd, 4, "last message is not moved");
 	mu_assert_eq(pfds->len, 4, "len was not modified");
+
+	pollfds_destroy(pfds);
 	mu_end;
 }
 
@@ -30,6 +32,7 @@ int t_pollfds_add__normal_add__adds_fds() {
 	mu_assert_eq(pfds->fds[0].fd, fd, "fd is not the same");
 	mu_assert_eq(pfds->fds[0].events, flags, "flags are not correctly set");
 
+	pollfds_destroy(pfds);
 	mu_end;
 }
 int t_pollfds_add__no_more_capacity__asks_more_memory() {
@@ -45,6 +48,7 @@ int t_pollfds_add__no_more_capacity__asks_more_memory() {
 	mu_assert_eq(pfds->len, DEFAULT_PFDS_LEN + 1, "len is not correct");
 	mu_assert_eq(pfds->fds[DEFAULT_PFDS_LEN].fd, i, "fd is not the same");
 
+	pollfds_destroy(pfds);
 	mu_end;
 }
 int t_pollfds_setcapacity__capacity_is_greater__realloc_mem() {
@@ -53,7 +57,8 @@ int t_pollfds_setcapacity__capacity_is_greater__realloc_mem() {
 
 	mu_assert_eq(retval, OK, "operation failed");
 	mu_assert_eq(pfds->capacity, DEFAULT_PFDS_LEN + 20,	"capacity not modified");
-
+	
+	pollfds_destroy(pfds);
 	mu_end;
 }
 int t_pollfds_setcapacity__capacity_is_inferior__notchanged() {
@@ -62,7 +67,8 @@ int t_pollfds_setcapacity__capacity_is_inferior__notchanged() {
 
 	mu_assert_eq(retval, OK, "operation failed");
 	mu_assert_eq(pfds->capacity, DEFAULT_PFDS_LEN,	"capacity modified");
-
+	
+	pollfds_destroy(pfds);
 	mu_end;
 }
 

@@ -136,6 +136,7 @@ int t_irc_msgsep__no_crlf__notmodified() {
 	mu_assert("the crlf was found.", next == NULL);
 	mu_assert("separated message is not the same", !strcmp(str, original));
 
+	free(original);
 	mu_end;
 }
 

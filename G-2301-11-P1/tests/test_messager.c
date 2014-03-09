@@ -83,6 +83,7 @@ cleanup:
     close(s_sck);
 nosock_cleanup:
     free(rcvbuf);
+    free(data);
 
     return retval;
 }
@@ -154,6 +155,7 @@ cleanup:
     close(s_sck);
 nosock_cleanup:
     free(rcvbuf);
+    free(data);
 
     return retval;
 }

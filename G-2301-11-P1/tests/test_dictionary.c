@@ -21,6 +21,7 @@ int t_dic_lookup__existing__returns_item()
     mu_assert("value is null", result);
     mu_assert("value is not the same", strcmp(result, str) == 0);
 
+    dic_destroy(dic, NULL);
     mu_end;
 }
 int t_dic_lookup__non_existing__returns_null()
@@ -35,6 +36,7 @@ int t_dic_lookup__non_existing__returns_null()
     result = dic_lookup(dic, &key);
     mu_assert("value is not null", result == NULL);
 
+    dic_destroy(dic, NULL);
     mu_end;
 }
 int t_dic_remove__existing__removed()
@@ -50,6 +52,8 @@ int t_dic_remove__existing__removed()
     count = dic_count(dic);
     mu_assert_eq(retval, OK, "retval is not ok");
     mu_assert_eq(count, 0, "number of elements is not correct");
+
+    dic_destroy(dic, NULL);
     mu_end;
 }
 int t_dic_remove__non_existing__not_removed()
@@ -67,6 +71,8 @@ int t_dic_remove__non_existing__not_removed()
     mu_assert_eq(retval, ERR_NOTFOUND, "retval is not ok");
     mu_assert_eq(count, 1, "number of elements is not correct");
 
+
+    dic_destroy(dic, NULL);
     mu_end;
 }
 
@@ -83,6 +89,7 @@ int t_dic_add__repeated_item__not_added()
     mu_assert_eq(retval, OK, "dic_add");
     mu_assert_eq(dic_count(dic), 1, "count");
 
+    dic_destroy(dic, NULL);
     mu_end;
 }
 int t_dic_add__new_item__added()
@@ -97,6 +104,7 @@ int t_dic_add__new_item__added()
     mu_assert_eq(retval, OK, "dic_add");
     mu_assert_eq(dic_count(dic), 1, "count");
 
+    dic_destroy(dic, NULL);
     mu_end;
 }
 

@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -ggdb -Wall -pedantic -D_GNU_SOURCE
+CFLAGS = -ggdb -Wall -pedantic -std=c99 -D_GNU_SOURCE
 E_LIBS = -lpthread
 
 OBJDIR = obj

@@ -211,12 +211,12 @@ int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* m
     return OK;
 }
 
-struct sockcomm_data *irc_build_errmsg(struct irc_msgdata *irc, int errcode, const char *additional_params)
+struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params)
 {
-    return irc_build_errmsg_withtext(irc, errcode, additional_params, irc_errstr(errcode));
+    return irc_build_numericreply_withtext(irc, errcode, additional_params, irc_errstr(errcode));
 }
 
-struct sockcomm_data *irc_build_errmsg_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
+struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
 {
     struct ircuser* user = irc_user_byid(irc->globdata, irc->msgdata->fd);
     char* nick;

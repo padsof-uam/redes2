@@ -38,6 +38,10 @@ struct ircuser *irc_user_byid(struct irc_globdata *gdata, const int id)
 static void _chan_destructor(void *ptr)
 {
     struct ircchan *chan = (struct ircchan *) ptr;
+
+    if(!chan)
+        return;
+
     list_destroy(chan->users, NULL);
     dic_destroy(chan->invited_users, NULL);
     free(chan);

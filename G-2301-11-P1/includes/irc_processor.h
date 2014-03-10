@@ -60,7 +60,7 @@ int irc_enqueue_msg(struct sockcomm_data *msg, int snd_qid);
  * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
  * @return                   Estructura rellena con el mensaje.
  */
-struct sockcomm_data *irc_build_errmsg(struct irc_msgdata *irc, int errcode, const char *additional_params);
+struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params);
 
 /**
  * Construye un mensaje de respuesta.
@@ -71,7 +71,7 @@ struct sockcomm_data *irc_build_errmsg(struct irc_msgdata *irc, int errcode, con
  * @param  msg_text			 Texto adicional de la respuesta.
  * @return                   Estructura rellena con el mensaje.
  */
-struct sockcomm_data *irc_build_errmsg_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
+struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
 
 /**
  * Crea el mensaje de respuesta numérica para el código de error dato.

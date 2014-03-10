@@ -17,7 +17,7 @@ static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, c
 
 	if(!chan)
 	{
-		list_add(irc->msg_tosend, irc_build_errmsg(irc, ERR_NOSUCHNICK, receiver));
+		list_add(irc->msg_tosend, irc_build_numericreply(irc, ERR_NOSUCHNICK, receiver));
  		return OK;
  	}
 
@@ -36,9 +36,9 @@ static int _irc_send_msg_touser(struct irc_msgdata *irc, const char *receiver, c
     struct ircuser* sender = irc_user_byid(irc->globdata, irc->msgdata->fd);
 
     if (!dest)
-    	list_add(irc->msg_tosend, irc_build_errmsg(irc, ERR_NOSUCHNICK, receiver));
+    	list_add(irc->msg_tosend, irc_build_numericreply(irc, ERR_NOSUCHNICK, receiver));
     else if(dest->is_away)
-    	list_add(irc->msg_tosend, irc_build_errmsg_withtext(irc, RPL_AWAY, receiver, dest->away_msg));
+    	list_add(irc->msg_tosend, irc_build_numericreply_withtext(irc, RPL_AWAY, receiver, dest->away_msg));
     else
     	list_add(irc->msg_tosend, irc_response_create(dest->fd, ":%s PRIVMSG %s :%s", sender->nick, receiver, text));
 
@@ -56,12 +56,12 @@ int irc_privmsg(void *data)
 
     if(param_num < 1)
     {
-    	list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NORECIPIENT, NULL));
+    	list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NORECIPIENT, NULL));
     	return OK;
     }
     else if(param_num < 2)
     {
-    	list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NOTEXTTOSEND, NULL));
+    	list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOTEXTTOSEND, NULL));
     	return OK;
     }
 
@@ -102,7 +102,7 @@ int irc_nick(void *data)
 
     if (!irc_parse_paramlist(ircdata->msg, new_nick, 1))
     {
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_UNKNOWNCOMMAND, NULL));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_UNKNOWNCOMMAND, NULL));
         return ERR;
     }
 
@@ -111,9 +111,9 @@ int irc_nick(void *data)
     if (retval != OK)
     {
         if (retval == ERR_NOTFOUND)
-            list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_ERRONEUSNICKNAME, NULL));
+            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_ERRONEUSNICKNAME, NULL));
         else if (retval == ERR_REPEAT)
-            list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NICKCOLLISION, NULL));
+            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NICKCOLLISION, NULL));
         else
             syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
@@ -129,14 +129,14 @@ int irc_user(void *data)
 
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
     {
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NEEDMOREPARAMS, NULL));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL));
         return ERR;
     }
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     if (strlen(params[0]) >= MAX_NAME_LEN)
     {
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata,ERR_ERRONEUSNICKNAME, NULL));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata,ERR_ERRONEUSNICKNAME, NULL));
         return ERR;
     }
 
@@ -156,7 +156,7 @@ int irc_join(void *data)
 
     if (irc_parse_paramlist(ircdata->msg, params, 2) == 0)
     {
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NEEDMOREPARAMS, NULL));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL));
         return ERR;
     }
 
@@ -165,7 +165,7 @@ int irc_join(void *data)
     if (!user)
     {
         sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NOTFOUND, bye_msg));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOTFOUND, bye_msg));
         return ERR_NOTFOUND;
     }
     chan_name = params[0];
@@ -196,7 +196,7 @@ int irc_join(void *data)
         channel = irc_channel_byname(ircdata->globdata, aux_name);
 
         if(!channel)
-        	list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NOSUCHCHANNEL, aux_name));
+        	list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOSUCHCHANNEL, aux_name));
 
         retval = irc_channel_adduser(ircdata->globdata, channel, user, aux_key);
         /*  Respuesta al cliente:   */
@@ -206,7 +206,7 @@ int irc_join(void *data)
         else
             sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ", chan_name, topic);
 
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, 0, bye_msg));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, 0, bye_msg));
 
         chan_name = aux_name;
         key = aux_key;
@@ -248,7 +248,7 @@ int irc_part(void *data)
 
     if (!user)
     {
-        list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata,ERR_NOTREGISTERED, NULL));
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata,ERR_NOTREGISTERED, NULL));
         return ERR_NOTREGISTERED;
     }
 
@@ -264,9 +264,9 @@ int irc_part(void *data)
         }
         channel = irc_channel_byname(ircdata->globdata, channel_name);
         if (!channel)
-            list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_NOSUCHCHANNEL, NULL));
+            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOSUCHCHANNEL, NULL));
         else if (irc_user_inchannel(channel, user) != OK)
-            list_add(ircdata->msg_tosend, irc_build_errmsg(ircdata, ERR_USERNOTINCHANNEL, NULL));
+            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_USERNOTINCHANNEL, NULL));
         else
         {
             retval = irc_channel_part(ircdata->globdata, channel, user);

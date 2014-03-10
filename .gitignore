@@ -5,6 +5,7 @@ lib
 man
 latex
 html
+*.dat
 
 # LaTeX
 *.acn

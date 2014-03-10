@@ -4,7 +4,7 @@
 #include <poll.h>
 #include "errors.h"
 
-#define DEFAULT_PFDS_LEN 20 /**< Longitud inicial del array de descriptores. */
+#define DEFAULT_PFDS_LEN 300 /**< Longitud inicial del array de descriptores. */
 
 /**
  * Estructura que contiene un conjunto dinámico de descriptores 

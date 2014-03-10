@@ -2,6 +2,8 @@
 #include "errors.h"
 #include "messager.h"
 #include "listener.h"
+#include "log.h"
+#include "sysutils.h"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -11,19 +13,20 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "log.h"
 #include <strings.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <sys/resource.h>
 
 static int _server_close_socket(int handler)
 {
-    if (handler > 0 && close(handler) < 0)
+    if (handler > 0 && shutdown(handler,SHUT_RDWR) < 0)
     {
         slog(LOG_ERR, "Error cerrando el socket: %s", strerror(errno));
         return ERR_SOCK;
     }
+
     return OK;
 }
 
@@ -84,9 +87,7 @@ int server_open_socket(int port, int max_long)
         return ERR_SOCK;
 
     fcntl(handler, F_SETFL, O_NONBLOCK);
-    /*
-    Código de error: Valor negativo -> ERROR; sino, devuelve el handler del socket creado.
-    */
+
     return handler;
 }
 
@@ -174,8 +175,8 @@ void *thread_listener(void *data)
     fds[0].fd = listen_sock;
 
 	fds[1].events = POLLIN;
-    fds[1].fd = thdata->commsocket;
-    
+    fds[1].fd = thdata->commsocket; 
+
     while (1)
     {
         /* Esperamos indefinidamente hasta que haya datos en algún socket */
@@ -188,7 +189,7 @@ void *thread_listener(void *data)
             if (fds[0].revents & POLLIN)
             {
                 if (create_new_connection_thread(listen_sock, thdata->commsocket) != OK)
-                    slog(LOG_ERR, "fallo al aceptar una conexión. Error %s", strerror(errno));
+                    slog(LOG_ERR, "Fallo al aceptar una conexión. Error %s", strerror(errno));
             }
 
             if (fds[1].revents & POLLIN)
@@ -211,6 +212,7 @@ void *thread_listener(void *data)
     pthread_cleanup_pop(0);
 
     pthread_exit(0);
+    
 }
 
 int create_new_connection_thread(int listen_sock, int commsocket)
@@ -233,6 +235,6 @@ int create_new_connection_thread(int listen_sock, int commsocket)
         return ERR;
     }
 
-    slog(LOG_NOTICE, "Nueva conexión creada con éxito.");
+    slog(LOG_NOTICE, "Nueva conexión creada con éxito en socket %d.", connsock);
     return OK;
 }

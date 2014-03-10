@@ -10,8 +10,9 @@
 #include "types.h"
 #include "messager.h"
 #include "listener.h"
+#include "sysutils.h"
 
-static void receive_cleanup(void* data)
+static void receive_cleanup(void *data)
 {
     slog(LOG_DEBUG, "receiver: limpiando.");
 
@@ -27,19 +28,27 @@ void *thread_receive(void *st)
     int sk_new_connection;
     char *buffer;
     char *message;
+    int sock_lim = -1;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
+
+    sock_lim = sysconf(_SC_OPEN_MAX);
+
+    if (sock_lim == -1)
+        slog(LOG_WARNING, "No se ha podido obtener el límite de descriptores para el proceso: %s", strerror(errno));
+    else
+        slog(LOG_NOTICE, "Límite de descriptores obtenido: %d.", sock_lim);
 
     pfds = pollfds_init(POLLIN);
     pollfds_add(pfds, recv_data->socket);
 
-    pthread_cleanup_push((void(*)(void*))pollfds_destroy, pfds);
+    pthread_cleanup_push((void(*)(void *))pollfds_destroy, pfds);
     pthread_cleanup_push(receive_cleanup, recv_data);
 
     slog(LOG_DEBUG, "Hilo de recepción iniciado.");
 
     while (1)
     {
-        ready_fds = pollfds_poll(pfds, -1); 
+        ready_fds = pollfds_poll(pfds, -1);
 
         if (ready_fds == -1)
         {
@@ -72,7 +81,7 @@ void *thread_receive(void *st)
                 }
                 else
                 {
-                    sk_new_connection = (int)(*buffer);
+                    sk_new_connection = *((int *)buffer);
                     add_new_connection(pfds, sk_new_connection);
                     free(buffer);
                 }
@@ -87,8 +96,9 @@ void *thread_receive(void *st)
                 slog(LOG_WARNING, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                 i--; /* Reexploramos este elemento */
+                fds_len--;
             }
-            else if (pfds->fds[i].revents & POLLHUP)
+            else if ((pfds->fds[i].revents & POLLHUP) || (pfds->fds[i].revents & POLLNVAL))
             {
                 slog(LOG_NOTICE, "El socket %d ha sido cerrado.", pfds->fds[i].fd);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
@@ -104,8 +114,8 @@ void *thread_receive(void *st)
                     send_to_main(recv_data->queue, pfds->fds[i].fd, message, msglen);
                 else
                     slog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
-                
-                if(message)
+
+                if (message)
                     free(message);
             }
         }
@@ -121,7 +131,7 @@ void *thread_receive(void *st)
 
 int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue)
 {
-    struct receiver_thdata* thdata = malloc(sizeof(struct receiver_thdata));
+    struct receiver_thdata *thdata = malloc(sizeof(struct receiver_thdata));
 
     thdata->queue = queue;
     thdata->socket = commsock;
@@ -165,7 +175,7 @@ int send_to_main(int queue, int fd, char *message, int msglen)
             slog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");
         else
             slog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal: %s", strerror(errno));
-        
+
         return ERR;
     }
 

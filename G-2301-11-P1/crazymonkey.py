@@ -14,11 +14,11 @@ port = 6667
 delay = 0.1
 client_spawndelay = 0.01
 client_batch = 50
-client_max = 500
-batch_time_sec = 1
+client_max = 600 # Python y el alto rendimiento no se llevan bien.
+batch_time_sec = 5
 ping_interval = 0.5
-threshold_manual_control = 250
-enable_sending = False
+threshold_manual_control = -1
+enable_sending = True
 
 response_times = []
 partial_averages = []
@@ -46,17 +46,18 @@ class IRCThread(threading.Thread):
 	def __init__(self):
 		super(IRCThread, self).__init__()
 		self._stop = threading.Event()
+		self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 	def stop(self):
 		self._stop.set()
+		self._sock.close()
 
 	def stopped(self):
 		return self._stop.isSet()
 
 	def run(self):
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.connect((host, port))
-		sock.settimeout(2)
+		self._sock.connect((host, port))
+		self._sock.settimeout(2)
 		nick = randitem(users)
 		msgargs = {
 			'nick': nick,
@@ -70,12 +71,11 @@ class IRCThread(threading.Thread):
 			msgargs['user'] = randitem(users)
 			msgargs['channel'] = randitem(channels)
 
-			if enable_sending and sock.send(command.format(**msgargs)) == 0:
+			if enable_sending and self._sock.send(command.format(**msgargs)) == 0:
 				print 'error sending'
 
 			time.sleep(delay)
 
-		sock.close()
 
 def avg(l):
 	return sum(l) / len(l)
@@ -88,9 +88,9 @@ def signal_handler(signal, frame):
 
 	stop = True
 
-users = [randstr(8) for _ in range(100)]
-channels = [randstr(5) for _ in range(10)]
-
+users = [randstr(8) for _ in range(2000)]
+channels = [randstr(5) for _ in range(100)]
+users[0] = 'pepe'
 signal.signal(signal.SIGINT, signal_handler)
 
 png = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

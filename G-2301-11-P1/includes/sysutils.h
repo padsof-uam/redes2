@@ -1,6 +1,8 @@
 #ifndef SYSUTILS_H
 #define SYSUTILS_H
 
+#include <sys/resource.h>
+
 #define MAX_KILL_WAIT_MS 5000
 
 /**
@@ -28,4 +30,13 @@ int read_pid_and_kill(const char* file);
  * @return 0 si no se pudo obtener bloqueo, 1 si se pudo obtener y -1 si hubo error.
  */
 int try_getlock(const char* file);
+
+/**
+ * Obtiene el límite para un recurso dato.
+ * @see getrlimit(2)
+ * @param  resource Recurso (RLIMIT_*)
+ * @return          Límite.
+ */
+rlim_t get_soft_limit(int resource);
 #endif
+

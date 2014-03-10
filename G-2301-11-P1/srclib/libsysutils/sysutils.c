@@ -83,3 +83,12 @@ int try_getlock(const char* file)
 
     return 1;
 }
+
+rlim_t get_soft_limit(int resource)
+{
+    struct rlimit lim;
+    if(getrlimit(resource, &lim) == -1)
+        return -1;
+    else
+        return lim.rlim_cur;
+}

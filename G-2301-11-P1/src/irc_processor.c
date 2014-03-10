@@ -245,7 +245,10 @@ struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
 
     msg->fd = fd;
     va_start(ap, fmt_string);
-    msg->len = vsnprintf(msg->data, MAX_IRC_MSG, fmt_string, ap);
+    msg->len = vsnprintf(msg->data, MAX_IRC_MSG - 2, fmt_string, ap);
+    msg->data[msg->len] = '\r';
+    msg->data[msg->len + 1] = '\n';
+    msg->len += 2;
     va_end(ap);
 
     return msg;

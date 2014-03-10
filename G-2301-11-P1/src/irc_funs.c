@@ -2,8 +2,8 @@
 #include "irc_core.h"
 #include "irc_codes.h"
 #include "irc_processor.h"
+#include "log.h"
 
-#include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -115,7 +115,7 @@ int irc_nick(void *data)
         else if (retval == ERR_REPEAT)
             list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NICKCOLLISION, NULL));
         else
-            syslog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
+            slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
 
     return OK;
@@ -271,7 +271,7 @@ int irc_part(void *data)
         {
             retval = irc_channel_part(ircdata->globdata, channel, user);
             if ( retval != OK)
-                syslog(LOG_ALERT, "No se ha podido eliminar al usuario %s del canal %s", user->nick, channel->name);
+                slog(LOG_ALERT, "No se ha podido eliminar al usuario %s del canal %s", user->nick, channel->name);
 
         }
         channel_name = aux;

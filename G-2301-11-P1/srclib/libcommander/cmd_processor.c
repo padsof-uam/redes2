@@ -1,6 +1,6 @@
 #include "cmd_processor.h"
+#include "log.h"
 #include <stdlib.h>
-#include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/msg.h>
@@ -24,18 +24,18 @@ int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun
 
     if (pthread_create(pth, NULL, proc_thread_entrypoint, thdata) < 0 )
     {
-        syslog(LOG_CRIT, "No se ha podido iniciar proc_thread: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido iniciar proc_thread: %s", strerror(errno));
         return ERR;
     }
 
-    syslog(LOG_DEBUG, "Hilo de procesado iniciado.");
+    slog(LOG_DEBUG, "Hilo de procesado iniciado.");
 
     return OK;
 }
 
 static void _proc_thread_cleanup(void *thdata)
 {
-    syslog(LOG_DEBUG, "proc: limpiando.");
+    slog(LOG_DEBUG, "proc: limpiando.");
 
     free(thdata);
 }
@@ -51,7 +51,7 @@ void *proc_thread_entrypoint(void *data)
     pthread_cleanup_push(_proc_thread_cleanup, thdata);
     pthread_cleanup_push((void (*)(void *))irc_destroy, gdata);
 
-    syslog(LOG_DEBUG, "Hilo de procesado iniciado.");
+    slog(LOG_DEBUG, "Hilo de procesado iniciado.");
 
     if (gdata)
     {
@@ -63,13 +63,13 @@ void *proc_thread_entrypoint(void *data)
             }
             else
             {
-                syslog(LOG_ERR, "error recibiendo de msgrcv: %s", strerror(errno));
+                slog(LOG_ERR, "error recibiendo de msgrcv: %s", strerror(errno));
             }
         }
     }
     else
     {
-        syslog(LOG_CRIT, "error inicializando estructuras: %s", strerror(errno));
+        slog(LOG_CRIT, "error inicializando estructuras: %s", strerror(errno));
     }
 
     pthread_cleanup_pop(0);

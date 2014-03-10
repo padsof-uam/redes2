@@ -4,9 +4,9 @@
 #include "irc_codes.h"
 #include "irc_funs.h"
 #include "strings.h"
+#include "log.h"
 
 #include <string.h>
-#include <sys/syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -75,7 +75,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         ircdata.msg = msg;
 
         if (parse_exec_command(msg, _irc_cmds, _irc_actions, (sizeof(_irc_actions) / sizeof(cmd_action)), &ircdata) == -1)
-            syslog(LOG_WARNING, "Error parsing command %s", data->data);
+            slog(LOG_WARNING, "Error parsing command %s", data->data);
 
         msg = msg_end;
     }
@@ -158,7 +158,7 @@ int irc_enqueue_msg(struct sockcomm_data *msg, int snd_qid)
 
     if (msgsnd(snd_qid, &qdata, sizeof(struct msg_sockcommdata), 0) == -1)
     {
-        syslog(LOG_ERR, "error enviando en cola de mensajes de envío: %s", strerror(errno));
+        slog(LOG_ERR, "error enviando en cola de mensajes de envío: %s", strerror(errno));
         return ERR;
     }
 

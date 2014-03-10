@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <syslog.h>
+#include "log.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,33 +44,33 @@ int daemonize(const char *log_id)
 
     if (signal(SIGTTOU, SIG_IGN))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTTOU");
+        slog(LOG_ERR, "Error en la captura de SIGTTOU");
         return ERR;
     }
 
     if (signal(SIGTTIN, SIG_IGN))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTTIN");
+        slog(LOG_ERR, "Error en la captura de SIGTTIN");
         return ERR;
     }
 
     if (signal(SIGTSTP, SIG_IGN))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        slog(LOG_ERR, "Error en la captura de SIGTSTP");
         return ERR;
     }
 
 #ifndef __APPLE__
     if (signal(SIGPWR, finish_daemon))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGPWR");
+        slog(LOG_ERR, "Error en la captura de SIGPWR");
         return ERR;
     }
 #endif 
 
     if (signal(SIGCHLD, SIG_IGN))  
     {
-        syslog(LOG_ERR, "Error en la captura de SIGCHLD");
+        slog(LOG_ERR, "Error en la captura de SIGCHLD");
         return ERR;
     }
 
@@ -86,19 +86,19 @@ int daemonize(const char *log_id)
         exit(EXIT_FAILURE);
 #endif
 
-    syslog(LOG_INFO, "Hijo creado como lider de la sesión");
+    slog(LOG_INFO, "Hijo creado como lider de la sesión");
 
     if ((chdir("/")) < 0)
-        syslog(LOG_ERR, "Error cambiando el directorio de trabajo");
+        slog(LOG_ERR, "Error cambiando el directorio de trabajo");
 
     /* SIGCHLD, SIGPWR */
 
-    syslog(LOG_INFO, "Cerrando los descriptores de fichero.");
+    slog(LOG_INFO, "Cerrando los descriptores de fichero.");
 
     if (close_open_fds() < 0)
-        syslog(LOG_ERR, "Error cerrando los ficheros abiertos.");
+        slog(LOG_ERR, "Error cerrando los ficheros abiertos.");
 
-    syslog(LOG_INFO, "Daemonización completa");
+    slog(LOG_INFO, "Daemonización completa");
     return OK;
 }
 
@@ -115,12 +115,12 @@ int unlink_proc()
 
     if (setsid() < 0)
     {
-        syslog(LOG_ERR, "Error creando un nuevo SID");
+        slog(LOG_ERR, "Error creando un nuevo SID");
     }   
 
     if (signal(SIGHUP, SIG_IGN))
     {
-        syslog(LOG_ERR, "Error en la captura de SIGTSTP");
+        slog(LOG_ERR, "Error en la captura de SIGTSTP");
         return ERR;
     }
 

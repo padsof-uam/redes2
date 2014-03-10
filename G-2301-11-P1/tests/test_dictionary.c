@@ -14,7 +14,7 @@ int t_dic_lookup__existing__returns_item()
     int key = 3;
     char str[] = "test1";
     char *result;
-
+    
     dic_add(dic, &key, str);
 
     result = dic_lookup(dic, &key);

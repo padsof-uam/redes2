@@ -8,6 +8,7 @@
 #include "cmd_processor.h"
 #include "irc_processor.h"
 #include "sysutils.h"
+#include "log.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -15,7 +16,6 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/msg.h>
-#include <syslog.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -50,13 +50,13 @@ static void pthread_cancel_join(pthread_t th)
     int err;
     if ((err = pthread_cancel(th)) < 0)
     {
-        syslog(LOG_ERR, "error cerrando hilo: %d", err);
+        slog(LOG_ERR, "error cerrando hilo: %d", err);
         return;
     }
 
     if ((err = pthread_join(th, NULL)) < 0)
     {
-        syslog(LOG_ERR, "error saliendo del hilo: %d", err);
+        slog(LOG_ERR, "error saliendo del hilo: %d", err);
         return;
     }
 }
@@ -97,34 +97,36 @@ int main(int argc, char const *argv[])
     comm_socks[0] = 0;
     comm_socks[1] = 0;
 
+#ifndef NODAEMON
     if (daemonize(LOG_ID) != OK)
     {
-        syslog(LOG_CRIT, "No se ha podido daemonizar.");
+        slog(LOG_CRIT, "No se ha podido daemonizar.");
         irc_exit(EXIT_FAILURE)
     }
+#endif
 
     if (!try_getlock(LOCK_FILE))
     {
-        syslog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
+        slog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
         irc_exit(EXIT_FAILURE);
     }
 
-    syslog(LOG_NOTICE, "Daemon empezando.\n");
+    slog(LOG_NOTICE, "Daemon empezando.");
 
     if (write_pid(PID_FILE) < 0)
     {
-        syslog(LOG_ERR, "Error escribiendo en pid_file. Sólo se podrá parar el daemon con kill.");
+        slog(LOG_ERR, "Error escribiendo en pid_file. Sólo se podrá parar el daemon con kill.");
     }
 
     if (signal(SIGTERM, capture_signal) == SIG_ERR)
     {
-        syslog(LOG_CRIT, "Error capturando señales.");
+        slog(LOG_CRIT, "Error capturando señales.");
         irc_exit(EXIT_FAILURE);
     }
 
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, comm_socks) < 0)
     {
-        syslog(LOG_CRIT, "No se han podido crear los sockets de comunicación con listener: %s", strerror(errno));
+        slog(LOG_CRIT, "No se han podido crear los sockets de comunicación con listener: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
 
@@ -132,7 +134,7 @@ int main(int argc, char const *argv[])
 
     if (rcv_qid == -1)
     {
-        syslog(LOG_CRIT, "No se ha podido crear la cola de mensajes de recepción: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear la cola de mensajes de recepción: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
 
@@ -140,7 +142,7 @@ int main(int argc, char const *argv[])
 
     if (snd_qid == -1)
     {
-        syslog(LOG_CRIT, "No se ha podido crear la cola de mensajes de envío: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear la cola de mensajes de envío: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
 
@@ -148,39 +150,39 @@ int main(int argc, char const *argv[])
 
     if (master_qid == -1)
     {
-        syslog(LOG_CRIT, "No se ha podido crear la cola de mensajes maestra: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear la cola de mensajes maestra: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
 
     if (spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
     {
-        syslog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
     listener_running = 1;
 
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {
-        syslog(LOG_CRIT, "No se ha podido crear el hilo de recepción de datos: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear el hilo de recepción de datos: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
     receiver_running = 1;
 
     if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess) < 0)
     {
-        syslog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
     proc_running = 1;
 
     if (spawn_sender_thread(&sender_th, snd_qid) < 0)
     {
-        syslog(LOG_CRIT, "No se ha podido crear el hilo de envío: %s", strerror(errno));
+        slog(LOG_CRIT, "No se ha podido crear el hilo de envío: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
     sender_running = 1;
 
-    syslog(LOG_NOTICE, "Todas las estructuras creadas. Daemon iniciado.");
+    slog(LOG_NOTICE, "Todas las estructuras creadas. Daemon iniciado.");
 
     /* Nos dedicamos a esperar hasta que nos digan que paramos */
     pthread_mutex_lock(&stop_mutex);
@@ -190,7 +192,7 @@ int main(int argc, char const *argv[])
     }
     pthread_mutex_unlock(&stop_mutex);
 
-    syslog(LOG_NOTICE, "Daemon saliendo...");
+    slog(LOG_NOTICE, "Daemon saliendo...");
 
 cleanup:
     irc_pth_exit(listener);
@@ -213,7 +215,7 @@ cleanup:
     if (comm_socks[1] != 0)
         close(comm_socks[1]);
 
-    syslog(LOG_NOTICE, "Daemon terminado.\n");
+    slog(LOG_NOTICE, "Daemon terminado.\n");
 
     return retval;
 }

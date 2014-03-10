@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
+#include "log.h"
 #include <strings.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -21,7 +21,7 @@ static int _server_close_socket(int handler)
 {
     if (close(handler) < 0)
     {
-        syslog(LOG_ERR, "Error cerrando el socket, %d", errno);
+        slog(LOG_ERR, "Error cerrando el socket, %d", errno);
         return ERR_SOCK;
     }
     return OK;
@@ -32,7 +32,7 @@ static int _server_open_socket()
     int handler = socket(AF_INET, SOCK_STREAM, TCP);
     if (handler == -1)
     {
-        syslog(LOG_ERR, "Error en la creación de socket");
+        slog(LOG_ERR, "Error en la creación de socket");
         return ERR_SOCK;
     }
     return handler;
@@ -50,7 +50,7 @@ static int _link_socket_port(int port, int handler)
 
     if (bind(handler, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in) ) == -1)
     {
-        syslog(LOG_ERR, "Error asociando puerto con socket: %s", strerror(errno));
+        slog(LOG_ERR, "Error asociando puerto con socket: %s", strerror(errno));
         return ERR_SOCK;
     }
 
@@ -61,7 +61,7 @@ static int _set_queue_socket(int handler, int long_max)
 {
     if (listen(handler, long_max) == -1)
     {
-        syslog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
+        slog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
         return ERR_SOCK;
     }
     return OK;
@@ -73,7 +73,7 @@ int server_open_socket(int port, int max_long)
     int handler = _server_open_socket();
     if (handler == ERR_SOCK)
     {
-        syslog(LOG_ERR, "Error al abrir el socket");
+        slog(LOG_ERR, "Error al abrir el socket");
         return ERR_SOCK;
     }
 
@@ -100,7 +100,7 @@ int server_listen_connect(int handler)
 
     if ( handler_accepted == -1)
     {
-        syslog(LOG_ERR, "Error aceptando conexiones, %d", errno);
+        slog(LOG_ERR, "Error aceptando conexiones, %d", errno);
         return ERR_SOCK;
     }
 
@@ -121,12 +121,12 @@ int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
 
     if (pthread_create(pth, NULL, thread_listener, thdata))
     {
-        syslog(LOG_CRIT, "Error creando thread de escucha: %s", strerror(errno));
+        slog(LOG_CRIT, "Error creando thread de escucha: %s", strerror(errno));
         return ERR;
     }
     else
     {
-        syslog(LOG_INFO, "Thread de escucha creado.");
+        slog(LOG_INFO, "Thread de escucha creado.");
         return OK;
     }
 }
@@ -135,7 +135,7 @@ void listener_cleanup(void* data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
     
-    syslog(LOG_NOTICE, "listener: limpiando.");
+    slog(LOG_NOTICE, "listener: limpiando.");
     server_close_communication(thdata->listen_sock);
 
     free(thdata);
@@ -148,20 +148,20 @@ void *thread_listener(void *data)
     struct pollfd fds[2];
     char *commbuf;
 
-    syslog(LOG_NOTICE, "Hilo de escucha creado.");
+    slog(LOG_NOTICE, "Hilo de escucha creado.");
     listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE);
     thdata->listen_sock = listen_sock;
     pthread_cleanup_push(listener_cleanup, thdata);
 
     if (listen_sock < 0)
     {
-        syslog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha en %d con long. cola %d: %s.", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        slog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha en %d con long. cola %d: %s.", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
         kill(getpid(), SIGTERM); /* Salimos */
         pthread_exit(NULL);
     }
     else
     {
-        syslog(LOG_NOTICE, "Puerto de escucha abierto en %d", thdata->port);
+        slog(LOG_NOTICE, "Puerto de escucha abierto en %d", thdata->port);
     }
 
     fds[0].events = POLLIN;
@@ -175,14 +175,14 @@ void *thread_listener(void *data)
         /* Esperamos indefinidamente hasta que haya datos en algún socket */
         if (poll(fds, 2, -1) < 0)
         {
-            syslog(LOG_NOTICE, "Error al llamar a poll: %s", strerror(errno));
+            slog(LOG_NOTICE, "Error al llamar a poll: %s", strerror(errno));
         }
         else
         {
             if (fds[0].revents & POLLIN)
             {
                 if (create_new_connection_thread(listen_sock, thdata->commsocket) != OK)
-                    syslog(LOG_ERR, "fallo al aceptar una conexión. Error %s", strerror(errno));
+                    slog(LOG_ERR, "fallo al aceptar una conexión. Error %s", strerror(errno));
             }
 
             if (fds[1].revents & POLLIN)
@@ -192,7 +192,7 @@ void *thread_listener(void *data)
                     if (commbuf[0] == COMM_STOP)
                         break;
                     else
-                        syslog(LOG_NOTICE, "Mensaje no reconocido en commsocket: %d", commbuf[0]);
+                        slog(LOG_NOTICE, "Mensaje no reconocido en commsocket: %d", commbuf[0]);
                 }
 
                 free(commbuf);
@@ -200,7 +200,7 @@ void *thread_listener(void *data)
         }
     }
 
-    syslog(LOG_INFO, "Hilo listener saliendo.");
+    slog(LOG_INFO, "Hilo listener saliendo.");
 
     pthread_cleanup_pop(0);
 
@@ -211,22 +211,22 @@ int create_new_connection_thread(int listen_sock, int commsocket)
 {
     int connsock;
 
-    syslog(LOG_NOTICE, "Nueva conexión recibida.");
+    slog(LOG_NOTICE, "Nueva conexión recibida.");
     connsock = server_listen_connect(listen_sock);
 
     if (connsock < 0)
     {
-        syslog(LOG_WARNING, "No se ha podido aceptar la conexión: %s", strerror(errno));
+        slog(LOG_WARNING, "No se ha podido aceptar la conexión: %s", strerror(errno));
         return ERR;
     }
 
     if (send_message(commsocket, &connsock, sizeof(int)) < 0)
     {
-        syslog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
+        slog(LOG_ERR, "No se ha podido transmitir la información al proceso principal (%s). Abortando...", strerror(errno));
         server_close_communication(connsock);
         return ERR;
     }
 
-    syslog(LOG_NOTICE, "Nueva conexión creada con éxito.");
+    slog(LOG_NOTICE, "Nueva conexión creada con éxito.");
     return OK;
 }

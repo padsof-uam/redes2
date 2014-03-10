@@ -4,7 +4,7 @@
 #include "messager.h"
 
 #include <sys/socket.h>
-#include <syslog.h>
+#include "log.h"
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -17,19 +17,19 @@ int spawn_sender_thread (pthread_t *sender_thread, int queue)
 
     if (pthread_create(sender_thread, NULL, thread_send, thdata))
     {
-        syslog(LOG_CRIT, "Error creando hilo sender de mensajes: %s", strerror(errno));
+        slog(LOG_CRIT, "Error creando hilo sender de mensajes: %s", strerror(errno));
         return ERR;
     }
     else
     {
-        syslog(LOG_INFO, "Hilo sender de mensajes creado");
+        slog(LOG_INFO, "Hilo sender de mensajes creado");
     }
     return OK;
 }
 
 static void send_cleanup(void * data)
 {
-    syslog(LOG_DEBUG, "sender: limpiando");
+    slog(LOG_DEBUG, "sender: limpiando");
 
     free(data);
 }
@@ -44,14 +44,14 @@ void *thread_send(void *st)
 
     pthread_cleanup_push(send_cleanup, recv_data);
 
-    syslog(LOG_NOTICE, "Hilo de envío iniciado.");
+    slog(LOG_NOTICE, "Hilo de envío iniciado.");
 
     while (1)
     {
         retval = msgrcv(recv_data->queue, &tosend, sizeof(tosend), 0, 0);
         if (retval == -1)
         {
-            syslog(LOG_ERR, "No se ha podido leer mensajes de la cola main-sender. %s", strerror(errno));
+            slog(LOG_ERR, "No se ha podido leer mensajes de la cola main-sender. %s", strerror(errno));
             errnum++;
 
             if (errnum >= MAX_ERR_THRESHOLD)
@@ -64,12 +64,12 @@ void *thread_send(void *st)
 		    if(send_message(tosend.scdata.fd, message, size) < 0)
 		    {
 		    	/* Política para reintentar? */
-		    	syslog(LOG_WARNING, "Error enviando mensaje: %s", strerror(errno));
+		    	slog(LOG_WARNING, "Error enviando mensaje: %s", strerror(errno));
 		    }
         }
     }
 
-    syslog(LOG_NOTICE, "Hilo de envío saliendo.");
+    slog(LOG_NOTICE, "Hilo de envío saliendo.");
 
     pthread_cleanup_pop(0);
 

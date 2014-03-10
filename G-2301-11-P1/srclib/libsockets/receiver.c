@@ -1,5 +1,5 @@
 #include <sys/socket.h>
-#include <syslog.h>
+#include "log.h"
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -12,7 +12,7 @@
 
 static void receive_cleanup(void* data)
 {
-    syslog(LOG_DEBUG, "receiver: limpiando.");
+    slog(LOG_DEBUG, "receiver: limpiando.");
 
     free(data);
 }
@@ -34,7 +34,7 @@ void *thread_receive(void *st)
     pthread_cleanup_push((void(*)(void*))pollfds_destroy, pfds);
     pthread_cleanup_push(receive_cleanup, recv_data);
 
-    syslog(LOG_DEBUG, "Hilo de recepción iniciado.");
+    slog(LOG_DEBUG, "Hilo de recepción iniciado.");
 
     while (1)
     {
@@ -42,7 +42,7 @@ void *thread_receive(void *st)
 
         if (ready_fds == -1)
         {
-            syslog(LOG_ERR, "Error %d ejecutando poll: %s", errnum, strerror(errno));
+            slog(LOG_ERR, "Error %d ejecutando poll: %s", errnum, strerror(errno));
             errnum++;
 
             if (errnum >= MAX_ERR_THRESHOLD)
@@ -59,7 +59,7 @@ void *thread_receive(void *st)
             if (pfds->fds[0].revents & POLLERR)
             {
                 /* ¿Qué hacemos en caso de error? */
-                syslog(LOG_ERR, "Error %d en la comunicación receiver-listener: %s", errnum, strerror(errno));
+                slog(LOG_ERR, "Error %d en la comunicación receiver-listener: %s", errnum, strerror(errno));
                 errnum++;
                 ready_fds--;
             }
@@ -67,7 +67,7 @@ void *thread_receive(void *st)
             {
                 if (rcv_message(pfds->fds[0].fd, (void **)&buffer) < 0)
                 {
-                    syslog(LOG_ERR, "Error recibiendo mensaje a través de commsock: %s", strerror(errno));
+                    slog(LOG_ERR, "Error recibiendo mensaje a través de commsock: %s", strerror(errno));
                 }
                 else
                 {
@@ -83,7 +83,7 @@ void *thread_receive(void *st)
         {
             if (pfds->fds[i].revents & POLLERR) /* algo malo ha pasado. Cerramos */
             {
-                syslog(LOG_NOTICE, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
+                slog(LOG_NOTICE, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                 i--; /* Reexploramos este elemento */
             }
@@ -95,7 +95,7 @@ void *thread_receive(void *st)
                 if (msglen > 0)
                     send_to_main(recv_data->queue, pfds->fds[i].fd, message, msglen);
                 else
-                    syslog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
+                    slog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
                 
                 if(message)
                     free(message);
@@ -103,7 +103,7 @@ void *thread_receive(void *st)
         }
     }
 
-    syslog(LOG_DEBUG, "Hilo de recepción saliendo.");
+    slog(LOG_DEBUG, "Hilo de recepción saliendo.");
 
     pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
@@ -120,12 +120,12 @@ int spawn_receiver_thread(pthread_t *recv_thread, int commsock, int queue)
 
     if (pthread_create(recv_thread, NULL, thread_receive, thdata))
     {
-        syslog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));
+        slog(LOG_CRIT, "Error creando hilo receptor de mensajes: %s", strerror(errno));
         return ERR;
     }
     else
     {
-        syslog(LOG_INFO, "Hilo receptor de mensajes creado");
+        slog(LOG_INFO, "Hilo receptor de mensajes creado");
     }
 
     return OK;
@@ -153,9 +153,9 @@ int send_to_main(int queue, int fd, char *message, int msglen)
     if (msgsnd(queue, &data_to_send, sizeof(data_to_send), 0) == -1)
     {
         if (errno == EIDRM)
-            syslog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");
+            slog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");
         else
-            syslog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal: %s", strerror(errno));
+            slog(LOG_WARNING, "No se ha podido enviar el mensaje al hilo principal: %s", strerror(errno));
         
         return ERR;
     }

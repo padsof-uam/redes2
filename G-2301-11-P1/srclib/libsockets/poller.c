@@ -68,7 +68,9 @@ int pollfds_remove(struct pollfds *pfds, int fd)
         return ERR;
 
     pfds->len--;
-    memcpy(pfds->fds + i, pfds->fds + pfds->len, sizeof(struct pollfd));
+
+    if(i != pfds->len)
+        memcpy(pfds->fds + i, pfds->fds + pfds->len, sizeof(struct pollfd));
 
     return OK;
 }

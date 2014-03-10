@@ -85,6 +85,7 @@ int irc_ping(void *data)
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct sockcomm_data *msg_tosend = malloc(sizeof(struct sockcomm_data));
 
+    slog(LOG_INFO, "ping!");
     strcpy(msg_tosend->data, "PONG\r\n");
     msg_tosend->len = strlen(msg_tosend->data);
     msg_tosend->fd = ircdata->msgdata->fd;

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "receiver.h"
 #include "types.h"
 #include "messager.h"
@@ -28,7 +29,7 @@ void *thread_receive(void *st)
     char *message;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
 
-    pfds = pollfds_init(POLLERR | POLLIN);
+    pfds = pollfds_init(POLLIN);
     pollfds_add(pfds, recv_data->socket);
 
     pthread_cleanup_push((void(*)(void*))pollfds_destroy, pfds);
@@ -38,7 +39,7 @@ void *thread_receive(void *st)
 
     while (1)
     {
-        ready_fds = pollfds_poll(pfds, 0); 
+        ready_fds = pollfds_poll(pfds, -1); 
 
         if (ready_fds == -1)
         {
@@ -83,9 +84,16 @@ void *thread_receive(void *st)
         {
             if (pfds->fds[i].revents & POLLERR) /* algo malo ha pasado. Cerramos */
             {
-                slog(LOG_NOTICE, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
+                slog(LOG_WARNING, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                 i--; /* Reexploramos este elemento */
+            }
+            else if (pfds->fds[i].revents & POLLHUP)
+            {
+                slog(LOG_NOTICE, "El socket %d ha sido cerrado.", pfds->fds[i].fd);
+                remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
+                i--; /* Reexploramos este elemento */
+                fds_len--;
             }
             else if (pfds->fds[i].revents & POLLIN) /* Datos en el socket */
             {

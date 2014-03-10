@@ -19,9 +19,9 @@
 
 static int _server_close_socket(int handler)
 {
-    if (close(handler) < 0)
+    if (handler > 0 && close(handler) < 0)
     {
-        slog(LOG_ERR, "Error cerrando el socket, %d", errno);
+        slog(LOG_ERR, "Error cerrando el socket: %s", strerror(errno));
         return ERR_SOCK;
     }
     return OK;
@@ -61,7 +61,7 @@ static int _set_queue_socket(int handler, int long_max)
 {
     if (listen(handler, long_max) == -1)
     {
-        slog(LOG_ERR, "Error al poner a escuchar: errno=%d", errno);
+        slog(LOG_ERR, "Error al poner a escuchar: %s", strerror(errno));
         return ERR_SOCK;
     }
     return OK;
@@ -98,10 +98,15 @@ int server_listen_connect(int handler)
 
     handler_accepted = accept(handler, &peer_addr, &peer_len);
 
-    if ( handler_accepted == -1)
+    if (handler_accepted == -1)
     {
-        slog(LOG_ERR, "Error aceptando conexiones, %d", errno);
+        slog(LOG_ERR, "Error aceptando conexiones : %s", strerror(errno));
         return ERR_SOCK;
+    }
+
+    if(fcntl(handler_accepted, F_SETFL, O_NONBLOCK) == -1)
+    {
+        slog(LOG_WARNING, "Error al marcar el socket %d como O_NONBLOCK: %s", handler_accepted, strerror(errno));
     }
 
     return handler_accepted;
@@ -156,6 +161,7 @@ void *thread_listener(void *data)
     if (listen_sock < 0)
     {
         slog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha en %d con long. cola %d: %s.", thdata->port, DEFAULT_MAX_QUEUE, strerror(errno));
+        thdata->listen_sock = -1;
         kill(getpid(), SIGTERM); /* Salimos */
         pthread_exit(NULL);
     }

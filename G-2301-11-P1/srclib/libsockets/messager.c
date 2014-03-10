@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <string.h>
+#include "log.h"
 
 #define INITIAL_RECEIVE_BUFFER 1024
 
@@ -58,7 +60,7 @@ ssize_t rcv_message(int socket, void **buffer)
     if (!internal_buf)
         return ERR_MEM;
 
-    while (sock_data_available(socket))
+    while (sock_data_available(socket) && batch_bytes > 0)
     {
         batch_bytes = recv(socket, internal_buf + read_bytes, buf_size - read_bytes, 0);
 
@@ -76,6 +78,11 @@ ssize_t rcv_message(int socket, void **buffer)
             {
                 internal_buf = realloc_retval;
             }
+        }
+        else if(batch_bytes == -1)
+        {
+            slog(LOG_ERR, "Error leyendo en el socket %d: %s", socket, strerror(errno));
+            return -1;
         }
 
         read_bytes += batch_bytes;

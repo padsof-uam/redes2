@@ -144,13 +144,14 @@ int remove_connection(struct pollfds *pfds, int fd)
 int send_to_main(int queue, int fd, char *message, int msglen)
 {
     struct msg_sockcommdata data_to_send;
+    bzero(&data_to_send, sizeof(struct msg_sockcommdata));
 
     data_to_send.msgtype = 1;
     strncpy(data_to_send.scdata.data, message, MAX_IRC_MSG);
     data_to_send.scdata.fd = fd;
     data_to_send.scdata.len = msglen;
 
-    if (msgsnd(queue, &data_to_send, sizeof(data_to_send), 0) == -1)
+    if (msgsnd(queue, &data_to_send, sizeof(struct sockcomm_data), 0) == -1)
     {
         if (errno == EIDRM)
             slog(LOG_ERR, "La cola de comunicación con el hilo principal ha sido eliminada.");

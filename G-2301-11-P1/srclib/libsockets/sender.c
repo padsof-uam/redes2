@@ -48,7 +48,7 @@ void *thread_send(void *st)
 
     while (1)
     {
-        retval = msgrcv(recv_data->queue, &tosend, sizeof(tosend), 0, 0);
+        retval = msgrcv(recv_data->queue, &tosend, sizeof(struct sockcomm_data), 0, 0);
         if (retval == -1)
         {
             slog(LOG_ERR, "No se ha podido leer mensajes de la cola main-sender. %s", strerror(errno));

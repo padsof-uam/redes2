@@ -57,7 +57,7 @@ void *proc_thread_entrypoint(void *data)
     {
         while (1)
         {
-            if (msgrcv(thdata->rcv_qid, &msg, sizeof(struct msg_sockcommdata), 0, 0) != -1)
+            if (msgrcv(thdata->rcv_qid, &msg, sizeof(struct sockcomm_data), 0, 0) != -1)
             {
                 thdata->pfun(thdata->snd_qid, &msg.scdata, gdata);
             }

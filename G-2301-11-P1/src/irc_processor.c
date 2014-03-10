@@ -156,7 +156,7 @@ int irc_enqueue_msg(struct sockcomm_data *msg, int snd_qid)
     memcpy(&(qdata.scdata), msg, sizeof(struct sockcomm_data));
     qdata.msgtype = 1;
 
-    if (msgsnd(snd_qid, &qdata, sizeof(struct msg_sockcommdata), 0) == -1)
+    if (msgsnd(snd_qid, &qdata, sizeof(struct sockcomm_data), 0) == -1)
     {
         slog(LOG_ERR, "error enviando en cola de mensajes de envío: %s", strerror(errno));
         return ERR;

@@ -135,8 +135,8 @@ void listener_cleanup(void* data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
     
-    slog(LOG_NOTICE, "listener: limpiando.");
     server_close_communication(thdata->listen_sock);
+    slog(LOG_NOTICE, "listener: limpiando.");
 
     free(thdata);
 }

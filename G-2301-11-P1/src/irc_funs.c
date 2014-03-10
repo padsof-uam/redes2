@@ -113,7 +113,7 @@ int irc_nick(void *data)
     {
         if (retval == ERR_NOTFOUND)
             list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_ERRONEUSNICKNAME, NULL));
-        else if (retval == ERR_REPEAT)
+        else if (retval == ERR_NICKCOLLISION)
             list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NICKCOLLISION, NULL));
         else
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);

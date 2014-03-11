@@ -53,7 +53,7 @@ ssize_t rcv_message(int socket, void **buffer)
     char* realloc_retval;
     size_t buf_size = INITIAL_RECEIVE_BUFFER;
     ssize_t read_bytes = 0;
-    ssize_t batch_bytes = 0;
+    ssize_t batch_bytes = 1;
 
     internal_buf = (char *) calloc(buf_size, sizeof(char));
 

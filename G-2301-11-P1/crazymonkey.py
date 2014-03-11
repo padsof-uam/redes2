@@ -13,10 +13,10 @@ host = "localhost"
 port = 6667
 delay = 0.1
 client_spawndelay = 0.01
-client_batch = 50
-client_max = 600 # Python y el alto rendimiento no se llevan bien.
-batch_time_sec = 5
-ping_interval = 0.5
+client_batch = 10
+client_max = 800 
+batch_time_sec = 20
+ping_interval = 1
 threshold_manual_control = -1
 enable_sending = True
 

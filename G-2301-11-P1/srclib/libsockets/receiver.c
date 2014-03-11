@@ -28,10 +28,12 @@ void *thread_receive(void *st)
     int sk_new_connection;
     char *buffer;
     char *message;
-    int sock_lim = -1;
+    int sock_lim_sc = -1, sock_lim_rlimit = -1, sock_lim = -1;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
 
-    sock_lim = sysconf(_SC_OPEN_MAX);
+    sock_lim_sc = sysconf(_SC_OPEN_MAX);   
+    sock_lim_rlimit = get_soft_limit(RLIMIT_NOFILE);
+    sock_lim = sock_lim_sc < sock_lim_rlimit ? sock_lim_sc : sock_lim_rlimit;
 
     if (sock_lim == -1)
         slog(LOG_WARNING, "No se ha podido obtener el límite de descriptores para el proceso: %s", strerror(errno));

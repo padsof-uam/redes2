@@ -87,6 +87,9 @@ def signal_handler(signal, frame):
 		t.stop()
 
 	stop = True
+	time.sleep(1)
+	png.close()
+	sys.exit(0)
 
 users = [randstr(8) for _ in range(2000)]
 channels = [randstr(5) for _ in range(100)]

@@ -136,6 +136,9 @@ signal.signal(signal.SIGINT, signal_handler)
 png = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	
 def profile_server(parameters):
+	out = open('cm-times.dat','w')
+	pout = open('cm-partials.dat', 'w')
+	
 	cmdsend_delay = parameters['cmdsend_delay']
 	client_spawndelay = parameters['client_spawndelay']
 	client_batch = parameters['client_batch']
@@ -176,7 +179,11 @@ def profile_server(parameters):
 				error = True
 				continue
 
-			response_times.append(end-start)
+			resp = end - start
+			response_times.append(resp)
+			out.write(str(resp) + '\n')
+			out.flush()
+
 			batch_elapsed = batch_elapsed + ping_interval
 			time.sleep(ping_interval)
 
@@ -210,6 +217,8 @@ def profile_server(parameters):
 		partial_devs.append(sdev)
 
 		print 'ping times for this batch: {0} +/- {1} ms'.format(mean, sdev)
+		pout.write('{0}\t{1}\n'.format(mean, sdev))
+		pout.flush()
 
 	png.close()
 
@@ -219,12 +228,7 @@ def profile_server(parameters):
 	for t in threads:
 		t.stop()
 
-	out = open('cm-times.dat','w')
-	out.write('\n'.join([str(x) for x in response_times]))
 	out.close()
-
-	pout = open('cm-partials.dat', 'w')
-	pout.write('\n'.join(['{0}\t{1}'.format(m, d) for m,d in zip(partial_averages, partial_devs)]))
 	pout.close()
 
 if len(sys.argv) < 2:

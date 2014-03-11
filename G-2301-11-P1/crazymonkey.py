@@ -135,7 +135,7 @@ while not error and not stop and client_count <= client_max:
 
 		client_batch = int(next_str)
 		
-	if client_count < client_max:
+	if not error and client_count < client_max:
 		for i in xrange(0,client_batch):
 			th = IRCThread()
 			th.start()

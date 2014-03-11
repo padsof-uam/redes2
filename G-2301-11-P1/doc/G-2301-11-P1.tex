@@ -2,6 +2,22 @@
 
 \begin{document}
 
-Test
+\section{Rendimiento}
+
+Hemos hecho varias pruebas para verificar el rendimiento de nuestro servidor. Para ello hemos usado el script \texttt{crazymonkey.py}, que crea múltiples hilos que se conectan al servidor. 
+
+La medida del tiempo de respuesta se hace con el comando \textit{PING}. El hilo principal del script envía un comando \textit{PING} y mide el tiempo que tarda hasta recibir el correspondiente \textit{PONG}. No han sido necesarios identificadores ya que en ningún momento el script está esperando respuesta a más de un \textit{PING}.
+
+En cuanto a los hilos auxiliares, escogen un comando aleatorio de una lista predefinida:
+
+\begin{verbatim}
+	"NICK {nick}",
+	"JOIN {channel}",
+	"PART {channel}",
+	"PRIVMSG {user} :{message}",
+	"PRIVMSG {channel} :{message}"
+\end{verbatim}
+
+Esto es, comandos de cambio de nombre, entrada y salida de canales y envío de mensajes a usuarios y canales. Tanto los usuarios como los canales se obtienen de listas fijas, globales para todos los hilos, de tal forma que se simula una actividad más o menos real.
 
 \end{document}

@@ -170,16 +170,16 @@ def profile_server(parameters):
 		batch_start = len(response_times)
 
 		while not error and not stop and batch_elapsed < batch_time_sec:
-			start = time.clock()
+			start = time.time()
 			png.send("PING\r\n")
 			rcv = png.recv(6)
-			end = time.clock()
+			end = time.time()
 
 			if "PONG" not in rcv:
 				error = True
 				continue
 
-			resp = end - start
+			resp = (end - start) * 1000 # milliseconds.
 			response_times.append(resp)
 			out.write(str(resp) + '\n')
 			out.flush()

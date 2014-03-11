@@ -130,7 +130,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $(E_LIBS) -o $@ $^
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 
 ## Tests
 
@@ -138,7 +138,7 @@ test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) $(E_LIBS) -o $@ $^
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 
 ### Documentation
 

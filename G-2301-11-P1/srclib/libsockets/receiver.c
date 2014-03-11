@@ -115,8 +115,10 @@ void *thread_receive(void *st)
                 if (msglen > 0)
                     send_to_main(recv_data->queue, pfds->fds[i].fd, message, msglen);
                 else
+                {
                     slog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
-
+                    
+                }
                 if (message)
                     free(message);
             }

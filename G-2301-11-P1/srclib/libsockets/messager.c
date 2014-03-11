@@ -45,7 +45,6 @@ int send_message(int socket, const void *msg, ssize_t len)
     return OK;
 }
 
-
 /* Posible bug: ¿y si no dejamos de recibir mensajes? */
 ssize_t rcv_message(int socket, void **buffer)
 {
@@ -53,14 +52,14 @@ ssize_t rcv_message(int socket, void **buffer)
     char* realloc_retval;
     size_t buf_size = INITIAL_RECEIVE_BUFFER;
     ssize_t read_bytes = 0;
-    ssize_t batch_bytes = 1;
+    ssize_t batch_bytes = 0;
 
     internal_buf = (char *) calloc(buf_size, sizeof(char));
 
     if (!internal_buf)
         return ERR_MEM;
 
-    while (sock_data_available(socket) && batch_bytes > 0)
+    while (sock_data_available(socket))
     {
         batch_bytes = recv(socket, internal_buf + read_bytes, buf_size - read_bytes, 0);
 
@@ -79,7 +78,7 @@ ssize_t rcv_message(int socket, void **buffer)
                 internal_buf = realloc_retval;
             }
         }
-        else if(batch_bytes == -1)
+        else if(batch_bytes <= 0)
         {
             slog(LOG_ERR, "Error leyendo en el socket %d: %s", socket, strerror(errno));
             return -1;

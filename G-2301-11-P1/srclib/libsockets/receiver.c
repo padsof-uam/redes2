@@ -117,7 +117,9 @@ void *thread_receive(void *st)
                 else
                 {
                     slog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
-                    
+                    remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
+                    i--; /* Reexploramos este elemento */
+                    fds_len--;
                 }
                 if (message)
                     free(message);

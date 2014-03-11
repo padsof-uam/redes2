@@ -80,7 +80,6 @@ ssize_t rcv_message(int socket, void **buffer)
         }
         else if(batch_bytes <= 0)
         {
-            slog(LOG_ERR, "Error leyendo en el socket %d: %s", socket, strerror(errno));
             return -1;
         }
 

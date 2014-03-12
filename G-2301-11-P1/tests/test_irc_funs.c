@@ -103,57 +103,53 @@ static struct ircuser* _irc_register_withnick(struct irc_globdata* irc, int id, 
 
 /* BEGIN TESTS */
 int t_irc_user_not_registered() {
-    struct irc_globdata *irc = irc_init();
-    list* output;
-
-    irc_testend;
 	mu_fail("Not implemented");
 	mu_end;
 }
 int t_irc_user_bad_params() {
     struct irc_globdata *irc = irc_init();
     list* output;
+    char * msg;
 
 
-    output = _process_message(irc_user, irc, 1, "USER Juan ignore ignorar Guillermo de Juan");
-    printf("asdf\n");
-    list_add(output,_process_message(irc_user, irc, 1, "USER ignore ignorar :Guillermo de Juan"));
-    printf("asdf\n");
-    list_add(output,_process_message(irc_user, irc, 1, "USER Juan ignorar :Guillermo de Juan"));
-    printf("asdf\n");
-    list_add(output,_process_message(irc_user, irc, 1, "USER Juan :Guillermo de Juan"));
-    printf("asdf\n");
-    assert_generated(4);
-    for (int i = 0; i < 4; ++i){
-        printf("asdf\n");
-        assert_numeric_reply(msgnum(i), ERR_NEEDMOREPARAMS, NULL);
-    }
-    irc_testend;
-}
-int t_irc_user_bad_name() {
-    struct irc_globdata *irc = irc_init();
-    list* output;
-
-    output = _process_message(irc_user, irc, 1, "qwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiop");
+    msg = strdup("USER ignore ignorar :Guillermo de Juan");
+    output = _process_message(irc_user, irc, 1, msg);
     assert_generated(1);
-    /* Este error habría que redefinirlo bien... */
-    assert_numeric_reply(msgnum(0), ERR, NULL);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+    free(msg);
+    
+    msg = strdup("USER Juan ignorar :Guillermo de Juan");
+    list_add(output,_process_message(irc_user, irc, 1, msg));
+    assert_generated(2);
+    assert_numeric_reply(msgnum(1), ERR_NEEDMOREPARAMS, NULL);    
+    free(msg);
+
+    msg = strdup("USER Juan :Guillermo de Juan");
+    list_add(output,_process_message(irc_user, irc, 1, msg));
+    assert_generated(3);
+    //assert_numeric_reply(msgnum(2), ERR_NEEDMOREPARAMS, NULL);
+    free(msg);
 
     irc_testend;
 }
+
 int t_irc_user() {
     struct irc_globdata *irc = irc_init();
     list* output;
     int fd = 1;
 
+    char * msg = strdup("USER Ralph Ignore ign :comida de gato");
+
     struct ircuser *a = _irc_register_withnick(irc, fd, "Eloy");
-    output = _process_message(irc_user, irc, fd, ":asdf USER Ralph Ignore Ignorar :La comida de gato de mi gato sabe a comida de gato");
-    assert_generated(0);
+    output = _process_message(irc_user, irc, fd, msg);
 
     struct ircuser *b = assert_created_user_id(fd);
 
 
     mu_assert_streq(b->name, a->name, "L");
+
+    assert_generated(0);
+
     irc_testend;
 }
 
@@ -336,7 +332,6 @@ int test_irc_funs_suite(int *errors, int *success)
     /* BEGIN TEST EXEC */
 	mu_run_test(t_irc_user_not_registered);
 	mu_run_test(t_irc_user_bad_params);
-	mu_run_test(t_irc_user_bad_name);
     mu_run_test(t_irc_user);
 	mu_run_test(t_irc_nick_not_registered);
 	mu_run_test(t_irc_nick_collision);

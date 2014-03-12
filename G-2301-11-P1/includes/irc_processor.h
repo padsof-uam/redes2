@@ -83,6 +83,7 @@ struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, i
  */
 /*int irc_build_numeric_response(struct irc_msgdata *irc, int errcode, const char* additional_params, char *message_str);
 */
+
 /**
 * Recibe un código de error y devuelve una frase interpretando el error.
 * @param    errcode     Código de error.
@@ -117,5 +118,29 @@ int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *m
  * @return            Estructura sockcomm_data lista para enviar.
  */
 struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...);
+
+/**
+ * Construye un mensaje de respuesta y lo inserta en la lista de mensajes a enviar.
+ * @param  irc               Estructura con los datos de un mensaje IRC.
+ * @param  errcode           Código de respuesta.
+ * @see irc_codes.h
+ * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
+ * @return                   Código OK/ERR
+ * @see irc_build_numeric_reply
+ */
+int irc_send_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params);
+
+/**
+ * Construye un mensaje de respuesta con texto adicional y lo inserta en la lista
+ * 	de mensajes a enviar.
+ * @param  irc               Estructura con los datos de un mensaje IRC.
+ * @param  errcode           Código de respuesta.
+ * @see irc_codes.h
+ * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
+ * @param  msg_text			 Texto adicional de la respuesta.
+ * @return                   Código OK/ERR.
+ * @see irc_build_numericreply_withtext
+ */
+int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
 #endif
 

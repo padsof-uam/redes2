@@ -65,4 +65,13 @@ struct ircchan * irc_channel_byname(struct irc_globdata* data, const char * name
 
 int irc_compare_user(const void * user1, const void * user2);
 
+/**
+ * Devuelve si el usuario dado está en la lista de operadores del canal.
+ * @param  chan Canal.
+ * @param  user Usuario.
+ * @return      1 ó 0 según el usuario sea o no operador.
+ */
+int irc_is_channel_op(struct ircchan* chan, struct ircuser* user);
+
+
 #endif

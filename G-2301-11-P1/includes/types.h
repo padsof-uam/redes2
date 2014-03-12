@@ -46,6 +46,7 @@ struct ircuser {
 	int fd;
 	char nick[MAX_NICK_LEN + 1];
 	char name[MAX_NAME_LEN + 1];
+	char username[MAX_NICK_LEN + 1];
 	short is_away;
 	char away_msg[MAX_AWAYMSG_LEN + 1];
 	user_mode mode;
@@ -57,6 +58,7 @@ struct irc_globdata {
 	dictionary* nick_user_map;
 	dictionary* chan_map;
 	list* chan_list;
+	dictionary* oper_passwords; /**< Diccionario usuario -> contraseña operador */
 	char servername[MAX_SERVER_NAME];
 };
 

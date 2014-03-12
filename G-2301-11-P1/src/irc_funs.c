@@ -479,3 +479,9 @@ int irc_users(void *data)
     irc_send_numericreply(ircdata, ERR_USERSDISABLED, NULL); /* De momento. */
     return OK;      
 }
+
+int irc_oper(void* data)
+{
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    
+}

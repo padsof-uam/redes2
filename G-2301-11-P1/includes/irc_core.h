@@ -73,5 +73,14 @@ int irc_compare_user(const void * user1, const void * user2);
  */
 int irc_is_channel_op(struct ircchan* chan, struct ircuser* user);
 
+/**
+ * Carga la configuración del servidor de un archivo.
+ * @param  irc  Estructura IRC.
+ * @param  file Archivo de configuración.
+ * @return      OK/ERR.
+ */
+int irc_load_config(struct irc_globdata* irc, const char *file);
+
+
 
 #endif

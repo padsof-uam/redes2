@@ -2,8 +2,13 @@
 #include "dictionary.h"
 #include "list.h"
 #include "irc_codes.h"
+#include "jsmn.h"
+#include "log.h"
 
 #include <string.h>
+#include <stdio.h>
+
+#define MAX_CONF_LEN 1000
 
 struct irc_globdata *irc_init()
 {
@@ -16,13 +21,79 @@ struct irc_globdata *irc_init()
     gdata->fd_user_map = dic_new_withint();
     gdata->nick_user_map = dic_new_withstr();
     gdata->chan_list = list_new();
+    gdata->oper_passwords = dic_new_withstr();
 
     strncpy(gdata->servername, "redes-ircd", MAX_SERVER_NAME); /* Nombre por defecto */
 
-    if (!(gdata->chan_list && gdata->fd_user_map && gdata->nick_user_map && gdata->chan_list))
+    if (!(gdata->chan_list && gdata->fd_user_map && gdata->nick_user_map && gdata->chan_list && gdata->oper_passwords))
+    {
         irc_destroy(gdata);
+        return NULL;
+    }
 
     return gdata;
+}
+
+static void _parse_opers(struct irc_globdata* irc, char* contents, jsmntok_t* tok)
+{
+    int i;  
+    int childs = tok[0].size;
+    char *user, *pass;
+
+    for(i = 1; i < childs; i += 2)
+    {
+        *(contents + tok[i].end) = '\0';
+        *(contents + tok[i + 1].end) = '\0';
+        user = contents + tok[i].start;
+        pass = contents + tok[i + 1].start;
+
+        dic_add(irc->oper_passwords, user, strdup(pass));
+        slog(LOG_DEBUG, "Configurada contraseña para %s", user);
+    }
+}
+
+int irc_load_config(struct irc_globdata* irc, const char *file)
+{
+    long conf_len;
+    char *conf_contents;
+    FILE *f_conf;
+    jsmn_parser parser;
+    jsmntok_t tokens[100];
+    int i, parsed;
+
+    f_conf = fopen(file, "r");
+
+    if (!f_conf)
+        return ERR_NOTFOUND;
+
+    fseek( f_conf , 0L , SEEK_END);
+    conf_len = ftell( f_conf );
+    rewind( f_conf );
+
+    conf_contents = calloc( 1, conf_len + 1 );
+
+    if (!conf_contents)
+        return ERR_MEM;
+
+    if (fread(conf_contents, conf_len, 1, f_conf) != 1)
+        return ERR_IO;
+
+    fclose(f_conf);
+
+    jsmn_init(&parser);
+
+    parsed = jsmn_parse(&parser, conf_contents, conf_len, tokens, 100);
+
+    if(parsed < 0)
+        return ERR_PARSE;
+
+    for(i = 0; i < parsed; i++)
+    {
+        if(tokens[i].type == JSMN_PRIMITIVE && !strncmp(conf_contents + tokens[i].start, "opers", strlen("opers")))
+            _parse_opers(irc, conf_contents, &(tokens[i + 1]));
+    }
+
+    return OK;
 }
 
 struct ircuser *irc_user_bynick(struct irc_globdata *gdata, const char *nick)
@@ -39,7 +110,7 @@ static void _chan_destructor(void *ptr)
 {
     struct ircchan *chan = (struct ircchan *) ptr;
 
-    if(!chan)
+    if (!chan)
         return;
 
     list_destroy(chan->users, NULL);
@@ -51,13 +122,13 @@ static void _chan_destructor(void *ptr)
 
 static void _user_destructor(void *ptr)
 {
-	struct ircuser* user = (struct ircuser*) ptr;
+    struct ircuser *user = (struct ircuser *) ptr;
 
-	if(!user)
-		return;
+    if (!user)
+        return;
 
-	list_destroy(user->channels, NULL);
-	free(user);
+    list_destroy(user->channels, NULL);
+    free(user);
 }
 
 void irc_destroy(struct irc_globdata *data)
@@ -222,7 +293,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     strncpy(chan->name, name, MAX_CHAN_LEN);
     list_add(data->chan_list, chan);
     dic_add(data->chan_map, name, chan);
-    
+
     chan->users = list_new();
     chan->mode = 0;
     chan->has_password = 0;
@@ -232,7 +303,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     return chan;
 }
 
-int irc_is_channel_op(struct ircchan* chan, struct ircuser* user)
+int irc_is_channel_op(struct ircchan *chan, struct ircuser *user)
 {
     return list_find(chan->operators, str_comparator, user->name) != -1;
 }

@@ -412,6 +412,8 @@ char *irc_errstr(int errcode)
         break;
     case RPL_NOTOPIC:
         return "No topic is set";
+    case RPL_ENDOFNAMES:
+        return "End of /NAMES list";
     default:
         return "Rellena este error";
     }

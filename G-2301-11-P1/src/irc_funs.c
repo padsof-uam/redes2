@@ -332,8 +332,38 @@ int irc_topic(void *data)
 }
 int irc_names(void *data)
 {
+    char* params[1];
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircchan* chan;
+    struct ircuser* user;
+    char* chanlist = NULL;
+    list* users;
+    int i, j;
+
+    if(irc_parse_paramlist(ircdata->msgdata->data, params, 1) == 1)
+        chanlist = params[0];
+
+    for(i = 0; i < list_count(ircdata->globdata->chan_list); i++)
+    {
+        chan = list_at(ircdata->globdata->chan_list, i);
+
+        if(!(chan->mode & (chan_priv | chan_secret)) /* No mostramos canales ni secretos ni privados */
+            && (chanlist == NULL || strncmp(chanlist, chan->name, MAX_CHAN_LEN) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
+        {
+            users = chan->users;
+            for(j = 0; j < list_count(users); j++)
+            {
+                user = list_at(users, j);
+                irc_send_numericreply_withtext(ircdata, RPL_NAMREPLY, chan->name, user->nick);
+            }
+
+            irc_send_numericreply(ircdata, RPL_ENDOFNAMES, chan->name);
+        }
+    }
+
     return OK;
 }
+
 int irc_list(void *data)
 {
     return OK;

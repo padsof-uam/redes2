@@ -468,7 +468,8 @@ int irc_notice(void *data)
 }
 
 int irc_pong(void *data)
-{
+{   
+    /* Quizás en un futuro queramos hacer algo con esto. Pero de momento, no. */
     return OK;
 }
 

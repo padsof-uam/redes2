@@ -282,7 +282,7 @@ int t_irc_quit__message_provided__message_transmitted()
 
     output = _process_message(irc_quit, irc, 1, "QUIT Bye");
 
-    assert_generated(1);
+    assert_generated(2);
     assert_msgstr_eq(msgnum(0), ":pepe QUIT :Bye");
     irc_testend;
 }
@@ -295,7 +295,7 @@ int t_irc_quit__no_message_provided__msg_is_nick()
 
     output = _process_message(irc_quit, irc, 1, "QUIT");
 
-    assert_generated(1);
+    assert_generated(2);
     assert_msgstr_eq(msgnum(0), ":pepe QUIT :pepe");
 
     irc_testend;

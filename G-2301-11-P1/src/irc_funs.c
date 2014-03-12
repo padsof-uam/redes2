@@ -716,3 +716,26 @@ int irc_kill(void *data)
 
     return OK;
 }
+
+int irc_away(void *data)
+{
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircuser* user;
+    char* params[1];
+
+    user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
+    if (irc_parse_paramlist(ircdata->msg, params, 1) == 0)
+    {
+        user->is_away = 0;
+        irc_send_numericreply(ircdata, RPL_UNAWAY, NULL);
+    }
+    else
+    {
+        user->is_away = 1;
+        strncpy(user->away_msg, params[0], MAX_AWAYMSG_LEN);
+        irc_send_numericreply(ircdata, RPL_NOWAWAY, NULL);
+    }
+
+    return OK;
+}

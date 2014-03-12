@@ -22,5 +22,6 @@ int irc_mode(void* data);
 int irc_invite(void* data);
 int irc_version(void* data);
 int irc_kill(void* data);
+int irc_away(void* data);
 #endif
 

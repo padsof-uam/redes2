@@ -36,7 +36,8 @@ const char *_irc_cmds[] =
     "MODE",
     "INVITE",
     "VERSION",
-    "KILL"
+    "KILL",
+    "AWAY"
 };
 
 cmd_action _irc_actions[] =
@@ -60,7 +61,8 @@ cmd_action _irc_actions[] =
     irc_mode,
     irc_invite,
     irc_version,
-    irc_kill
+    irc_kill,
+    irc_away
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -100,7 +102,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
 
     list_destroy(ircdata.msg_tosend, free);
 
-    if(ircdata.connection_to_terminate)
+    if (ircdata.connection_to_terminate)
         close(ircdata.connection_to_terminate);
 }
 
@@ -202,7 +204,7 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
-static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, const char *message, const char* cmd)
+static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, const char *message, const char *cmd)
 {
     int i;
     int chan_count;
@@ -213,7 +215,7 @@ static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, c
     for (i = 0; i < chan_count; i++)
     {
         chan = list_at(user->channels, i);
-        irc_channel_broadcast(chan, msgqueue, ":%s %s :%s", user->nick, cmd, message);       
+        irc_channel_broadcast(chan, msgqueue, ":%s %s :%s", user->nick, cmd, message);
     }
 
     return OK;
@@ -224,8 +226,8 @@ int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *m
     return _irc_create_quitkill_messages(user, msgqueue, message, "QUIT");
 }
 
-int irc_create_kill_messages(struct ircuser* user, list* msgqueue, const char* tokill_name, const char* message)
-{   
+int irc_create_kill_messages(struct ircuser *user, list *msgqueue, const char *tokill_name, const char *message)
+{
     char cmd[20];
     snprintf(cmd, 20, "KILL %s", tokill_name);
     return _irc_create_quitkill_messages(user, msgqueue, message, cmd);
@@ -329,7 +331,7 @@ int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char 
     return OK;
 }
 
-int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic)
+int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic)
 {
     int i;
     short adding;
@@ -337,13 +339,13 @@ int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic
     adding = flags[0] == '+';
     flags++;
 
-    while(*flags != ' ' && *flags != '\0')
+    while (*flags != ' ' && *flags != '\0')
     {
-        for(i = 0; !IS_IRCFLAGS_END(flagdic[i]); i++)
+        for (i = 0; !IS_IRCFLAGS_END(flagdic[i]); i++)
         {
-            if(*flags == flagdic[i].code)
+            if (*flags == flagdic[i].code)
             {
-                if(adding)
+                if (adding)
                     *flagval |= flagdic[i].value;
                 else
                     *flagval &= ~(flagdic[i].value);
@@ -454,6 +456,10 @@ char *irc_errstr(int errcode)
         return "End of /NAMES list";
     case RPL_YOUREOPER:
         return "You're now an IRC operator";
+    case RPL_NOWAWAY:
+        return "You have been marked as being away";
+    case RPL_UNAWAY:
+        return "You are no longer marked as being away";
     default:
         return "I don't know that error";
     }

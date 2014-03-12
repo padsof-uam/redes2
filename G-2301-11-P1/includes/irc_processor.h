@@ -6,6 +6,13 @@
 
 #include <stdarg.h>
 
+struct ircflag {
+	char code;
+	int value;
+};
+
+#define IRCFLAGS_END { -1, -1 }
+#define IS_IRCFLAGS_END(flag) ((flag).code != -1 && (flag).value != -1)
 /**
  * Procesa un mensaje IRC.
  * @param snd_qid ID de la cola donde enviar los mensajes generados.
@@ -170,5 +177,15 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
  * @return            Código OK/ERR.
  */
 int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char* message, ...);
+
+/**
+ * Analiza una cadena del estilo "[+|-]abcd" para extraer las distintas flags.
+ * @param  flags   Cadena con los flags.
+ * @param  flagval Valor a modificar con los flags.
+ * @param  flagdic Lista de estructuras ircflag terminada en IRCFLAG_END
+ * @return         OK/ERR.
+ */
+int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic);
+
 #endif
 

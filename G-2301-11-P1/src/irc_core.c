@@ -299,6 +299,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     chan->has_password = 0;
     chan->invited_users = dic_new_withstr();
     chan->operators = list_new();
+    chan->user_limit = -1;
 
     return chan;
 }
@@ -306,4 +307,13 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
 int irc_is_channel_op(struct ircchan *chan, struct ircuser *user)
 {
     return list_find(chan->operators, str_comparator, user->name) != -1;
+}
+
+
+int irc_set_channel_pass(struct ircchan* chan, const char* pass)
+{
+    strncpy(chan->password, pass, MAX_KEY_LEN);
+    chan->has_password = 1;
+
+    return OK;
 }

@@ -1,7 +1,5 @@
-- Implementar las funciones de IRC que no están implementadas.
-	De momento sólo está PRIVMSG. Hay un buen número a implementar pero no debería ser difícil. Para enviar mensajes, fíjate en cómo está hecha irc_privmsg. Lo que hacemos es crear el mensaje (estructura sockcomm_data) y lo metemos en una lista. De esta forma enviamos todos los mensajes a la vez y no tenemos que preocuparnos de cómo mandarlos desde las funciones específicas de IRC.
-
-	También faltan algunas funciones para acceder a los campos de IRC, como las listas de usuarios y diccionarios. El lunes te lo explico mejor, pero la idea es tener varias estructuras apuntando a los mismos datos en memoria para acceder más rápidamente. Por ejemplo, si queremos recorrer todos los canales usamos la lista. Si lo que queremos es buscar uno concreto, hay que usar un diccionario. Para que todo sea transparente, hay que crear funciones para esas tareas concretas, como por ejemplo irc_user_bynick en irc_core.c.
+==== TESTS === 
+- Hay que hacer tests sobre varias cosas. irc_notice, irc_kick, irc_oper, irc_mode, irc_flagparse e irc_channel_broadcast deberían tener pruebas. Además, deberíamos comprobar que se respetan los modos del canal tanto en PRIVMSG como en JOIN.
 
 === Cambios Guille sobre cosas De Juan
 

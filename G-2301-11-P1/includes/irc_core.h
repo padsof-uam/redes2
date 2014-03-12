@@ -81,6 +81,12 @@ int irc_is_channel_op(struct ircchan* chan, struct ircuser* user);
  */
 int irc_load_config(struct irc_globdata* irc, const char *file);
 
-
+/**
+ * Establece una contraseña para un canal.
+ * @param  chan Canal.
+ * @param  pass Contraseña.
+ * @return      OK.
+ */
+int irc_set_channel_pass(struct ircchan* chan, const char* pass);
 
 #endif

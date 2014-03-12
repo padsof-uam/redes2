@@ -319,6 +319,31 @@ int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char 
     return OK;
 }
 
+int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic)
+{
+    int i;
+    short adding;
+
+    adding = flags[0] == '+';
+    flags++;
+
+    while(*flags != ' ' && *flags != '\0')
+    {
+        for(i = 0; !IS_IRCFLAGS_END(flagdic[i]); i++)
+        {
+            if(*flags == flagdic[i].code)
+            {
+                if(adding)
+                    *flagval |= flagdic[i].value;
+                else
+                    *flagval &= ~(flagdic[i].value);
+            }
+        }
+    }
+
+    return OK;
+}
+
 char *irc_errstr(int errcode)
 {
     switch (errcode)

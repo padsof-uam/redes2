@@ -23,8 +23,8 @@
 #define MAX_ERR_THRESHOLD 5
 
 typedef enum  { 
-	chan_op = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 
-	chan_topiclock = 16, chan_nooutside = 32, chan_moderated = 64 
+	chan_moderated = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 
+	chan_topiclock = 16, chan_nooutside = 32 
 } chan_mode;
 
 typedef enum {
@@ -40,6 +40,7 @@ struct ircchan {
 	list* operators; /**< Lista de cadenas con los nicks de los operadores */
 	char password[MAX_KEY_LEN + 1];
 	short has_password;
+	int user_limit;
 };
 
 struct ircuser {

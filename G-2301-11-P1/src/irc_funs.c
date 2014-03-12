@@ -10,35 +10,44 @@
 #include <stdio.h>
 #include <time.h>
 
-static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, const char *text)
+#define MSG_PRIVMSG 1 
+#define MSG_NOTICE 2
+
+static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, const char *text, int msgtype)
 {
 	struct ircchan* chan = irc_channel_byname(irc->globdata, receiver);
 	struct ircuser* sender = irc_user_byid(irc->globdata, irc->msgdata->fd);
+    char* cmd_name = msgtype == MSG_PRIVMSG ? "PRIVMSG" : "NOTICE";
 
 	if(!chan)
-	   return irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
+	{
+        if(msgtype == MSG_PRIVMSG)
+            irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
+        return OK;
+    }
 
-    irc_channel_broadcast(chan, irc->msg_tosend, ":%s PRIVMSG %s :%s", sender->nick, receiver, text);
+    irc_channel_broadcast(chan, irc->msg_tosend, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text);
 
  	return OK;
 }
 
-static int _irc_send_msg_touser(struct irc_msgdata *irc, const char *receiver, const char *text)
+static int _irc_send_msg_touser(struct irc_msgdata *irc, const char *receiver, const char *text, int msgtype)
 {
     struct ircuser *dest = irc_user_bynick(irc->globdata, receiver);
     struct ircuser* sender = irc_user_byid(irc->globdata, irc->msgdata->fd);
+    char* cmd_name = msgtype == MSG_PRIVMSG ? "PRIVMSG" : "NOTICE";
 
-    if (!dest)
+    if (!dest && msgtype == MSG_PRIVMSG)
         irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
-    else if(dest->is_away)
+    else if(dest->is_away && msgtype == MSG_PRIVMSG)
         irc_send_numericreply_withtext(irc, RPL_AWAY, receiver, dest->away_msg);
-    else
-    	list_add(irc->msg_tosend, irc_response_create(dest->fd, ":%s PRIVMSG %s :%s", sender->nick, receiver, text));
+    else if(dest && !dest->is_away)
+    	list_add(irc->msg_tosend, irc_response_create(dest->fd, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text));
 
     return OK;
 }
 
-int irc_privmsg(void *data)
+int _irc_internal_msg(void* data, int msgtype)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     char* params[2];
@@ -49,13 +58,13 @@ int irc_privmsg(void *data)
 
     if(param_num < 1)
     {
-    	irc_send_numericreply(ircdata, ERR_NORECIPIENT, NULL);
-    	return OK;
+        irc_send_numericreply(ircdata, ERR_NORECIPIENT, NULL);
+        return OK;
     }
     else if(param_num < 2)
     {
-    	irc_send_numericreply(ircdata, ERR_NOTEXTTOSEND, NULL);
-    	return OK;
+        irc_send_numericreply(ircdata, ERR_NOTEXTTOSEND, NULL);
+        return OK;
     }
 
     dests = params[0];
@@ -63,14 +72,18 @@ int irc_privmsg(void *data)
 
     while ((receiver = strsep(&dests, ",")) != NULL)
     {
-    	if(receiver[0] == '#' || receiver[0] == '&')
-    		_irc_send_msg_tochan(ircdata, receiver, text);
-    	else
-    		_irc_send_msg_touser(ircdata, receiver, text);
-
+        if(receiver[0] == '#' || receiver[0] == '&')
+            _irc_send_msg_tochan(ircdata, receiver, text, msgtype);
+        else
+            _irc_send_msg_touser(ircdata, receiver, text, msgtype);
     }
 
     return OK;
+}
+
+int irc_privmsg(void *data)
+{
+    return _irc_internal_msg(data, MSG_PRIVMSG);
 }
 
 int irc_ping(void *data)
@@ -451,7 +464,7 @@ int irc_time(void *data)
 
 int irc_notice(void *data)
 {
-    return OK;
+    return _irc_internal_msg(data, MSG_NOTICE);
 }
 
 int irc_pong(void *data)

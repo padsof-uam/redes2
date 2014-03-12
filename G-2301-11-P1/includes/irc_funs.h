@@ -18,5 +18,6 @@ int irc_notice(void* data);
 int irc_pong(void* data);
 int irc_users(void* data);
 int irc_oper(void* data);
+int irc_mode(void* data);
 #endif
 

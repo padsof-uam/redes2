@@ -32,7 +32,8 @@ const char *_irc_cmds[] =
     "NOTICE",
     "PONG",
     "USERS",
-    "OPER"
+    "OPER",
+    "MODE"
 };
 
 cmd_action _irc_actions[] =
@@ -52,7 +53,8 @@ cmd_action _irc_actions[] =
     irc_notice,
     irc_pong,
     irc_users,
-    irc_oper
+    irc_oper,
+    irc_mode
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)

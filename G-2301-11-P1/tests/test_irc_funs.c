@@ -13,14 +13,16 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
-int t_irc_topic__topic_change__topic_changed_and_broadcast() {
+int t_irc_topic__topic_change__topic_changed_and_broadcast()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
-    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 2, a, b);
+    struct ircchan *chan =  _irc_create_chan(irc, "#testchan", 2, a, b);
+    char msg[] = "TOPIC #testchan :Tema de prueba";
 
-    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan :Tema de prueba");
+    output = _process_message(irc_topic, irc, 1, msg);
 
     assert_generated(2);
     assert_dest(msgnum(0), a);
@@ -29,69 +31,75 @@ int t_irc_topic__topic_change__topic_changed_and_broadcast() {
     assert_msgstr_eq(msgnum(1), ":pepe TOPIC #testchan :Tema de prueba");
     mu_assert_streq(chan->topic, "Tema de prueba", "Topic not set");
 
-	irc_testend;
+    irc_testend;
 }
-int t_irc_topic__op_needed__returns_needmoreprivileges() {
+int t_irc_topic__op_needed__returns_needmoreprivileges()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
-    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 2, a, b);    
-	
+    struct ircchan *chan =  _irc_create_chan(irc, "#testchan", 2, a, b);
+    char msg[] = "TOPIC #testchan :Tema de prueba";
     chan->mode |= chan_topiclock;
 
-    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan :Tema de prueba");
+    output = _process_message(irc_topic, irc, 1, msg);
     assert_generated(1);
     assert_numeric_reply(msgnum(0), ERR_CHANOPRIVSNEEDED, "#testchan");
     irc_testend;
 }
-int t_irc_topic__topic_notset_request__returns_notopic() {
+int t_irc_topic__topic_notset_request__returns_notopic()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     _irc_create_chan(irc, "#testchan", 1, a);
     output = _process_message(irc_topic, irc, 1, "TOPIC #testchan");
-    
+
     assert_generated(1);
     assert_numeric_reply(msgnum(0), RPL_NOTOPIC, "#testchan");
-	irc_testend;
+    irc_testend;
 }
-int t_irc_topic__topic_set_requested__returns_topic() {
+int t_irc_topic__topic_set_requested__returns_topic()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
-    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 1, a);    
+    struct ircchan *chan =  _irc_create_chan(irc, "#testchan", 1, a);
     strcpy(chan->topic, "Prueba");
 
     output = _process_message(irc_topic, irc, 1, "TOPIC #testchan");
-    
+
     assert_generated(1);
     mu_assert("Message doesn't contain the topic", strstr(msgnum(0)->data, ":Prueba") != NULL);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, "#testchan");
-	
+
     irc_testend;
 }
-int t_irc_topic__no_params__returns_needmoreparams() {
+int t_irc_topic__no_params__returns_needmoreparams()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
-    _irc_create_chan(irc, "#testchan", 2, a, b);    
-    
+    _irc_create_chan(irc, "#testchan", 2, a, b);
+
     output = _process_message(irc_topic, irc, 1, "TOPIC");
     assert_generated(1);
     assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, "TOPIC");
     irc_testend;
 }
 
-int t_irc_user_not_registered() {
-	mu_fail("Not implemented");
-	mu_end;
+int t_irc_user_not_registered()
+{
+    mu_fail("Not implemented");
+    mu_end;
 }
 
-int t_irc_user_bad_params() {
+int t_irc_user_bad_params()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     char msg[] = "USER ignore ignorar :Guillermo de Juan";
 
 
@@ -102,9 +110,10 @@ int t_irc_user_bad_params() {
     irc_testend;
 }
 
-int t_irc_user() {
+int t_irc_user()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     int fd = 1;
     char msg[] = "USER Ralph Ignore ign :comida de gato";
     struct ircuser *a = _irc_register_withnick(irc, fd, "Ralph");
@@ -117,22 +126,23 @@ int t_irc_user() {
     irc_testend;
 }
 
-int t_irc_nick_collision() {
+int t_irc_nick_collision()
+{
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     _irc_register_withnick(irc, 4, "pedro");
     output = _process_message(irc_nick, irc, 4, "NICK pedro");
 
     assert_generated(1);
     assert_numeric_reply(msgnum(0), ERR_NICKCOLLISION, NULL);
-	
+
     irc_testend;
 }
 
-int t_irc_nick__set_nick__set() 
+int t_irc_nick__set_nick__set()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = irc_register_user(irc, 1);
 
     output = _process_message(irc_nick, irc, 1, "NICK Juan");
@@ -143,10 +153,10 @@ int t_irc_nick__set_nick__set()
     irc_testend;
 }
 
-int t_irc_nick__change_nick__set_and_broadcast() 
+int t_irc_nick__change_nick__set_and_broadcast()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "paco");
     struct ircuser *b = _irc_register_withnick(irc, 2, "pepe");
     _irc_create_chan(irc, "#testchan", 2, a, b);
@@ -163,14 +173,15 @@ int t_irc_nick__change_nick__set_and_broadcast()
 int t_irc_privmsg__send_to_channel__sent_to_users_in_channel()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
+    char msg[] = "PRIVMSG #testchan :todos";
     _irc_register_withnick(irc, 3, "luis");
 
     _irc_create_chan(irc, "#testchan", 2, a, b);
 
-    output = _process_message(irc_privmsg, irc, 3, "PRIVMSG #testchan :todos");
+    output = _process_message(irc_privmsg, irc, 3, msg);
 
     assert_generated(2);
     assert_dest(msgnum(0), a);
@@ -184,12 +195,13 @@ int t_irc_privmsg__send_to_channel__sent_to_users_in_channel()
 int t_irc_privmsg__send_to_user__user_receives_it()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
+    char msg[] = "PRIVMSG pepe :hola :)";
 
     _irc_register_withnick(irc, 0, "paco");
     _irc_register_withnick(irc, 1, "pepe");
 
-    output = _process_message(irc_privmsg, irc, 0, "PRIVMSG pepe :hola :)");
+    output = _process_message(irc_privmsg, irc, 0, msg);
 
     assert_generated(1);
     assert_msgstr_eq(msgnum(0), ":paco PRIVMSG pepe :hola :)");
@@ -200,7 +212,7 @@ int t_irc_privmsg__send_to_user__user_receives_it()
 int t_irc_privmsg__no_text_provided__err_notexttosend()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
 
     output = _process_message(irc_privmsg, irc, 0, "PRIVMSG pepe");
 
@@ -213,7 +225,7 @@ int t_irc_privmsg__no_text_provided__err_notexttosend()
 int t_irc_privmsg__dest_not_provied__err_norecipient()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
+    list *output;
 
     output = _process_message(irc_privmsg, irc, 0, "PRIVMSG");
 
@@ -226,9 +238,9 @@ int t_irc_privmsg__dest_not_provied__err_norecipient()
 int t_irc_privmsg__dest_doesnt_exist__err_no_such_nick()
 {
     struct irc_globdata *irc = irc_init();
-    list* output;
-
-    output = _process_message(irc_privmsg, irc, 0, "PRIVMSG pepe: hola!!!");
+    list *output;
+    char msg[] =  "PRIVMSG pepe: hola!!!";
+    output = _process_message(irc_privmsg, irc, 0, msg);
 
     assert_generated(1);
     assert_numeric_reply(msgnum(0), ERR_NOSUCHNICK, NULL);
@@ -239,14 +251,15 @@ int t_irc_privmsg__dest_doesnt_exist__err_no_such_nick()
 int t_irc_privmsg__dest_away__replies_away()
 {
     struct irc_globdata *irc = irc_init();
-    struct ircuser* user = _irc_register_withnick(irc, 0, "pepe");
-    list* output;
+    struct ircuser *user = _irc_register_withnick(irc, 0, "pepe");
+    list *output;
+    char msg[] = "PRIVMSG pepe :hola";
     _irc_register_withnick(irc, 1, "luis");
 
     user->is_away = 1;
     strcpy(user->away_msg, "Estoy programando redes.");
 
-    output = _process_message(irc_privmsg, irc, 1, "PRIVMSG pepe :hola");
+    output = _process_message(irc_privmsg, irc, 1, msg);
 
     assert_generated(1);
     assert_msgstr_eq(msgnum(0), ":redes-ircd 301 luis pepe :Estoy programando redes.");
@@ -296,17 +309,17 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
-	mu_run_test(t_irc_user_not_registered);
-	mu_run_test(t_irc_user_bad_params);
+    mu_run_test(t_irc_user_not_registered);
+    mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
-	mu_run_test(t_irc_nick_collision);
+    mu_run_test(t_irc_nick_collision);
     mu_run_test(t_irc_nick__set_nick__set);
-	mu_run_test(t_irc_nick__change_nick__set_and_broadcast);
-	mu_run_test(t_irc_topic__topic_change__topic_changed_and_broadcast);
-	mu_run_test(t_irc_topic__op_needed__returns_needmoreprivileges);
-	mu_run_test(t_irc_topic__topic_notset_request__returns_notopic);
-	mu_run_test(t_irc_topic__topic_set_requested__returns_topic);
-	mu_run_test(t_irc_topic__no_params__returns_needmoreparams);
+    mu_run_test(t_irc_nick__change_nick__set_and_broadcast);
+    mu_run_test(t_irc_topic__topic_change__topic_changed_and_broadcast);
+    mu_run_test(t_irc_topic__op_needed__returns_needmoreprivileges);
+    mu_run_test(t_irc_topic__topic_notset_request__returns_notopic);
+    mu_run_test(t_irc_topic__topic_set_requested__returns_topic);
+    mu_run_test(t_irc_topic__no_params__returns_needmoreparams);
     mu_run_test(t_irc_privmsg__send_to_channel__sent_to_users_in_channel);
     mu_run_test(t_irc_privmsg__send_to_user__user_receives_it);
     mu_run_test(t_irc_privmsg__no_text_provided__err_notexttosend);

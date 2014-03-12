@@ -444,7 +444,7 @@ int irc_time(void *data)
 
     ctime_r(&t, date_buf);   
     date_buf[strlen(date_buf) - 1] = '\0'; /* Eliminamos último \n */
-    irc_build_numericreply_withtext(ircdata, RPL_TIME, ircdata->globdata->servername, date_buf);
+    irc_send_numericreply_withtext(ircdata, RPL_TIME, ircdata->globdata->servername, date_buf);
 
     return OK;
 }

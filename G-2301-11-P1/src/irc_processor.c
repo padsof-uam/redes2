@@ -79,7 +79,10 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         ircdata.msg = msg;
 
         if (parse_exec_command(msg, _irc_cmds, _irc_actions, (sizeof(_irc_actions) / sizeof(cmd_action)), &ircdata) == -1)
-            slog(LOG_WARNING, "Error parsing command %s", data->data);
+        {
+            slog(LOG_WARNING, "Error parsing command %s", msg);
+            irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);
+        }
 
         msg = msg_end;
     }

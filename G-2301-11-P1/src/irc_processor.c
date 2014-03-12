@@ -356,6 +356,25 @@ int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic
     return OK;
 }
 
+
+int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *ircdata)
+{
+    struct ircuser *user;
+    list *users;
+    int j;
+    
+    users = channel->users;
+    for (j = 0; j < list_count(users); j++)
+    {
+        user = list_at(users, j);
+        irc_send_numericreply_withtext(ircdata, RPL_NAMREPLY, channel->name, user->nick);
+    }
+
+    irc_send_numericreply(ircdata, RPL_ENDOFNAMES, channel->name);
+
+    return OK;
+}
+
 char *irc_errstr(int errcode)
 {
     switch (errcode)
@@ -460,6 +479,10 @@ char *irc_errstr(int errcode)
         return "You have been marked as being away";
     case RPL_UNAWAY:
         return "You are no longer marked as being away";
+    case RPL_LISTSTART:
+        return "Channel users topic";
+    case RPL_LISTEND:
+        return "End of /LIST";
     default:
         return "I don't know that error";
     }

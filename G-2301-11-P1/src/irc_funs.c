@@ -151,9 +151,11 @@ int irc_join(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan *channel;
-    char topic[MAX_TOPIC_LEN], bye_msg[MAX_IRC_MSG + 1];
     char *params[2];
-    char *chan_name, *aux_name, *key, *aux_key;
+    char *channels[10];
+    char *passwords[10];
+    int chan_num, pass_num, i;
+    char *key;
     struct ircuser *user;
     int retval = OK;
 
@@ -163,56 +165,37 @@ int irc_join(void *data)
         return ERR;
     }
 
-
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
     if (!user)
     {
-        sprintf(bye_msg, "No has podido unirte al canal porque no eres un usuario");
-        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOTFOUND, bye_msg));
-        return ERR_NOTFOUND;
+        irc_send_numericreply(ircdata, ERR_NOTFOUND, "No has podido unirte al canal porque no eres un usuario");
+        return OK;
     }
-    chan_name = params[0];
-    key = params[1];
 
-    while (!chan_name)
+    chan_num = str_arrsep(params[0], ",", channels, 10);
+    pass_num = str_arrsep(params[1], ",", passwords, 10);
+
+    for(i = 0; i < chan_num; i++)
     {
-
-        aux_name = strchr(chan_name, ',');
-        if (!aux_name)
-        {
-            *aux_name = '\0';
-            aux_name++;
-        }
-
-        if (!key)
-            aux_key = strchr(key, ',');
-        else
-            aux_key = NULL;
-
-        if (!aux_key)
-        {
-            *aux_key = '\0';
-            aux_key++;
-        }
-
-        /* TODO: ¿Qué pasa si aux_name es NULL? */
-        channel = irc_channel_byname(ircdata->globdata, aux_name);
+        channel = irc_channel_byname(ircdata->globdata, channels[i]);
 
         if (!channel)
-            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOSUCHCHANNEL, aux_name));
+            channel = irc_register_channel(ircdata->globdata, channels[i]);
 
-        retval = irc_channel_adduser(ircdata->globdata, channel, user, aux_key);
-        /*  Respuesta al cliente:   */
+        key = i >= pass_num ? NULL : passwords[i];
+        retval = irc_channel_adduser(ircdata->globdata, channel, user, key);
 
-        if (retval != OK) /* Pasando de interpretar errores... ¿no? */
-            sprintf(bye_msg, "No te has podido unir al canal %s, porque %s", chan_name, irc_errstr(retval));
+        if (retval != OK) 
+        {
+            irc_send_numericreply(ircdata, retval, channels[i]);
+        }
         else
-            sprintf(bye_msg, "Te has unido al canal %s cuyo tema es: %s y está formado por: ", chan_name, topic);
-
-        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, 0, bye_msg));
-
-        chan_name = aux_name;
-        key = aux_key;
+        {
+            irc_send_numericreply_withtext(ircdata, RPL_TOPIC, channels[i], channel->topic);
+            irc_send_names_messages(channel, ircdata);
+            irc_channel_broadcast(channel, ircdata->msg_tosend, ":%s JOIN %s", user->nick, channel->name);
+        }
     }
 
     return OK;
@@ -333,11 +316,9 @@ int irc_names(void *data)
     char *params[1];
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan *chan;
-    struct ircuser *user;
     struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     char *chanlist = NULL;
-    list *users;
-    int i, j;
+    int i;
 
     if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
         chanlist = params[0];
@@ -349,14 +330,7 @@ int irc_names(void *data)
         if ((!(chan->mode & (chan_priv | chan_secret)) || irc_user_inchannel(chan, source) == OK) /* No mostramos canales ni secretos ni privados si el usuario no está en ellos */
                 && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
         {
-            users = chan->users;
-            for (j = 0; j < list_count(users); j++)
-            {
-                user = list_at(users, j);
-                irc_send_numericreply_withtext(ircdata, RPL_NAMREPLY, chan->name, user->nick);
-            }
-
-            irc_send_numericreply(ircdata, RPL_ENDOFNAMES, chan->name);
+            irc_send_names_messages(chan, ircdata);
         }
     }
 
@@ -367,15 +341,16 @@ int irc_list(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan *chan;
-    struct ircuser *user;
     struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     char *chanlist = NULL;
     char *params[1];
-    list *users;
-    int i, j;
+    char chandata[50];
+    int i;
 
     if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
         chanlist = params[0];
+
+    irc_send_numericreply(ircdata, RPL_LISTSTART, NULL);
 
     for (i = 0; i < list_count(ircdata->globdata->chan_list); i++)
     {
@@ -384,16 +359,12 @@ int irc_list(void *data)
         if ((!(chan->mode & (chan_priv | chan_secret)) || irc_user_inchannel(chan, source) == OK) /* No mostramos canales ni secretos ni privados si el usuario no está en ellos */
                 && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
         {
-            users = chan->users;
-            for (j = 0; j < list_count(users); j++)
-            {
-                user = list_at(users, j);
-                irc_send_numericreply_withtext(ircdata, RPL_NAMREPLY, chan->name, user->nick);
-            }
-
-            irc_send_numericreply(ircdata, RPL_ENDOFNAMES, chan->name);
+            snprintf(chandata, 50, "%s %d", chan->name, list_count(chan->users));
+            irc_send_numericreply_withtext(ircdata, RPL_LIST, chandata, chan->topic);
         }
     }
+
+    irc_send_numericreply(ircdata, RPL_LISTEND, NULL);
 
     return OK;
 }

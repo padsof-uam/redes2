@@ -63,6 +63,16 @@ profiles = {
 		'ping_interval': 0.2,
 		'threshold_manual_control': -1,
 		'enable_sending': False
+	},
+	'commands': {
+		'cmdsend_delay': 0.05,
+		'client_spawndelay': 0.01,
+		'client_batch': 5,
+		'client_max': 25 ,
+		'batch_time_sec': 10,
+		'ping_interval': 1,
+		'threshold_manual_control': 20,
+		'enable_sending': True
 	}
 }
 
@@ -139,9 +149,12 @@ def signal_handler(signal, frame):
 	png.close()
 	sys.exit(0)
 
-users = [randstr(8) for _ in range(2000)]
-channels = [randstr(5) for _ in range(100)]
+users = [randstr(8) for _ in range(100)]
+channels = ['#' + randstr(5) for _ in range(3)]
 users[0] = 'pepe'
+users[1] = 'guille'
+channels[0] = '#patata'
+
 signal.signal(signal.SIGINT, signal_handler)
 png = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	

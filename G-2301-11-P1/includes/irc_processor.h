@@ -196,5 +196,7 @@ int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char*
  */
 int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic);
 
+int irc_send_names_messages(struct ircchan* channel, struct irc_msgdata* irc);
+
 #endif
 

@@ -513,13 +513,13 @@ int irc_oper(void *data)
     return OK;
 }
 
-static int _try_getint(const char* str, int* value)
+static int _try_getint(const char *str, int *value)
 {
     int val = strtol(str, NULL, 10);
 
-    if(!val && errno == EINVAL)
+    if (!val && errno == EINVAL)
         return 0;
-    
+
     *value = val;
     return 1;
 }
@@ -594,12 +594,12 @@ int irc_mode(void *data)
                     chan->user_limit = -1;
             }
 
-            if(strchr(mode, 'k'))
+            if (strchr(mode, 'k'))
             {
                 if (mode_add && pnum < 3)
                     irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "MODE +k");
                 else if (mode_add)
-                    irc_set_channel_pass(chan, param);                    
+                    irc_set_channel_pass(chan, param);
                 else
                     chan->has_password = 0;
             }
@@ -628,14 +628,14 @@ int irc_mode(void *data)
     return OK;
 }
 
-int irc_invite(void* data)
+int irc_invite(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    struct ircuser* invited, *user;
-    struct ircchan* chan;
-    char* params[2];
+    struct ircuser *invited, *user;
+    struct ircchan *chan;
+    char *params[2];
 
-    if(irc_parse_paramlist(ircdata->msg, params, 2) != 2)
+    if (irc_parse_paramlist(ircdata->msg, params, 2) != 2)
     {
         irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "INVITE");
         return OK;
@@ -645,22 +645,39 @@ int irc_invite(void* data)
     invited = irc_user_bynick(ircdata->globdata, params[0]);
     chan = irc_channel_byname(ircdata->globdata, params[1]);
 
-    if(!invited)
+    if (!invited)
         irc_send_numericreply(ircdata, ERR_NOSUCHNICK, params[0]);
-    else if(chan != NULL && irc_user_inchannel(chan, invited))
+    else if (chan != NULL && irc_user_inchannel(chan, invited))
         irc_send_numericreply(ircdata, ERR_USERONCHANNEL, params[0]);
-    else if(chan != NULL && (chan->mode & chan_invite) && !irc_is_channel_op(chan, user))
+    else if (chan != NULL && (chan->mode & chan_invite) && !irc_is_channel_op(chan, user))
         irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, params[1]);
-    else if(invited->is_away)
+    else if (invited->is_away)
         irc_send_numericreply_withtext(ircdata, RPL_AWAY, params[0], invited->away_msg);
     else
     {
         irc_send_numericreply_withtext(ircdata, RPL_INVITING, params[0], params[1]);
         list_add(ircdata->msg_tosend, irc_response_create(invited->fd, ":%s INVITE %s %s", user->nick, params[0], params[1]));
-    
-        if(chan->mode & chan_invite)
+
+        if (chan->mode & chan_invite)
             dic_add(chan->invited_users, invited->nick, invited);
     }
+
+    return OK;
+}
+
+int irc_version(void *data)
+{
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    char versionmsg[MAX_IRC_MSG];
+
+#ifdef DEBUG
+    char debug[] = "DEBUG";
+#else
+    char debug[] = "RELEASE";
+#endif
+
+    snprintf(versionmsg, MAX_IRC_MSG, "%d.%s %s", SERVER_VERSION, debug, ircdata->globdata->servername);
+    irc_send_numericreply_withtext(ircdata, RPL_VERSION, versionmsg, "Servidor de IRC - Redes II EPS UAM- Guillermo Julián / Víctor de Juan");
 
     return OK;
 }

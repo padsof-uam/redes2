@@ -22,6 +22,8 @@
 
 #define MAX_ERR_THRESHOLD 5
 
+#define SERVER_VERSION 0
+
 typedef enum  { 
 	chan_moderated = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 
 	chan_topiclock = 16, chan_nooutside = 32 

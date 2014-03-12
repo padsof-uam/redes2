@@ -21,7 +21,7 @@
 
 static int _server_close_socket(int handler)
 {
-    if (handler > 0 && shutdown(handler,SHUT_RDWR) < 0)
+    if (handler > 0 && shutdown(handler,SHUT_RDWR) < 0 && errno != ENOTCONN)
     {
         slog(LOG_ERR, "Error cerrando el socket: %s", strerror(errno));
         return ERR_SOCK;

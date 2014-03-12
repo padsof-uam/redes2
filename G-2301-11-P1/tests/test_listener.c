@@ -9,7 +9,9 @@
 int t_Server_close_communication__close_noconnected_socket() {
 	int sock = socket(AF_INET, SOCK_STREAM, TCP);
 	int res = server_close_communication(sock);
-	mu_assert_eq(res, OK, "close failed");
+
+	if(res != OK)
+		mu_sysfail("close failed");
 
 	mu_end;
 }
@@ -18,14 +20,19 @@ int t_Server_close_communication__close_connected_socket() {
 	int sock[2];
 	int res;
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sock) == -1)
-    {
         mu_sysfail("socketpair");
-    }
+
     res = server_close_communication(sock[0]);
-    mu_assert_eq(res, OK, "close s1 failed");
+    
+	if(res != OK)
+		mu_sysfail("close s1 failed");
+
 
     res = server_close_communication(sock[1]);
-    mu_assert_eq(res, OK, "close s2 failed");
+    
+	if(res != OK)
+		mu_sysfail("close s2 failed");
+
 
 	mu_end;
 }

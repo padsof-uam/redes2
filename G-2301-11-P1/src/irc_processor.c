@@ -33,7 +33,8 @@ const char *_irc_cmds[] =
     "PONG",
     "USERS",
     "OPER",
-    "MODE"
+    "MODE",
+    "INVITE"
 };
 
 cmd_action _irc_actions[] =
@@ -54,7 +55,8 @@ cmd_action _irc_actions[] =
     irc_pong,
     irc_users,
     irc_oper,
-    irc_mode
+    irc_mode,
+    irc_invite
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)

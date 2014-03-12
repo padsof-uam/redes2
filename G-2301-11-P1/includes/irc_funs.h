@@ -19,5 +19,6 @@ int irc_pong(void* data);
 int irc_users(void* data);
 int irc_oper(void* data);
 int irc_mode(void* data);
+int irc_invite(void* data);
 #endif
 

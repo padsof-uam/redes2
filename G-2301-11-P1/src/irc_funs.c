@@ -627,3 +627,40 @@ int irc_mode(void *data)
 
     return OK;
 }
+
+int irc_invite(void* data)
+{
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircuser* invited, *user;
+    struct ircchan* chan;
+    char* params[2];
+
+    if(irc_parse_paramlist(ircdata->msg, params, 2) != 2)
+    {
+        irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "INVITE");
+        return OK;
+    }
+
+    user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    invited = irc_user_bynick(ircdata->globdata, params[0]);
+    chan = irc_channel_byname(ircdata->globdata, params[1]);
+
+    if(!invited)
+        irc_send_numericreply(ircdata, ERR_NOSUCHNICK, params[0]);
+    else if(chan != NULL && irc_user_inchannel(chan, invited))
+        irc_send_numericreply(ircdata, ERR_USERONCHANNEL, params[0]);
+    else if(chan != NULL && (chan->mode & chan_invite) && !irc_is_channel_op(chan, user))
+        irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, params[1]);
+    else if(invited->is_away)
+        irc_send_numericreply_withtext(ircdata, RPL_AWAY, params[0], invited->away_msg);
+    else
+    {
+        irc_send_numericreply_withtext(ircdata, RPL_INVITING, params[0], params[1]);
+        list_add(ircdata->msg_tosend, irc_response_create(invited->fd, ":%s INVITE %s %s", user->nick, params[0], params[1]));
+    
+        if(chan->mode & chan_invite)
+            dic_add(chan->invited_users, invited->nick, invited);
+    }
+
+    return OK;
+}

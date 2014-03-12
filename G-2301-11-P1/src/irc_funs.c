@@ -475,5 +475,7 @@ int irc_pong(void *data)
 
 int irc_users(void *data)
 {
-    return OK;
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    irc_send_numericreply(ircdata, ERR_USERSDISABLED, NULL); /* De momento. */
+    return OK;      
 }

@@ -117,7 +117,7 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
     msg = irc_remove_prefix(msg);
     msg = strchr(msg, ' ');
 
-    if(!msg) 
+    if (!msg)
         return 0; /* No hay un espacio detrás del comando -> no hay argumentos. */
 
     msg++; /* Marcamos al inicio de la lista de parámetros */
@@ -133,7 +133,7 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
     {
         strip(&arg);
 
-        if(strlen(arg) == 0)
+        if (strlen(arg) == 0)
             continue;
 
         params[param_count] = arg;
@@ -184,26 +184,26 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
-int irc_create_quit_messages(struct ircuser* user, list* msgqueue, const char* message)
+int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message)
 {
     int i, j;
     int chan_count, user_count;
-    struct ircchan* chan;
-    list* user_list;
-    struct ircuser* target;
+    struct ircchan *chan;
+    list *user_list;
+    struct ircuser *target;
 
     chan_count = list_count(user->channels);
 
-    for(i = 0; i < chan_count; i++)
+    for (i = 0; i < chan_count; i++)
     {
         chan = list_at(user->channels, i);
         user_list = chan->users;
         user_count = list_count(user_list);
 
-        for(j = 0; j < user_count; j++)
+        for (j = 0; j < user_count; j++)
         {
             target = list_at(user_list, j);
-            if(irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
+            if (irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
                 list_add(msgqueue, irc_response_create(target->fd, ":%s QUIT :%s", user->nick, message));
         }
     }
@@ -216,31 +216,31 @@ struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcod
     return irc_build_numericreply_withtext(irc, errcode, additional_params, irc_errstr(errcode));
 }
 
-struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
+struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text)
 {
-    struct ircuser* user = irc_user_byid(irc->globdata, irc->msgdata->fd);
-    char* nick;
+    struct ircuser *user = irc_user_byid(irc->globdata, irc->msgdata->fd);
+    char *nick;
     char space[2] = "";
 
     space[0] = '\0';
     space[1] = '\0';
 
-    if(user)
+    if (user)
         nick = user->nick;
     else
         nick = "?";
 
-    if(!additional_params)
+    if (!additional_params)
         additional_params = "";
     else
         space[0] = ' ';
 
-    return irc_response_create(irc->msgdata->fd, ":%s %d %s%s%s :%s", irc->globdata->servername, errcode, nick, space, additional_params, text);    
+    return irc_response_create(irc->msgdata->fd, ":%s %d %s%s%s :%s", irc->globdata->servername, errcode, nick, space, additional_params, text);
 }
 
-struct sockcomm_data* irc_response_vcreate(int fd, const char* fmt_string, va_list ap)
+struct sockcomm_data *irc_response_vcreate(int fd, const char *fmt_string, va_list ap)
 {
-    struct sockcomm_data* msg = malloc(sizeof(struct sockcomm_data));
+    struct sockcomm_data *msg = malloc(sizeof(struct sockcomm_data));
 
     msg->fd = fd;
     msg->len = vsnprintf(msg->data, MAX_IRC_MSG - 2, fmt_string, ap);
@@ -251,10 +251,10 @@ struct sockcomm_data* irc_response_vcreate(int fd, const char* fmt_string, va_li
     return msg;
 }
 
-struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
+struct sockcomm_data *irc_response_create(int fd, const char *fmt_string, ...)
 {
     va_list ap;
-    struct sockcomm_data* msg;
+    struct sockcomm_data *msg;
 
     va_start(ap, fmt_string);
     msg = irc_response_vcreate(fd, fmt_string, ap);
@@ -268,13 +268,13 @@ int irc_send_numericreply(struct irc_msgdata *irc, int errcode, const char *addi
     return irc_send_numericreply_withtext(irc, errcode, additional_params, irc_errstr(errcode));
 }
 
-int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
+int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text)
 {
-    struct sockcomm_data* msg;
+    struct sockcomm_data *msg;
 
     msg = irc_build_numericreply_withtext(irc, errcode, additional_params, text);
 
-    if(msg == NULL)
+    if (msg == NULL)
     {
         slog(LOG_WARNING, "Error construyendo mensaje de respuesta %d para el socket %d", errcode, irc->msgdata->fd);
         return ERR;
@@ -285,22 +285,22 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
 }
 
 
-int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char* message, ...)
+int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char *message, ...)
 {
     va_list ap;
     int i;
-    struct ircuser* user;
+    struct ircuser *user;
     char msg[MAX_IRC_MSG];
     msg[MAX_IRC_MSG - 1] = '\0';
 
-    if(!channel || !msg_tosend)
+    if (!channel || !msg_tosend)
         return ERR;
 
     va_start(ap, message);
     vsnprintf(msg, MAX_IRC_MSG - 2, message, ap);
     va_end(ap);
 
-    for(i = 0; i < list_count(channel->users); i++)
+    for (i = 0; i < list_count(channel->users); i++)
     {
         user = list_at(channel->users, i);
         list_add(msg_tosend, irc_response_create(user->fd, msg));
@@ -311,146 +311,103 @@ int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char*
 
 char *irc_errstr(int errcode)
 {
-
     switch (errcode)
     {
     case OK:
         return " ";
     case ERR_NOSUCHNICK:
-
-        break;
+        return "No suck nick/channel";
     case ERR_NOSUCHSERVER:
-
-        break;
+        return "No such server";
     case ERR_NOSUCHCHANNEL:
-
-        break;
+        return "No such channel";
     case ERR_CANNOTSENDTOCHAN:
-
-        break;
+        return "Cannot send to channel";
     case ERR_TOOMANYCHANNELS:
-
-        break;
+        return "You have joined too many channels";
     case ERR_WASNOSUCHNICK:
-
-        break;
+        return "There was no such nickname";
     case ERR_TOOMANYTARGETS:
-
-        break;
+        return "Duplicate recipients. No message delivered";
     case ERR_NOORIGIN:
-
-        break;
+        return "No origin specificed";
     case ERR_NORECIPIENT:
-
-        break;
+        return "No recipient given";
     case ERR_NOTEXTTOSEND:
-
-        break;
+        return "No text to send";
     case ERR_NOTOPLEVEL:
-
-        break;
+        return "No toplevel domain specified";
     case ERR_WILDTOPLEVEL:
-
-        break;
+        return "Wildcard in toplevel domain";
     case ERR_UNKNOWNCOMMAND:
-
-        break;
+        return "Unknown command";
     case ERR_NOMOTD:
-
-        break;
+        return "MOTD File is missing";
     case ERR_NOADMININFO:
-
-        break;
+        return "No administrative info available";
     case ERR_FILEERROR:
-
-        break;
+        return "File error doing %s on %s";
     case ERR_NONICKNAMEGIVEN:
-
-        break;
+        return "No nickname given";
     case ERR_ERRONEUSNICKNAME:
-
-        break;
+        return "Erroneus nickname";
     case ERR_NICKNAMEINUSE:
-
-        break;
+        return "Nickname is already in use";
     case ERR_NICKCOLLISION:
-
-        break;
+        return "Nickname collision KILL";
     case ERR_USERNOTINCHANNEL:
-
-        break;
+        return "They aren't on that channel";
     case ERR_NOTONCHANNEL:
-        return "You're not on that channel";    
+        return "You're not on that channel";
     case ERR_USERONCHANNEL:
-
-        break;
+        return "is already in channel";
     case ERR_NOLOGIN:
-
-        break;
+        return "User not logged in";
     case ERR_SUMMONDISABLED:
-
-        break;
+        return "SUMMON has been disabled";
     case ERR_USERSDISABLED:
-
-        break;
+        return "USERS has been disabled";
     case ERR_NOTREGISTERED:
-
-        break;
+        return "You have not registered";
     case ERR_NEEDMOREPARAMS:
         return "Not enough parameters";
     case ERR_ALREADYREGISTRED:
-
-        break;
+        return "You may not reregister";
     case ERR_NOPERMFORHOST:
-
-        break;
+        return "Your host is not among the privileged";
     case ERR_PASSWDMISMATCH:
-
-        break;
+        return "Password incorrect";
     case ERR_YOUREBANNEDCREEP:
-
-        break;
+        return "You''re banned from this server";
     case ERR_KEYSET:
-
-        break;
+        return "Channel key already set";
     case ERR_CHANNELISFULL:
-
-        break;
+        return "Cannot join channel (+l)";
     case ERR_UNKNOWNMODE:
-
-        break;
+        return "is unknown mode char to me";
     case ERR_INVITEONLYCHAN:
-
-        break;
+        return "Cannot join channel (+i)";
     case ERR_BANNEDFROMCHAN:
-
-        break;
+        return "Cannot join channel (+b)";
     case ERR_BADCHANNELKEY:
-
-        break;
+        return "Cannot join channel (+k)";
     case ERR_NOPRIVILEGES:
-
-        break;
+        return "Permission Denied- You're not an IRC operator";
     case ERR_CHANOPRIVSNEEDED:
         return "You're not channel operator";
     case ERR_CANTKILLSERVER:
-
-        break;
+        return "You can't kill a server";
     case ERR_NOOPERHOST:
-
-        break;
+        return "No O-lines for your host";
     case ERR_UMODEUNKNOWNFLAG:
-
-        break;
+        return "Unknown MODE flag";
     case ERR_USERSDONTMATCH:
-        break;
+        return "Can''t change mode for other users";
     case RPL_NOTOPIC:
         return "No topic is set";
     case RPL_ENDOFNAMES:
         return "End of /NAMES list";
     default:
-        return "Rellena este error";
+        return "I don't know that error";
     }
-
-    return "Default error";
 }

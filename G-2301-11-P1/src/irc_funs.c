@@ -122,16 +122,26 @@ int irc_nick(void *data)
 int irc_user(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    char *params[1];
+    char *params[4];
     struct ircuser *user;
 
+<<<<<<< HEAD
+    if (irc_parse_paramlist(ircdata->msg, params, 4) < 4){
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, "USER"));
+        return OK;
+=======
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
     {
         irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL);
         return ERR;
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
     }
-
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+<<<<<<< HEAD
+    if(user)
+        strncpy(user->name, params[0],MAX_NAME_LEN);
+    
+=======
     if (strlen(params[0]) >= MAX_NAME_LEN)
     {
         irc_send_numericreply(ircdata,ERR_ERRONEUSNICKNAME, NULL);
@@ -139,6 +149,7 @@ int irc_user(void *data)
     }
 
     strcpy(user->name, params[0]);
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
     return OK;
 }
 

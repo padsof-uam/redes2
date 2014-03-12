@@ -1,14 +1,15 @@
 #include "daemonize.h"
 #include "errors.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include "log.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
+#include <execinfo.h>
 
 #ifdef __APPLE__
 #define FD_DIR "/dev/fd"
@@ -16,23 +17,50 @@
 #define FD_DIR "/proc/self/fd"
 #endif
 
+#define BT_DEPTH 20
+
 /* Hay alguna razón por la que esto sea estático? */
-char * _log_id;
+char *_log_id;
 
-static void _open_log(){
-    openlog(_log_id, 0, LOG_DAEMON);    
+static void _open_log()
+{
+    openlog(_log_id, 0, LOG_DAEMON);
 }
 
-static void _close_log(){
-    closelog();   
+static void _close_log()
+{
+    closelog();
 }
 
 
-void finish_daemon (int signal){
+void finish_daemon (int signal)
+{
     _close_log();
     exit(EXIT_SUCCESS);
 }
 
+void critical_stop_handler(int signum)
+{
+    void *callstack[BT_DEPTH];
+    int i, frames;
+    char **strs;
+
+    signal(signum, SIG_DFL); /* No queremos quedarnos en un bucle infinito capturando la misma señal siempre */
+    slog(LOG_CRIT, "Error grave: recibida señal %d (%s). Salida inesperada.", signum, strsignal(signum));
+    slog(LOG_CRIT, "Tratando de extraer backtrace (prof. %d)...", BT_DEPTH);
+
+    frames = backtrace(callstack, BT_DEPTH);
+    strs = backtrace_symbols(callstack, frames);
+    
+    for (i = 0; i < frames; ++i)
+        slog(LOG_CRIT, strs[i]);
+
+    free(strs);
+
+    /* Y ahora, por si cuela, tratamos de salir ordenadamente y con tranquilidad */
+    slog(LOG_CRIT, "Enviando SIGTERM para tratar de salir ordenadamente...");
+    kill(getpid(), SIGTERM);
+}
 
 int daemonize(const char *log_id)
 {
@@ -60,15 +88,25 @@ int daemonize(const char *log_id)
         return ERR;
     }
 
+    /* Nos interesa capturar estas señales para poder saber que hemos salido en el log */
+    if (signal(SIGSEGV, critical_stop_handler))
+        slog(LOG_ERR, "Error en la captura de SIGSEGV");
+
+    if (signal(SIGILL, critical_stop_handler))
+        slog(LOG_ERR, "Error en la captura de SIGILL");
+
+    if (signal(SIGBUS, critical_stop_handler))
+        slog(LOG_ERR, "Error en la captura de SIGBUS");
+
 #ifndef __APPLE__
     if (signal(SIGPWR, finish_daemon))
     {
         slog(LOG_ERR, "Error en la captura de SIGPWR");
         return ERR;
     }
-#endif 
+#endif
 
-    if (signal(SIGCHLD, SIG_IGN))  
+    if (signal(SIGCHLD, SIG_IGN))
     {
         slog(LOG_ERR, "Error en la captura de SIGCHLD");
         return ERR;
@@ -76,13 +114,13 @@ int daemonize(const char *log_id)
 
 #ifndef NODAEMON
     pid = unlink_proc();
-    if (pid > 0) 
+    if (pid > 0)
     {
         printf("Daemon creado: PID %d\n", pid);
         exit(EXIT_SUCCESS);
     }
 
-    if (pid < 0) 
+    if (pid < 0)
         exit(EXIT_FAILURE);
 #endif
 
@@ -116,7 +154,7 @@ int unlink_proc()
     if (setsid() < 0)
     {
         slog(LOG_ERR, "Error creando un nuevo SID");
-    }   
+    }
 
     if (signal(SIGHUP, SIG_IGN))
     {

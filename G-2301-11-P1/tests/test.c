@@ -1,3 +1,4 @@
+#include "test_irc_core.h"
 #include "test_strings.h"
 #include "test_irc_funs.h"
 #include "test_irc_processor.h"
@@ -47,6 +48,8 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("irc_core", argc, argv))
+		run += test_irc_core_suite(&error, &success);
 	if(include_test("strings", argc, argv))
 		run += test_strings_suite(&error, &success);
 	if(include_test("irc_funs", argc, argv))

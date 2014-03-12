@@ -16,10 +16,7 @@ static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, c
 	struct ircuser* user;
 
 	if(!chan)
-	{
-		list_add(irc->msg_tosend, irc_build_numericreply(irc, ERR_NOSUCHNICK, receiver));
- 		return OK;
- 	}
+	   return irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
 
  	for(i = 0; i < list_count(chan->users); i++)
  	{
@@ -36,9 +33,9 @@ static int _irc_send_msg_touser(struct irc_msgdata *irc, const char *receiver, c
     struct ircuser* sender = irc_user_byid(irc->globdata, irc->msgdata->fd);
 
     if (!dest)
-    	list_add(irc->msg_tosend, irc_build_numericreply(irc, ERR_NOSUCHNICK, receiver));
+        irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
     else if(dest->is_away)
-    	list_add(irc->msg_tosend, irc_build_numericreply_withtext(irc, RPL_AWAY, receiver, dest->away_msg));
+        irc_send_numericreply_withtext(irc, RPL_AWAY, receiver, dest->away_msg);
     else
     	list_add(irc->msg_tosend, irc_response_create(dest->fd, ":%s PRIVMSG %s :%s", sender->nick, receiver, text));
 
@@ -56,12 +53,12 @@ int irc_privmsg(void *data)
 
     if(param_num < 1)
     {
-    	list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NORECIPIENT, NULL));
+    	irc_send_numericreply(ircdata, ERR_NORECIPIENT, NULL);
     	return OK;
     }
     else if(param_num < 2)
     {
-    	list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOTEXTTOSEND, NULL));
+    	irc_send_numericreply(ircdata, ERR_NOTEXTTOSEND, NULL);
     	return OK;
     }
 
@@ -103,7 +100,7 @@ int irc_nick(void *data)
 
     if (!irc_parse_paramlist(ircdata->msg, new_nick, 1))
     {
-        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_UNKNOWNCOMMAND, NULL));
+        irc_send_numericreply(ircdata, ERR_UNKNOWNCOMMAND, NULL);
         return ERR;
     }
 
@@ -112,9 +109,9 @@ int irc_nick(void *data)
     if (retval != OK)
     {
         if (retval == ERR_NOTFOUND)
-            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_ERRONEUSNICKNAME, NULL));
+            irc_send_numericreply(ircdata, ERR_ERRONEUSNICKNAME, NULL);
         else if (retval == ERR_NICKCOLLISION)
-            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NICKCOLLISION, NULL));
+            irc_send_numericreply(ircdata, ERR_NICKCOLLISION, NULL);
         else
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
@@ -128,14 +125,31 @@ int irc_user(void *data)
     char *params[4];
     struct ircuser *user;
 
+<<<<<<< HEAD
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4){
         list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, "USER"));
         return OK;
+=======
+    if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
+    {
+        irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL);
+        return ERR;
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
     }
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+<<<<<<< HEAD
     if(user)
         strncpy(user->name, params[0],MAX_NAME_LEN);
     
+=======
+    if (strlen(params[0]) >= MAX_NAME_LEN)
+    {
+        irc_send_numericreply(ircdata,ERR_ERRONEUSNICKNAME, NULL);
+        return ERR;
+    }
+
+    strcpy(user->name, params[0]);
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
     return OK;
 }
 
@@ -278,6 +292,53 @@ int irc_part(void *data)
 /** Pendientes **/
 int irc_topic(void *data)
 {
+    char* params[2];
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircchan* chan;
+    char* chan_name, *topic;
+    struct ircuser* user, *dest;
+    int pnum, i;
+
+    pnum = irc_parse_paramlist(ircdata->msgdata->data, params, 2);
+    user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
+    if(pnum == 0)
+    {
+        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, "TOPIC"));
+        return OK;
+    }
+
+    chan_name = params[0];
+    chan = irc_channel_byname(ircdata->globdata, chan_name);
+
+    if(chan == NULL || irc_user_inchannel(chan, user) == ERR_NOTFOUND)
+        return irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name);
+
+    if((chan->mode & chan_topiclock) && !irc_is_channel_op(chan, user))
+    {
+        irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, chan_name);
+        return OK;
+    }
+
+    if(pnum == 1) /* Sólo nos piden el canal */
+    {
+        if(strnlen(chan->topic, MAX_TOPIC_LEN) == 0)
+            irc_send_numericreply(ircdata, RPL_NOTOPIC, chan_name);
+        else
+            irc_send_numericreply_withtext(ircdata, RPL_TOPIC, chan_name, chan->topic);
+    }
+    else
+    {
+        topic = params[1];
+        strncpy(chan->topic, topic, MAX_TOPIC_LEN);
+
+        for(i = 0; i < list_count(chan->users); i++)
+        {
+            dest = list_at(chan->users, i);
+            list_add(ircdata->msg_tosend, irc_response_create(dest->fd, ":%s TOPIC %s :%s", user->nick, chan_name, topic));
+        }
+    }
+
     return OK;
 }
 int irc_names(void *data)
@@ -296,14 +357,17 @@ int irc_time(void *data)
 {
     return OK;
 }
+
 int irc_notice(void *data)
 {
     return OK;
 }
+
 int irc_pong(void *data)
 {
     return OK;
 }
+
 int irc_users(void *data)
 {
     return OK;

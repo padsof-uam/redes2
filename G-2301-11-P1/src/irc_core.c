@@ -44,6 +44,8 @@ static void _chan_destructor(void *ptr)
 
     list_destroy(chan->users, NULL);
     dic_destroy(chan->invited_users, NULL);
+    list_destroy(chan->operators, NULL);
+
     free(chan);
 }
 
@@ -215,6 +217,8 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     if (!chan)
         return NULL;
 
+    bzero(chan, sizeof(struct ircchan));
+
     strncpy(chan->name, name, MAX_CHAN_LEN);
     list_add(data->chan_list, chan);
     dic_add(data->chan_map, name, chan);
@@ -223,6 +227,12 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     chan->mode = 0;
     chan->has_password = 0;
     chan->invited_users = dic_new_withstr();
+    chan->operators = list_new();
 
     return chan;
+}
+
+int irc_is_channel_op(struct ircchan* chan, struct ircuser* user)
+{
+    return list_find(chan->operators, str_comparator, user->name) != -1;
 }

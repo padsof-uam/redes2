@@ -254,6 +254,27 @@ struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
     return msg;
 }
 
+int irc_send_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params)
+{
+    return irc_send_numericreply_withtext(irc, errcode, additional_params, irc_errstr(errcode));
+}
+
+int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text)
+{
+    struct sockcomm_data* msg;
+
+    msg = irc_build_numericreply_withtext(irc, errcode, additional_params, text);
+
+    if(msg == NULL)
+    {
+        slog(LOG_WARNING, "Error construyendo mensaje de respuesta %d para el socket %d", errcode, irc->msgdata->fd);
+        return ERR;
+    }
+
+    list_add(irc->msg_tosend, msg);
+    return OK;
+}
+
 char *irc_errstr(int errcode)
 {
 
@@ -325,8 +346,7 @@ char *irc_errstr(int errcode)
 
         break;
     case ERR_NOTONCHANNEL:
-
-        break;
+        return "You're not on that channel";    
     case ERR_USERONCHANNEL:
 
         break;
@@ -343,8 +363,7 @@ char *irc_errstr(int errcode)
 
         break;
     case ERR_NEEDMOREPARAMS:
-
-        break;
+        return "Not enough parameters";
     case ERR_ALREADYREGISTRED:
 
         break;
@@ -379,8 +398,7 @@ char *irc_errstr(int errcode)
 
         break;
     case ERR_CHANOPRIVSNEEDED:
-
-        break;
+        return "You're not channel operator";
     case ERR_CANTKILLSERVER:
 
         break;
@@ -392,6 +410,8 @@ char *irc_errstr(int errcode)
         break;
     case ERR_USERSDONTMATCH:
         break;
+    case RPL_NOTOPIC:
+        return "No topic is set";
     default:
         return "Rellena este error";
     }

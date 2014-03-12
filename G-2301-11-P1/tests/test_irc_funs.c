@@ -6,11 +6,13 @@
 #include "types.h"
 #include "irc_codes.h"
 #include "strings.h"
+#include "irc_testhelper.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 
+<<<<<<< HEAD
 /** 
  * Usamos macros para facilitar la creación de tests aunque se pierda un poco 
  *  de claridad
@@ -47,59 +49,80 @@ static int _assert_numeric_reply(struct sockcomm_data *msg, int expected_reply, 
 		colon--;
 		*colon = '\0';
 	}
+=======
+/* BEGIN TESTS */
+int t_irc_topic__topic_change__topic_changed_and_broadcast() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
+    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 2, a, b);
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
 
-	mu_assert_eq(actual_reply, expected_reply, err_msg);
+    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan :Tema de prueba");
 
-	if(additional_params)
-		mu_assert_streq(param_start, additional_params, err_msg);
+    assert_generated(2);
+    assert_dest(msgnum(0), a);
+    assert_dest(msgnum(1), b);
+    assert_msgstr_eq(msgnum(0), ":pepe TOPIC #testchan :Tema de prueba");
+    assert_msgstr_eq(msgnum(1), ":pepe TOPIC #testchan :Tema de prueba");
+    mu_assert_streq(chan->topic, "Tema de prueba", "Topic not set");
 
-    return MU_PASSED;
+	irc_testend;
 }
+int t_irc_topic__op_needed__returns_needmoreprivileges() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
+    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 2, a, b);    
+	
+    chan->mode |= chan_topiclock;
 
-static list *_process_message(cmd_action action, struct irc_globdata *gdata, int fd, char *message)
-{
-    struct irc_msgdata data;
-
-    data.globdata = gdata;
-    data.msg_tosend = list_new();
-    data.msg = message;
-    data.msgdata = malloc(sizeof(struct sockcomm_data));
-    data.msgdata->fd = fd;
-    strcpy(data.msgdata->data, message);
-    data.msgdata->len = strlen(message);
-
-    action(&data);
-
-    free(data.msgdata);
-    return data.msg_tosend;
+    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan :Tema de prueba");
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_CHANOPRIVSNEEDED, "#testchan");
+    irc_testend;
 }
-
-static struct ircchan* _irc_create_chan(struct irc_globdata* irc, const char* name, int usernum, ...)
-{
-	int i;
-	va_list ap;
-	struct ircuser* user;
-	struct ircchan* chan = irc_register_channel(irc, name);
-
-	va_start(ap, usernum);
-	for(i = 0; i < usernum; i++)
-	{
-		user = va_arg(ap, struct ircuser*);
-		irc_channel_adduser(irc, chan, user, NULL);
-	}
-
-	va_end(ap);
-
-	return chan;
+int t_irc_topic__topic_notset_request__returns_notopic() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    _irc_create_chan(irc, "#testchan", 1, a);
+    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan");
+    
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), RPL_NOTOPIC, "#testchan");
+	irc_testend;
 }
+int t_irc_topic__topic_set_requested__returns_topic() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan =  _irc_create_chan(irc, "#testchan", 1, a);    
+    strcpy(chan->topic, "Prueba");
 
-
-static struct ircuser* _irc_register_withnick(struct irc_globdata* irc, int id, const char* nick)
-{
-	struct ircuser* user = irc_register_user(irc, id);
-	irc_set_usernick(irc, id, nick);
-	return user;
+    output = _process_message(irc_topic, irc, 1, "TOPIC #testchan");
+    
+    assert_generated(1);
+    mu_assert("Message doesn't contain the topic", strstr(msgnum(0)->data, ":Prueba") != NULL);
+    assert_numeric_reply(msgnum(0), RPL_TOPIC, "#testchan");
+	
+    irc_testend;
 }
+int t_irc_topic__no_params__returns_needmoreparams() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
+    _irc_create_chan(irc, "#testchan", 2, a, b);    
+    
+    output = _process_message(irc_topic, irc, 1, "TOPIC");
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, "TOPIC");
+    irc_testend;
+}
+<<<<<<< HEAD
 
 /* BEGIN TESTS */
 int t_irc_user_not_registered() {
@@ -191,6 +214,8 @@ int t_irc_nick() {
     assert_created_user_nick("Barbacoa");
     irc_testend;
 }
+=======
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
 int t_irc_privmsg__send_to_channel__sent_to_users_in_channel()
 {
     struct irc_globdata *irc = irc_init();
@@ -290,7 +315,6 @@ int t_irc_quit__message_provided__message_transmitted()
     struct irc_globdata *irc = irc_init();
     struct ircchan *chan = irc_register_channel(irc, "testchan");
     list *output;
-    struct sockcomm_data *msg;
     struct ircuser *user = irc_register_user(irc, 1);
 
     list_add(chan->users, user);
@@ -302,9 +326,7 @@ int t_irc_quit__message_provided__message_transmitted()
     output = _process_message(irc_quit, irc, 1, "QUIT Bye");
 
     assert_generated(1);
-    msg = list_at(output, 0);
-
-    mu_assert_streq(msg->data, ":pepe QUIT :Bye", "Bad message");
+    assert_msgstr_eq(msgnum(0), ":pepe QUIT :Bye");
     irc_testend;
 }
 int t_irc_quit__no_message_provided__msg_is_nick()
@@ -330,12 +352,20 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+<<<<<<< HEAD
 	mu_run_test(t_irc_user_not_registered);
 	mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
 	mu_run_test(t_irc_nick_not_registered);
 	mu_run_test(t_irc_nick_collision);
 	mu_run_test(t_irc_nick);
+=======
+	mu_run_test(t_irc_topic__topic_change__topic_changed_and_broadcast);
+	mu_run_test(t_irc_topic__op_needed__returns_needmoreprivileges);
+	mu_run_test(t_irc_topic__topic_notset_request__returns_notopic);
+	mu_run_test(t_irc_topic__topic_set_requested__returns_topic);
+	mu_run_test(t_irc_topic__no_params__returns_needmoreparams);
+>>>>>>> 959f3c1ec1f1f8a1cbf2a2edc3ab8961aecb46c0
     mu_run_test(t_irc_privmsg__send_to_channel__sent_to_users_in_channel);
     mu_run_test(t_irc_privmsg__send_to_user__user_receives_it);
     mu_run_test(t_irc_privmsg__no_text_provided__err_notexttosend);

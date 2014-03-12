@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <time.h>
 
 static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, const char *text)
 {
@@ -434,7 +435,17 @@ int irc_kick(void *data)
 }
 
 int irc_time(void *data)
-{
+{   
+    /* Ignoramos la parte de servidores */
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    time_t t;
+    char date_buf[30];
+    time(&t);
+
+    ctime_r(&t, date_buf);   
+    date_buf[strlen(date_buf) - 1] = '\0'; /* Eliminamos último \n */
+    irc_build_numericreply_withtext(ircdata, RPL_TIME, ircdata->globdata->servername, date_buf);
+
     return OK;
 }
 

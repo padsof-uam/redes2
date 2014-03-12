@@ -4,6 +4,8 @@
 #include "types.h"
 #include "commparser.h"
 
+#include <stdarg.h>
+
 /**
  * Procesa un mensaje IRC.
  * @param snd_qid ID de la cola donde enviar los mensajes generados.
@@ -120,6 +122,19 @@ int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *m
 struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...);
 
 /**
+ * Crea un mensaje para un cliente con el texto que se dé como formato, con la lista 
+ * 	de argumentos en formato va_list.
+ * @see vfprintf
+ * @see stdarg
+ * @param  fd         Socket de destino.
+ * @param  fmt_string Cadena (estilo printf) que escribir en el mensaje.
+ * @param  ap         Lista de parámetros para printf.
+ * @return            Estructura sockcomm_data lista para enviar.
+ */
+struct sockcomm_data* irc_response_vcreate(int fd, const char* fmt_string, va_list ap);
+
+
+/**
  * Construye un mensaje de respuesta y lo inserta en la lista de mensajes a enviar.
  * @param  irc               Estructura con los datos de un mensaje IRC.
  * @param  errcode           Código de respuesta.
@@ -142,5 +157,18 @@ int irc_send_numericreply(struct irc_msgdata *irc, int errcode, const char *addi
  * @see irc_build_numericreply_withtext
  */
 int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
+
+/**
+ * Envía un mensaje a todos los usuarios de un canal.
+ * @param  channel    Canal.
+ * @param  msg_tosend Lista de mensajes para enviar.
+ * @param  message    Texto del mensaje.
+ * @param  ...		  Parámetros para formatear el mensaje.
+ * @see printf
+ * @see stdarg.h
+ * @see irc_response_create
+ * @return            Código OK/ERR.
+ */
+int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char* message, ...);
 #endif
 

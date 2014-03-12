@@ -43,3 +43,17 @@ char * strnstr(const char* s, const char* find, size_t slen)
     return ((char *)s);
 }
 
+
+int str_arrsep(char* str, const char* sep, char** array, size_t arrlen)
+{
+    char* token;
+    int i = 0;
+
+    while((token = strsep(&str, sep)) != NULL && i < arrlen)
+    {
+        array[i] = token;
+        i++;
+    }
+
+    return i;
+}

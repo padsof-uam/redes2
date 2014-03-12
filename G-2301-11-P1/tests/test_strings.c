@@ -8,6 +8,71 @@
 #include <stdlib.h>
 
 /* BEGIN TESTS */
+int t_str_arrsep__no_separators__one_part() {
+    char* parts[3];
+    char str[] = "nocommashere";
+    int partnum;
+
+    partnum = str_arrsep(str, ",", parts, 3);
+
+	mu_assert_eq(partnum, 1, "bad count");
+
+    mu_end;
+}
+int t_str_arrsep__nullstring__returns_zero() {
+
+	char* parts[3];
+    char* str = NULL;
+    int partnum;
+
+    partnum = str_arrsep(str, ",", parts, 3);
+
+    mu_assert_eq(partnum, 0, "count is not 0");
+	mu_end;
+}
+int t_str_arrsep__fill_param_array_minusone__no_overflow() {
+
+	char* parts[3];
+    char str[] = "a,param";
+    int partnum;
+    parts[2] = NULL;
+
+    partnum = str_arrsep(str, ",", parts, 3);
+
+    mu_assert_eq(partnum, 2, "bad number of parts");
+    mu_assert_streq(parts[0], "a", "first element is wrong");
+    mu_assert_streq(parts[1], "param", "second element is wrong");
+    mu_assert("third element was modified", parts[2] == NULL);
+
+	mu_end;
+}
+int t_str_arrsep__fill_param_array__no_overflow() {
+
+	char* parts[3];
+    char str[] = "one,two,three";
+    int partnum;
+
+    partnum = str_arrsep(str, ",", parts, 3);
+    mu_assert_eq(partnum, 3, "bad number of parts");
+    mu_assert_streq(parts[0], "one", "first element is wrong");
+    mu_assert_streq(parts[1], "two", "second element is wrong");
+    mu_assert_streq(parts[2], "three", "third element is wrong");
+
+	mu_end;
+}
+int t_str_arrsep__normal_separation__correct() {
+
+	char* parts[5];
+    char str[] = "this is, a param";
+    int partnum;
+
+    partnum = str_arrsep(str, ",", parts, 5);
+    mu_assert_eq(partnum, 2, "bad number of parts");
+    mu_assert_streq(parts[0], "this is", "first element is wrong");
+    mu_assert_streq(parts[1], " a param", "second element is wrong");
+
+	mu_end;
+}
 int t_strip__tabs__removed()
 {
     char *str = strdup("\tasd\t");
@@ -78,6 +143,11 @@ int test_strings_suite(int *errors, int *success)
 
     printf("Begin test_strings suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_str_arrsep__no_separators__one_part);
+	mu_run_test(t_str_arrsep__nullstring__returns_zero);
+	mu_run_test(t_str_arrsep__fill_param_array_minusone__no_overflow);
+	mu_run_test(t_str_arrsep__fill_param_array__no_overflow);
+	mu_run_test(t_str_arrsep__normal_separation__correct);
     mu_run_test(t_strip__tabs__removed);
     mu_run_test(t_strip__nullstr__nofail);
     mu_run_test(t_strip__nullptr__nofail);

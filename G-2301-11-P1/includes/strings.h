@@ -30,6 +30,6 @@ char * strnstr(const char* s, const char* find, size_t slen);
  * @param  arrlen Longitud del array para guardar valores
  * @return        Número de valores separados.
  */
-int str_arrsep(const char* str, const char* sep, char** array, size_t arrlen);
+int str_arrsep(char* str, const char* sep, char** array, size_t arrlen);
 #endif
 

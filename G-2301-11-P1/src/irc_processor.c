@@ -238,17 +238,26 @@ struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, i
     return irc_response_create(irc->msgdata->fd, ":%s %d %s%s%s :%s", irc->globdata->servername, errcode, nick, space, additional_params, text);    
 }
 
-struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
+struct sockcomm_data* irc_response_vcreate(int fd, const char* fmt_string, va_list ap)
 {
-    va_list ap;
     struct sockcomm_data* msg = malloc(sizeof(struct sockcomm_data));
 
     msg->fd = fd;
-    va_start(ap, fmt_string);
     msg->len = vsnprintf(msg->data, MAX_IRC_MSG - 2, fmt_string, ap);
     msg->data[msg->len] = '\r';
     msg->data[msg->len + 1] = '\n';
     msg->len += 2;
+
+    return msg;
+}
+
+struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...)
+{
+    va_list ap;
+    struct sockcomm_data* msg;
+
+    va_start(ap, fmt_string);
+    msg = irc_response_vcreate(fd, fmt_string, ap);
     va_end(ap);
 
     return msg;
@@ -272,6 +281,31 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
     }
 
     list_add(irc->msg_tosend, msg);
+    return OK;
+}
+
+
+int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char* message, ...)
+{
+    va_list ap;
+    int i;
+    struct ircuser* user;
+    char msg[MAX_IRC_MSG];
+    msg[MAX_IRC_MSG - 1] = '\0';
+
+    if(!channel || !msg_tosend)
+        return ERR;
+
+    va_start(ap, message);
+    vsnprintf(msg, MAX_IRC_MSG - 2, message, ap);
+    va_end(ap);
+
+    for(i = 0; i < list_count(channel->users); i++)
+    {
+        user = list_at(channel->users, i);
+        list_add(msg_tosend, irc_response_create(user->fd, msg));
+    }
+
     return OK;
 }
 

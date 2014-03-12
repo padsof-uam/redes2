@@ -3,6 +3,7 @@
 #include "irc_codes.h"
 #include "irc_processor.h"
 #include "log.h"
+#include "strings.h"
 
 #include <string.h>
 #include <errno.h>
@@ -10,19 +11,13 @@
 
 static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, const char *text)
 {
-	int i;
 	struct ircchan* chan = irc_channel_byname(irc->globdata, receiver);
 	struct ircuser* sender = irc_user_byid(irc->globdata, irc->msgdata->fd);
-	struct ircuser* user;
 
 	if(!chan)
 	   return irc_send_numericreply(irc, ERR_NOSUCHNICK, receiver);
 
- 	for(i = 0; i < list_count(chan->users); i++)
- 	{
- 		user = list_at(chan->users, i);
- 		list_add(irc->msg_tosend, irc_response_create(user->fd, ":%s PRIVMSG %s :%s", sender->nick, receiver, text));
- 	}
+    irc_channel_broadcast(chan, irc->msg_tosend, ":%s PRIVMSG %s :%s", sender->nick, receiver, text);
 
  	return OK;
 }
@@ -233,9 +228,11 @@ int irc_quit(void *data)
 
 int irc_part(void *data)
 {
-    int retval;
-    char *channel_name, *aux;
+    int i;
+    char *channel_name;
     char *params[1];
+    char *chans[50];
+    int channum;
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircuser *user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     struct ircchan *channel;
@@ -243,32 +240,27 @@ int irc_part(void *data)
     if (!user)
     {
         list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata,ERR_NOTREGISTERED, NULL));
-        return ERR_NOTREGISTERED;
+        return OK;
     }
 
     irc_parse_paramlist(ircdata->msg, params, 1);
-    channel_name = params[0];
-    while (!channel_name)
+    
+    channum = str_arrsep(params[0], ",", chans, 50);
+
+    for(i = 0; i < channum; i++)
     {
-        aux = strchr(channel_name, ',');
-        if (!aux)
-        {
-            aux++;
-            *aux = '\0';
-        }
+        channel_name = chans[i];
         channel = irc_channel_byname(ircdata->globdata, channel_name);
+
         if (!channel)
-            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NOSUCHCHANNEL, NULL));
+            irc_send_numericreply(ircdata, ERR_NOSUCHCHANNEL, channel_name);
         else if (irc_user_inchannel(channel, user) != OK)
-            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_USERNOTINCHANNEL, NULL));
+            irc_send_numericreply(ircdata, ERR_USERNOTINCHANNEL, NULL);
         else
         {
-            retval = irc_channel_part(ircdata->globdata, channel, user);
-            if ( retval != OK)
-                slog(LOG_ALERT, "No se ha podido eliminar al usuario %s del canal %s", user->nick, channel->name);
-
+            irc_channel_part(ircdata->globdata, channel, user);
+            irc_channel_broadcast(channel, ircdata->msg_tosend, ":%s PART %s", user->nick, channel_name);
         }
-        channel_name = aux;
     }
 
     return OK;
@@ -281,8 +273,8 @@ int irc_topic(void *data)
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan* chan;
     char* chan_name, *topic;
-    struct ircuser* user, *dest;
-    int pnum, i;
+    struct ircuser* user;
+    int pnum;
 
     pnum = irc_parse_paramlist(ircdata->msgdata->data, params, 2);
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
@@ -316,12 +308,7 @@ int irc_topic(void *data)
     {
         topic = params[1];
         strncpy(chan->topic, topic, MAX_TOPIC_LEN);
-
-        for(i = 0; i < list_count(chan->users); i++)
-        {
-            dest = list_at(chan->users, i);
-            list_add(ircdata->msg_tosend, irc_response_create(dest->fd, ":%s TOPIC %s :%s", user->nick, chan_name, topic));
-        }
+        irc_channel_broadcast(chan, ircdata->msg_tosend, ":%s TOPIC %s :%s", user->nick, chan_name, topic);
     }
 
     return OK;

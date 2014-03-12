@@ -135,14 +135,19 @@ int irc_user(void *data)
     }
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
-    if (strlen(params[0]) >= MAX_NAME_LEN)
-    {
-        list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata,ERR_ERRONEUSNICKNAME, NULL));
-        return ERR;
-    }
+    if(!user){
+        if (strlen(params[0]) >= MAX_NAME_LEN)
+        {
+            list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata,ERR, NULL));
+            return ERR;
+        }
 
-    strcpy(user->name, params[0]);
-    return OK;
+        strcpy(user->name, params[0]);
+
+        return OK;
+    }  
+    else
+        return ERR_NOTREGISTERED;
 }
 
 int irc_join(void *data)

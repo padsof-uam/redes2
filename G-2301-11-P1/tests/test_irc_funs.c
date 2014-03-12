@@ -22,6 +22,10 @@
 #define assert_numeric_reply(msg, expected_reply, params) do { if(_assert_numeric_reply(msg, expected_reply, params) != MU_PASSED) return MU_ERR; } while(0)
 #define assert_dest(msg, dest) mu_assert_eq(msg->fd, dest->fd, "Destinatary is not the expected.")
 
+/* Esto vale? */
+#define assert_created_user_nick(nick) (dic_lookup(irc->nick_user_map, nick))
+#define assert_created_user_id(id) (dic_lookup(irc->fd_user_map, &id))
+
 static int _assert_numeric_reply(struct sockcomm_data *msg, int expected_reply, const char* additional_params)
 {
 	char servname[MAX_SERVER_NAME];
@@ -98,6 +102,99 @@ static struct ircuser* _irc_register_withnick(struct irc_globdata* irc, int id, 
 }
 
 /* BEGIN TESTS */
+int t_irc_user_not_registered() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+    irc_testend;
+	mu_fail("Not implemented");
+	mu_end;
+}
+int t_irc_user_bad_params() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+
+    output = _process_message(irc_user, irc, 1, "USER Juan ignore ignorar Guillermo de Juan");
+    printf("asdf\n");
+    list_add(output,_process_message(irc_user, irc, 1, "USER ignore ignorar :Guillermo de Juan"));
+    printf("asdf\n");
+    list_add(output,_process_message(irc_user, irc, 1, "USER Juan ignorar :Guillermo de Juan"));
+    printf("asdf\n");
+    list_add(output,_process_message(irc_user, irc, 1, "USER Juan :Guillermo de Juan"));
+    printf("asdf\n");
+    assert_generated(4);
+    for (int i = 0; i < 4; ++i){
+        printf("asdf\n");
+        assert_numeric_reply(msgnum(i), ERR_NEEDMOREPARAMS, NULL);
+    }
+    irc_testend;
+}
+int t_irc_user_bad_name() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+    output = _process_message(irc_user, irc, 1, "qwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiopqwertyuiop");
+    assert_generated(1);
+    /* Este error habría que redefinirlo bien... */
+    assert_numeric_reply(msgnum(0), ERR, NULL);
+
+    irc_testend;
+}
+int t_irc_user() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+    int fd = 1;
+
+    struct ircuser *a = _irc_register_withnick(irc, fd, "Eloy");
+    output = _process_message(irc_user, irc, fd, ":asdf USER Ralph Ignore Ignorar :La comida de gato de mi gato sabe a comida de gato");
+    assert_generated(0);
+
+    struct ircuser *b = assert_created_user_id(fd);
+
+
+    mu_assert_streq(b->name, a->name, "L");
+    irc_testend;
+}
+
+
+int t_irc_nick_not_registered() {
+
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+    output = _process_message(irc_nick, irc, 4, "NICK Eloy");
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_ERRONEUSNICKNAME, NULL);
+    irc_testend;
+}
+int t_irc_nick_collision() {
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+    struct ircuser *a = _irc_register_withnick(irc, 4, "Eloy");
+    output = _process_message(irc_nick, irc, 4, "NICK Eloy");
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NICKCOLLISION, NULL);
+	irc_testend;
+}
+int t_irc_nick() {
+
+    struct irc_globdata *irc = irc_init();
+    list* output;
+
+    struct ircuser *a = _irc_register_withnick(irc, 4, "Eloy");
+    output = _process_message(irc_nick, irc, 4, "NICK Juan");
+    assert_generated(0);
+
+    _irc_register_withnick(irc, 5, "Alfredo");
+    output = _process_message(irc_nick, irc, 4, ":Alfredo NICK Barbacoa");
+    assert_generated(0);
+
+    assert_created_user_nick("Juan");
+    assert_created_user_nick("Barbacoa");
+    irc_testend;
+}
 int t_irc_privmsg__send_to_channel__sent_to_users_in_channel()
 {
     struct irc_globdata *irc = irc_init();
@@ -237,6 +334,13 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_user_not_registered);
+	mu_run_test(t_irc_user_bad_params);
+	mu_run_test(t_irc_user_bad_name);
+    mu_run_test(t_irc_user);
+	mu_run_test(t_irc_nick_not_registered);
+	mu_run_test(t_irc_nick_collision);
+	mu_run_test(t_irc_nick);
     mu_run_test(t_irc_privmsg__send_to_channel__sent_to_users_in_channel);
     mu_run_test(t_irc_privmsg__send_to_user__user_receives_it);
     mu_run_test(t_irc_privmsg__no_text_provided__err_notexttosend);

@@ -54,7 +54,7 @@ int _irc_internal_msg(void* data, int msgtype)
     int param_num;
     char *dests, *text, *receiver;
 
-    param_num = irc_parse_paramlist(ircdata->msgdata->data, params, 2);
+    param_num = irc_parse_paramlist(ircdata->msg, params, 2);
 
     if(param_num < 1)
     {
@@ -236,7 +236,7 @@ int irc_quit(void *data)
         bye_msg = params[0];
 
     irc_create_quit_messages(user, ircdata->msg_tosend, bye_msg);
-
+    ircdata->terminate_connection = 1;
     return OK;
 }
 
@@ -290,7 +290,7 @@ int irc_topic(void *data)
     struct ircuser* user;
     int pnum;
 
-    pnum = irc_parse_paramlist(ircdata->msgdata->data, params, 2);
+    pnum = irc_parse_paramlist(ircdata->msg, params, 2);
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 
     if(pnum == 0)
@@ -339,7 +339,7 @@ int irc_names(void *data)
     list* users;
     int i, j;
 
-    if(irc_parse_paramlist(ircdata->msgdata->data, params, 1) == 1)
+    if(irc_parse_paramlist(ircdata->msg, params, 1) == 1)
         chanlist = params[0];
 
     for(i = 0; i < list_count(ircdata->globdata->chan_list); i++)
@@ -374,7 +374,7 @@ int irc_list(void *data)
     list* users;
     int i, j;
 
-    if(irc_parse_paramlist(ircdata->msgdata->data, params, 1) == 1)
+    if(irc_parse_paramlist(ircdata->msg, params, 1) == 1)
         chanlist = params[0];
 
     for(i = 0; i < list_count(ircdata->globdata->chan_list); i++)
@@ -407,7 +407,7 @@ int irc_kick(void *data)
     char *chan_name, *username;
     int pnum;
 
-    pnum = irc_parse_paramlist(ircdata->msgdata->data, params, 3);
+    pnum = irc_parse_paramlist(ircdata->msg, params, 3);
 
     if(pnum < 2)
     {
@@ -483,5 +483,30 @@ int irc_users(void *data)
 int irc_oper(void* data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    
+    struct ircuser* user;
+    char* params[2];
+    char *username, *pass;
+    char *actual_pass;
+
+    if(irc_parse_paramlist(ircdata->msg, params, 2) != 2)
+    {
+        irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "OPER");
+        return OK;
+    }
+
+    user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    username = params[0];
+    pass = params[1];
+
+    actual_pass = dic_lookup(ircdata->globdata->oper_passwords, username);
+
+    if(actual_pass == NULL || strncmp(actual_pass, pass, MAX_KEY_LEN))
+    {
+        irc_send_numericreply(ircdata, ERR_PASSWDMISMATCH, NULL);
+        return OK;
+    }
+
+    user->mode |= user_op;
+    irc_send_numericreply(ircdata, RPL_YOUREOPER, NULL);
+    return OK;
 }

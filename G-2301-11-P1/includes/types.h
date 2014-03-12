@@ -28,7 +28,7 @@ typedef enum  {
 } chan_mode;
 
 typedef enum {
-	user_invisible = 1, user_rcvnotices = 2, user_rcvwallops = 4, user_wallops = 8
+	user_invisible = 1, user_rcvnotices = 2, user_rcvwallops = 4, user_op = 8
 } user_mode;
 
 struct ircchan {
@@ -67,6 +67,7 @@ struct irc_msgdata {
 	struct irc_globdata* globdata;
 	char* msg;
 	list* msg_tosend;
+	short terminate_connection;
 };	
 
 struct sockcomm_data {

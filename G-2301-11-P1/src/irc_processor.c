@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 const char *_irc_cmds[] =
 {
@@ -30,7 +31,8 @@ const char *_irc_cmds[] =
     "TIME",
     "NOTICE",
     "PONG",
-    "USERS"
+    "USERS",
+    "OPER"
 };
 
 cmd_action _irc_actions[] =
@@ -49,7 +51,8 @@ cmd_action _irc_actions[] =
     irc_time,
     irc_notice,
     irc_pong,
-    irc_users
+    irc_users,
+    irc_oper
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -62,6 +65,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     ircdata.globdata = gdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
+    ircdata.terminate_connection = 0;
 
     if (irc_user_byid(gdata, data->fd) == NULL)
         irc_register_user(gdata, data->fd);
@@ -84,6 +88,9 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         irc_enqueue_msg(list_at(ircdata.msg_tosend, i), snd_qid);
 
     list_destroy(ircdata.msg_tosend, free);
+
+    if(ircdata.terminate_connection)
+        close(data->fd);
 }
 
 char *irc_msgsep(char *str, int len)
@@ -407,6 +414,8 @@ char *irc_errstr(int errcode)
         return "No topic is set";
     case RPL_ENDOFNAMES:
         return "End of /NAMES list";
+    case RPL_YOUREOPER:
+        return "You're now an IRC operator";
     default:
         return "I don't know that error";
     }

@@ -70,7 +70,7 @@ struct irc_msgdata {
 	struct irc_globdata* globdata;
 	char* msg;
 	list* msg_tosend;
-	short terminate_connection;
+	int connection_to_terminate;
 };	
 
 struct sockcomm_data {

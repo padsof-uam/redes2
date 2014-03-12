@@ -35,7 +35,8 @@ const char *_irc_cmds[] =
     "OPER",
     "MODE",
     "INVITE",
-    "VERSION"
+    "VERSION",
+    "KILL"
 };
 
 cmd_action _irc_actions[] =
@@ -58,7 +59,8 @@ cmd_action _irc_actions[] =
     irc_oper,
     irc_mode,
     irc_invite,
-    irc_version
+    irc_version,
+    irc_kill
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -71,7 +73,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     ircdata.globdata = gdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
-    ircdata.terminate_connection = 0;
+    ircdata.connection_to_terminate = 0;
 
     if (irc_user_byid(gdata, data->fd) == NULL)
         irc_register_user(gdata, data->fd);
@@ -98,8 +100,8 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
 
     list_destroy(ircdata.msg_tosend, free);
 
-    if(ircdata.terminate_connection)
-        close(data->fd);
+    if(ircdata.connection_to_terminate)
+        close(ircdata.connection_to_terminate);
 }
 
 char *irc_msgsep(char *str, int len)
@@ -200,31 +202,33 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
-int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message)
+static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, const char *message, const char* cmd)
 {
-    int i, j;
-    int chan_count, user_count;
+    int i;
+    int chan_count;
     struct ircchan *chan;
-    list *user_list;
-    struct ircuser *target;
 
     chan_count = list_count(user->channels);
 
     for (i = 0; i < chan_count; i++)
     {
         chan = list_at(user->channels, i);
-        user_list = chan->users;
-        user_count = list_count(user_list);
-
-        for (j = 0; j < user_count; j++)
-        {
-            target = list_at(user_list, j);
-            if (irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
-                list_add(msgqueue, irc_response_create(target->fd, ":%s QUIT :%s", user->nick, message));
-        }
+        irc_channel_broadcast(chan, msgqueue, ":%s %s :%s", user->nick, cmd, message);       
     }
 
     return OK;
+}
+
+int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message)
+{
+    return _irc_create_quitkill_messages(user, msgqueue, message, "QUIT");
+}
+
+int irc_create_kill_messages(struct ircuser* user, list* msgqueue, const char* tokill_name, const char* message)
+{   
+    char cmd[20];
+    snprintf(cmd, 20, "KILL %s", tokill_name);
+    return _irc_create_quitkill_messages(user, msgqueue, message, cmd);
 }
 
 struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params)

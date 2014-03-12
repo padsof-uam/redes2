@@ -236,7 +236,7 @@ int irc_quit(void *data)
         bye_msg = params[0];
 
     irc_create_quit_messages(user, ircdata->msg_tosend, bye_msg);
-    ircdata->terminate_connection = 1;
+    ircdata->connection_to_terminate = ircdata->msgdata->fd;
     return OK;
 }
 
@@ -678,6 +678,41 @@ int irc_version(void *data)
 
     snprintf(versionmsg, MAX_IRC_MSG, "%d.%s %s", SERVER_VERSION, debug, ircdata->globdata->servername);
     irc_send_numericreply_withtext(ircdata, RPL_VERSION, versionmsg, "Servidor de IRC - Redes II EPS UAM- Guillermo Julián / Víctor de Juan");
+
+    return OK;
+}
+
+int irc_kill(void *data)
+{
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircuser *tokill, *user;
+    char *params[2];
+
+    if (irc_parse_paramlist(ircdata->msg, params, 2) != 2)
+    {
+        irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "KILL");
+        return OK;
+    }
+
+    user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    tokill = irc_user_bynick(ircdata->globdata, params[0]);
+
+    if (!tokill)
+    {
+        irc_send_numericreply(ircdata, ERR_NOSUCHNICK, params[0]);
+        return OK;
+    }
+
+    if (!(user->mode & user_op))
+    {
+        irc_send_numericreply(ircdata, ERR_NOPRIVILEGES, "KILL");
+        return OK;
+    }
+
+    irc_create_kill_messages(user, ircdata->msg_tosend, params[0], params[1]);
+    list_add(ircdata->msg_tosend, irc_response_create(ircdata->msgdata->fd, ":%s KILL %s :%s", user->nick, params[0], params[1]));
+
+    ircdata->connection_to_terminate = tokill->fd;
 
     return OK;
 }

@@ -119,6 +119,15 @@ int irc_create_welcome_messages(struct ircuser *user, list *msgqueue);
 int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message);
 
 /**
+ * Crea los mensajes de salida de un usuario especificados en el RFC para un usuario.
+ * @param  user     Usuario.
+ * @param  msgqueue Lista donde se introducirán los mensajes.
+ * @param  message  Comentario de kill.
+ * @return          Código de error.
+ */
+int irc_create_kill_messages(struct ircuser* user, list* msgqueue, const char* tokill_name, const char* message);
+
+/**
  * Crea un mensaje para un cliente con el texto que se dé como formato
  * @see printf
  * @param  fd         Socket de destino.

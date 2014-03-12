@@ -386,6 +386,50 @@ int irc_list(void *data)
 
 int irc_kick(void *data)
 {
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircuser *sender, *kicked;
+    struct ircchan* chan;
+    char *params[3];
+    char *chan_name, *username;
+    int pnum;
+
+    pnum = irc_parse_paramlist(ircdata->msgdata->data, params, 3);
+
+    if(pnum < 2)
+    {
+        irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "KICK");
+        return OK;
+    }
+
+    chan_name = params[0];
+    username = params[1];
+
+    chan = irc_channel_byname(ircdata->globdata, chan_name);
+
+    if(!chan)
+    {
+        irc_send_numericreply(ircdata, ERR_NOSUCHCHANNEL, chan_name);
+        return OK;
+    }
+
+    sender = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    kicked = irc_user_bynick(ircdata->globdata,username);
+
+    if(!kicked || !irc_user_inchannel(chan, kicked))
+    {
+        irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name); /* No estoy seguro de esto */
+        return OK;
+    }
+
+    if(!irc_is_channel_op(chan, sender))
+    {
+        irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, chan_name);
+        return OK;
+    }
+
+    irc_channel_broadcast(chan, ircdata->msg_tosend, ":%s PART %s %s", sender->nick, chan->name, kicked->nick);
+    irc_channel_part(ircdata->globdata, chan, kicked);
+
     return OK;
 }
 

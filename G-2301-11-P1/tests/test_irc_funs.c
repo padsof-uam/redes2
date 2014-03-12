@@ -103,7 +103,6 @@ int t_irc_user_bad_params() {
 }
 
 int t_irc_user() {
-    /* ¿Qué es esto? */
     struct irc_globdata *irc = irc_init();
     list* output;
     int fd = 1;

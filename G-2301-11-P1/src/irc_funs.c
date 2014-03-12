@@ -401,6 +401,7 @@ int irc_kick(void *data)
 {
     return OK;
 }
+
 int irc_time(void *data)
 {
     return OK;

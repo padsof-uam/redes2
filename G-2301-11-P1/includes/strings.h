@@ -22,5 +22,14 @@ void strip(char** str);
  */
 char * strnstr(const char* s, const char* find, size_t slen);
 
+/**
+ * Separa una cadena en una matriz pasada como argumento
+ * @param  str    Cadena
+ * @param  sep    Separadores
+ * @param  array  Matriz donde se guardan los valores
+ * @param  arrlen Longitud del array para guardar valores
+ * @return        Número de valores separados.
+ */
+int str_arrsep(const char* str, const char* sep, char** array, size_t arrlen);
 #endif
 

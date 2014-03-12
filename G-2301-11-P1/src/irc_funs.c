@@ -346,14 +346,17 @@ int irc_time(void *data)
 {
     return OK;
 }
+
 int irc_notice(void *data)
 {
     return OK;
 }
+
 int irc_pong(void *data)
 {
     return OK;
 }
+
 int irc_users(void *data)
 {
     return OK;

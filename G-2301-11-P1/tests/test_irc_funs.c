@@ -84,10 +84,6 @@ int t_irc_topic__no_params__returns_needmoreparams() {
     irc_testend;
 }
 
-int t_irc_user_not_registered() {
-	mu_fail("Not implemented");
-	mu_end;
-}
 
 int t_irc_user_bad_params() {
     struct irc_globdata *irc = irc_init();
@@ -296,7 +292,6 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
-	mu_run_test(t_irc_user_not_registered);
 	mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
 	mu_run_test(t_irc_nick_collision);

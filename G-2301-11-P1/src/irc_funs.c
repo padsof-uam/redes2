@@ -105,13 +105,12 @@ int irc_nick(void *data)
 {
     int retval;
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    char *new_nick[1],*old_nick;
-    char string_tosend[MAX_IRC_MSG];
-    struct ircuser * user = irc_user_byid(ircdata->globdata,ircdata->msgdata->fd);
+    char *new_nick[1], *old_nick;
+    int i;
+    struct ircuser *user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 
     if (user)
-        old_nick=strdup(user->nick);
-
+        old_nick = strdup(user->nick);
 
     if (!irc_parse_paramlist(ircdata->msg, new_nick, 1))
     {
@@ -131,12 +130,11 @@ int irc_nick(void *data)
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
 
+    for (i = 0; i < list_count(user->channels); ++i)
+        irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, user, ":%s NICK %s", old_nick, user->nick);
 
-    snprintf(string_tosend,MAX_IRC_MSG,":%s NICK %s",old_nick,user->nick);
-    if (user)
-        for (int i = 0; i < list_count(user->channels); ++i)
-            irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, string_tosend);
-    
+    list_add(ircdata->msg_tosend, irc_response_create(ircdata->msgdata->fd, ":%s NICK %s", old_nick, user->nick));
+
     free(old_nick);
     return OK;
 }
@@ -189,7 +187,7 @@ int irc_join(void *data)
     chan_num = str_arrsep(params[0], ",", channels, 10);
     pass_num = str_arrsep(params[1], ",", passwords, 10);
 
-    for(i = 0; i < chan_num; i++)
+    for (i = 0; i < chan_num; i++)
     {
         channel = irc_channel_byname(ircdata->globdata, channels[i]);
 
@@ -199,7 +197,7 @@ int irc_join(void *data)
         key = i >= pass_num ? NULL : passwords[i];
         retval = irc_channel_adduser(ircdata->globdata, channel, user, key);
 
-        if (retval != OK) 
+        if (retval != OK)
         {
             irc_send_numericreply(ircdata, retval, channels[i]);
         }
@@ -704,8 +702,8 @@ int irc_kill(void *data)
 int irc_away(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    struct ircuser* user;
-    char* params[1];
+    struct ircuser *user;
+    char *params[1];
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 

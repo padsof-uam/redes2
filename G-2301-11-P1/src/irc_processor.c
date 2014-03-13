@@ -86,6 +86,8 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         
         if(user)
             irc_delete_user(gdata, user);
+
+        return;
     }
 
     if (irc_user_byid(gdata, data->fd) == NULL)

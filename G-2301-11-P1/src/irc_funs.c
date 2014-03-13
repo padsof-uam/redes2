@@ -851,3 +851,43 @@ int irc_who(void *data)
 
     return OK;
 }
+
+int irc_ison(void * data)
+{
+    char *params[10];
+    char * str_return = calloc(MAX_IRC_MSG, sizeof(char));
+    char * to_ret;
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+
+    int i,num_params = irc_parse_paramlist(ircdata->msg, params, 10);
+
+    to_ret = str_return;
+
+    if (num_params == 0)
+    {
+        irc_send_numericreply_withtext(ircdata, ERR_NEEDMOREPARAMS,NULL, "ISON nick_1 nick_2");
+        free(to_ret);
+        return OK;        
+    }
+
+
+    for (i = 0; i < num_params; ++i)
+    {
+        if(!irc_user_bynick(ircdata->globdata, params[i])){
+            strcpy(str_return, params[i]);
+            str_return+=strlen(params[i]);
+            *str_return=' ';
+            str_return++;
+        }
+
+    }
+    if (str_return!=NULL){
+        str_return--;
+        *str_return = '\0';
+    }
+
+    irc_send_numericreply_withtext(ircdata, RPL_ISON, NULL, to_ret);
+    free(to_ret);
+
+    return OK;
+}

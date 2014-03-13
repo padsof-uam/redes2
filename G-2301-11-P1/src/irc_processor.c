@@ -39,7 +39,8 @@ const char *_irc_cmds[] =
     "VERSION",
     "KILL",
     "AWAY",
-    "WHO"
+    "WHO",
+    "ISON"
 };
 
 cmd_action _irc_actions[] =
@@ -65,7 +66,8 @@ cmd_action _irc_actions[] =
     irc_version,
     irc_kill,
     irc_away,
-    irc_who
+    irc_who,
+    irc_ison
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -156,6 +158,10 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
         return 0; /* No hay un espacio detrás del comando -> no hay argumentos. */
 
     msg++; /* Marcamos al inicio de la lista de parámetros */
+    if (*msg=='\0')
+    {
+        return 0; /* Hay un espacion detrás del comando pero no hay argumentos. */
+    }
     colon = strchr(msg, ':');
 
     if (colon != NULL)

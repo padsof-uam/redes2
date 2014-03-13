@@ -369,6 +369,8 @@ int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic
                     *flagval &= ~(flagdic[i].value);
             }
         }
+
+        flags++;
     }
 
     return OK;

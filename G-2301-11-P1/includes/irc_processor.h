@@ -12,7 +12,7 @@ struct ircflag {
 };
 
 #define IRCFLAGS_END { -1, -1 }
-#define IS_IRCFLAGS_END(flag) ((flag).code != -1 && (flag).value != -1)
+#define IS_IRCFLAGS_END(flag) ((flag).code == -1 && (flag).value == -1)
 /**
  * Procesa un mensaje IRC.
  * @param snd_qid ID de la cola donde enviar los mensajes generados.

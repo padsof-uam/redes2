@@ -1,6 +1,8 @@
 ==== TESTS === 
 - Hay que hacer tests sobre varias cosas. irc_notice, irc_kick, irc_oper, irc_mode, irc_flagparse e irc_channel_broadcast deberían tener pruebas. Además, deberíamos comprobar que se respetan los modos del canal tanto en PRIVMSG como en JOIN.
 
+Mensajes de bienvenida.
+
 === Cambios Guille sobre cosas De Juan
 
 == receiver.c: commit 7ae47b8

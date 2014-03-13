@@ -140,4 +140,5 @@ int irc_set_channel_pass(struct ircchan* chan, const char* pass);
  */
 int irc_channel_removeop(struct ircchan* chan, struct ircuser* user);
 
+
 #endif

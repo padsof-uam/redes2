@@ -1,5 +1,6 @@
 CC = clang
 CFLAGS =  -Wall -pedantic -std=c99 -D_GNU_SOURCE
+DEBUG_CFLAGS = -DDEBUG -ggdb 
 LDFLAGS = 
 E_LIBS = -lpthread
 
@@ -56,7 +57,7 @@ final: all docs pack
 
 ### Compilation
 
-debug: CFLAGS += -DDEBUG -ggdb 
+debug: CFLAGS += $(DEBUG_CFLAGS)
 debug: $(TARGET)
 
 release: CFLAGS += -02
@@ -137,6 +138,7 @@ $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(LIBS) | $(BINDIR) depend $(LIBS)
 
 ## Tests
 
+test: CFLAGS += $(DEBUG_CFLAGS)
 test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)

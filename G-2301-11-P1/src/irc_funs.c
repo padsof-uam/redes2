@@ -411,16 +411,21 @@ int irc_kick(void *data)
         return OK;
     }
 
+
     sender = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     kicked = irc_user_bynick(ircdata->globdata, username);
 
-    if (!kicked || !irc_user_inchannel(chan, kicked))
+    if(irc_user_inchannel(chan, sender)!=OK)
     {
-        irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name); /* No estoy seguro de esto */
+        irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name);
         return OK;
     }
-
-    if (!irc_is_channel_op(chan, sender))
+    else if (!kicked || irc_user_inchannel(chan, kicked)!=OK)
+    {
+        irc_send_numericreply(ircdata, ERR_USERNOTINCHANNEL, chan_name);
+        return OK;
+    }
+    else if (!irc_is_channel_op(chan, sender))
     {
         irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, chan_name);
         return OK;

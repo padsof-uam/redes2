@@ -34,13 +34,13 @@ struct irc_globdata *irc_init()
     return gdata;
 }
 
-static void _parse_opers(struct irc_globdata* irc, char* contents, jsmntok_t* tok)
+static void _parse_opers(struct irc_globdata *irc, char *contents, jsmntok_t *tok)
 {
-    int i;  
+    int i;
     int childs = tok[0].size;
     char *user, *pass;
 
-    for(i = 1; i < childs; i += 2)
+    for (i = 1; i < childs; i += 2)
     {
         *(contents + tok[i].end) = '\0';
         *(contents + tok[i + 1].end) = '\0';
@@ -52,7 +52,7 @@ static void _parse_opers(struct irc_globdata* irc, char* contents, jsmntok_t* to
     }
 }
 
-int irc_load_config(struct irc_globdata* irc, const char *file)
+int irc_load_config(struct irc_globdata *irc, const char *file)
 {
     long conf_len;
     char *conf_contents;
@@ -84,12 +84,12 @@ int irc_load_config(struct irc_globdata* irc, const char *file)
 
     parsed = jsmn_parse(&parser, conf_contents, conf_len, tokens, 100);
 
-    if(parsed < 0)
+    if (parsed < 0)
         return ERR_PARSE;
 
-    for(i = 0; i < parsed; i++)
+    for (i = 0; i < parsed; i++)
     {
-        if(tokens[i].type == JSMN_PRIMITIVE && !strncmp(conf_contents + tokens[i].start, "opers", strlen("opers")))
+        if (tokens[i].type == JSMN_PRIMITIVE && !strncmp(conf_contents + tokens[i].start, "opers", strlen("opers")))
             _parse_opers(irc, conf_contents, &(tokens[i + 1]));
     }
 
@@ -304,17 +304,20 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     return chan;
 }
 
-int irc_channel_addop(struct ircchan * channel, struct ircuser * user){
-
-    return OK;
+int irc_channel_addop(struct ircchan *channel, struct ircuser *user)
+{
+    if (irc_user_inchannel(channel, user)==OK)
+        return list_add(channel->operators, user);
+    else 
+        return ERR;
 }
 int irc_is_channel_op(struct ircchan *chan, struct ircuser *user)
 {
-    return list_find(chan->operators, str_comparator, user->name) != -1;
+    return list_find(chan->operators,ptr_comparator, user) != -1;
 }
 
 
-int irc_set_channel_pass(struct ircchan* chan, const char* pass)
+int irc_set_channel_pass(struct ircchan *chan, const char *pass)
 {
     strncpy(chan->password, pass, MAX_KEY_LEN);
     chan->has_password = 1;

@@ -17,17 +17,21 @@ int t_irc_join__create() {
 
     struct irc_globdata * irc=irc_init();
     list * output;
-    _irc_register_withnick(irc, 1, "Paco");
-    _irc_create_chan(irc, "#foobar", 0);
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 0);
 
-    char str[]="JOIN #foobar";
+    char str[]="JOIN #foobar foopas";
     output = _process_message(irc_join, irc, 1, str);
+    
     assert_generated(4);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     /* Los mensajes 1,2 son NAMES */
     
     assert_msgstr_eq(msgnum(3), ":Paco JOIN #foobar");
+    mu_assert("No se ha unido al canal creado.", irc_user_inchannel(chan, user)==OK && list_find(chan->users,ptr_comparator, user)!=-1);
+
+
     irc_testend;
 
 }
@@ -42,7 +46,7 @@ int t_irc_join__all_together() {
     chan_1->has_password = 1;
     strcpy(chan_1->password,"foopass");    
     
-    struct ircchan * chan_2 = _irc_create_chan(irc, "#patata", 1,user_1);
+    struct ircchan * chan_2 = _irc_create_chan(irc, "&patata", 1,user_1);
     chan_2->has_password = 1;
     chan_2->mode |= chan_invite;
     dic_add(chan_2->invited_users, "Pepe" ,user_2);

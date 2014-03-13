@@ -145,11 +145,11 @@ int t_irc_nick__change_nick__set_and_broadcast()
     list* output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "paco");
     struct ircuser *b = _irc_register_withnick(irc, 2, "pepe");
-    _irc_create_chan(irc, "#testchan", 2, a, b);
+    _irc_create_chan(irc, "#testchan", 2, a, b);    
 
     output = _process_message(irc_nick, irc, 1, "NICK Juan");
 
-    assert_generated(1);
+    assert_generated(2);
     assert_msgstr_eq(msgnum(0), ":paco NICK Juan");
     mu_assert_streq(a->nick, "Juan", "Nick was not set");
 

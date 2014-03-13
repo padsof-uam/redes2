@@ -131,12 +131,12 @@ int irc_nick(void *data)
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
 
-    snprintf(string_tosend,MAX_IRC_MSG,"El usuario %s ha cambiado de nick a %s",old_nick,user->nick);
 
-    for (int i = 0; i < list_count(user->channels); ++i)
-    {
-        irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, string_tosend);
-    }
+    snprintf(string_tosend,MAX_IRC_MSG,":%s NICK %s",old_nick,user->nick);
+    if (user)
+        for (int i = 0; i < list_count(user->channels); ++i)
+            irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, string_tosend);
+    
     free(old_nick);
     return OK;
 }

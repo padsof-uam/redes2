@@ -7,4 +7,11 @@ Mensajes de bienvenida.
 
 Memorietor
 
-Documentar más cosas
+====DOCUMENTAR====
+
+ - List_helpers?.
+ - cmp_processor.
+ - comparser.
+ - errors.
+ - log.
+ - suites de test.

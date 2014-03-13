@@ -253,15 +253,6 @@ int irc_channel_adduser(struct irc_globdata *data, struct ircchan *channel, stru
     if (list_count(user->channels) >= MAX_CHANNELES_USER)
         return ERR_TOOMANYCHANNELS;
 
-    /*
-    Comrprobados:
-        - Contraseña
-        - Invitados
-        - Already in channel
-        - Demasiada gente
-        - too many chanels;
-        */
-
     if (list_add(channel->users, user) != OK)
         return ERR;
     else if (list_add(user->channels, channel) != OK)

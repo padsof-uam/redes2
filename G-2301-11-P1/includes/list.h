@@ -5,6 +5,9 @@
 #include "errors.h"
 #include "list_helpers.h"
 
+/**
+ * Lista enlazada de memoria dinámica. 
+ */
 typedef struct {
 	void** array;
 	int count;

@@ -1,4 +1,4 @@
-CC = clang
+CC = cc
 CFLAGS =  -Wall -pedantic -std=c99 -D_GNU_SOURCE
 DEBUG_CFLAGS = -DDEBUG -ggdb 
 LDFLAGS = 

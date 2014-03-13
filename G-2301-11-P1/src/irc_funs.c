@@ -105,7 +105,13 @@ int irc_nick(void *data)
 {
     int retval;
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    char *new_nick[1];
+    char *new_nick[1],*old_nick;
+    char string_tosend[MAX_IRC_MSG];
+    struct ircuser * user = irc_user_byid(ircdata->globdata,ircdata->msgdata->fd);
+
+    if (user)
+        old_nick=strdup(user->nick);
+
 
     if (!irc_parse_paramlist(ircdata->msg, new_nick, 1))
     {
@@ -125,6 +131,13 @@ int irc_nick(void *data)
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
     }
 
+
+    snprintf(string_tosend,MAX_IRC_MSG,":%s NICK %s",old_nick,user->nick);
+    if (user)
+        for (int i = 0; i < list_count(user->channels); ++i)
+            irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, string_tosend);
+    
+    free(old_nick);
     return OK;
 }
 

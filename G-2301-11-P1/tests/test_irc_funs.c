@@ -90,12 +90,6 @@ int t_irc_topic__no_params__returns_needmoreparams()
     irc_testend;
 }
 
-int t_irc_user_not_registered()
-{
-    mu_fail("Not implemented");
-    mu_end;
-}
-
 int t_irc_user_bad_params()
 {
     struct irc_globdata *irc = irc_init();
@@ -159,11 +153,11 @@ int t_irc_nick__change_nick__set_and_broadcast()
     list *output;
     struct ircuser *a = _irc_register_withnick(irc, 1, "paco");
     struct ircuser *b = _irc_register_withnick(irc, 2, "pepe");
-    _irc_create_chan(irc, "#testchan", 2, a, b);
+    _irc_create_chan(irc, "#testchan", 2, a, b);    
 
     output = _process_message(irc_nick, irc, 1, "NICK Juan");
 
-    assert_generated(1);
+    assert_generated(2);
     assert_msgstr_eq(msgnum(0), ":paco NICK Juan");
     mu_assert_streq(a->nick, "Juan", "Nick was not set");
 
@@ -309,8 +303,7 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
-    mu_run_test(t_irc_user_not_registered);
-    mu_run_test(t_irc_user_bad_params);
+	mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
     mu_run_test(t_irc_nick_collision);
     mu_run_test(t_irc_nick__set_nick__set);

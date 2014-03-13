@@ -18,7 +18,7 @@ profiles = {
 		'cmdsend_delay': 0.1,
 		'client_spawndelay': 0.08,
 		'client_batch': 10,
-		'client_max': 800 ,
+		'client_max': 500 ,
 		'batch_time_sec': 20,
 		'ping_interval': 1,
 		'threshold_manual_control': -1,

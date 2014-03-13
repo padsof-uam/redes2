@@ -38,7 +38,8 @@ const char *_irc_cmds[] =
     "INVITE",
     "VERSION",
     "KILL",
-    "AWAY"
+    "AWAY",
+    "WHO"
 };
 
 cmd_action _irc_actions[] =
@@ -63,7 +64,8 @@ cmd_action _irc_actions[] =
     irc_invite,
     irc_version,
     irc_kill,
-    irc_away
+    irc_away,
+    irc_who
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -430,6 +432,21 @@ int irc_send_response(struct irc_msgdata* irc, const char* msg_format,...)
     return list_add(irc->msg_tosend, msg);
 }
 
+int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b)
+{
+    int i;
+    struct ircchan* chan;
+
+    for(i = 0; i < list_count(a->channels); i++)
+    {
+        chan = list_at(a->channels, i);
+        if(irc_user_inchannel(chan, b) == OK)
+            return 1;
+    }
+
+    return 0;
+}
+
 char *irc_errstr(int errcode)
 {
     switch (errcode)
@@ -538,6 +555,8 @@ char *irc_errstr(int errcode)
         return "Channel users topic";
     case RPL_LISTEND:
         return "End of /LIST";
+    case RPL_ENDOFWHO:
+        return "End of /WHO list";
     default:
         return "I don't know that error";
     }

@@ -106,12 +106,12 @@ int t_irc_join__create() {
     char str[]="JOIN #foobar";
     output = _process_message(irc_join, irc, 1, str);
     
-    assert_generated(3);
+    assert_generated(4);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     /* Los mensajes 1,2 son NAMES */
     
-    assert_msgstr_eq(msgnum(2), ":Pepe JOIN #foobar");
+    assert_msgstr_eq(msgnum(3), ":Pepe JOIN #foobar");
     mu_assert("No se ha unido al canal creado.", irc_user_inchannel(chan, user)==OK && list_find(chan->users,ptr_comparator, user)!=-1);
 
 
@@ -183,7 +183,7 @@ int t_irc_join__1_invited_ok() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(5);
+    assert_generated(6); /* TOPIC, NAMES x 2, NAMES_END, JOIN x 2 */
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     mu_assert("Se ha saltado el control de la invitación", list_find(chan->users,ptr_comparator, user_2)!=-1);
@@ -205,8 +205,8 @@ int t_irc_join__1_channel_pass__ok() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(5);
-
+    assert_generated(6); /* TOPIC, NAMES x 2, NAME_END, JOIN x 2 */
+ 
     mu_assert("Se ha saltado el control de la contraseña", list_find(chan->users,ptr_comparator, user_2)!=-1);
     mu_assert("Se ha saltado el control de la contraseña", irc_user_inchannel(chan, user_2)==OK);
 
@@ -248,7 +248,7 @@ int t_irc_join__more_channel_no_pass() {
     
     char str[]="JOIN #patata,#foobar";
     output = _process_message(irc_join, irc, 2, str);
-    assert_generated(10);
+    assert_generated(12); /* TOPIC x 2, NAMES x 4, NAMEEND x 2, JOIN x 4 */
 
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
@@ -271,7 +271,7 @@ int t_irc_join__1_channel_no_pass() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(5);
+    assert_generated(6); /* TOPIC, NAMES x 2, NAME_END, JOIN x 2 */
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     /* Los mensajes 1-4 son NAMES */

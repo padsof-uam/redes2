@@ -1,4 +1,6 @@
+CC = clang
 CFLAGS =  -Wall -pedantic -std=c99 -D_GNU_SOURCE
+LDFLAGS = 
 E_LIBS = -lpthread
 
 OBJDIR = obj
@@ -54,17 +56,17 @@ final: all docs pack
 
 ### Compilation
 
-debug: CFLAGS += -DDEBUG -ggdb
+debug: CFLAGS += -DDEBUG -ggdb 
 debug: $(TARGET)
 
 release: CFLAGS += -02
 release: $(TARGET)
 
 no-daemon: CFLAGS += -DDEBUG -DNODAEMON
-no-daemon: $(TARGET)
+no-daemon: debug
 
 scan: clean
-	@scan-build make
+	@scan-build make test
 	
 $(OBJS): | $(OBJDIR)
 
@@ -131,7 +133,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 
 ## Tests
 
@@ -139,7 +141,7 @@ test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 
 ### Documentation
 

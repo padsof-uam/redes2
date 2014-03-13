@@ -17,9 +17,9 @@ profiles = {
 	'longrun': {
 		'cmdsend_delay': 0.1,
 		'client_spawndelay': 0.08,
-		'client_batch': 10,
+		'client_batch': 5,
 		'client_max': 500 ,
-		'batch_time_sec': 20,
+		'batch_time_sec': 50,
 		'ping_interval': 1,
 		'threshold_manual_control': -1,
 		'enable_sending': True
@@ -115,7 +115,7 @@ class IRCThread(threading.Thread):
 
 	def run(self):
 		self._sock.connect((host, port))
-		self._sock.settimeout(2)
+		# self._sock.settimeout(2)
 		nick = randitem(users)
 		msgargs = {
 			'nick': nick,
@@ -172,7 +172,7 @@ def profile_server(parameters):
 	enable_sending = parameters['enable_sending']
 
 	png.connect((host, port))
-	png.settimeout(2)
+	# png.settimeout(2)
 
 	client_count = 0
 	batch_elapsed = 0

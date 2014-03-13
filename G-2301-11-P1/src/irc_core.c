@@ -201,19 +201,26 @@ void irc_delete_user(struct irc_globdata *data, struct ircuser *user)
     int chan_count;
     int i;
     struct ircchan *chan;
+    list* chans_todelete;
 
+    chans_todelete = list_new();
     dic_remove(data->fd_user_map, &(user->fd));
-    dic_remove(data->nick_user_map, user->name);
+    dic_remove(data->nick_user_map, user->nick);
 
     chan_count = list_count(user->channels);
 
     for (i = 0; i < chan_count; ++i)
+        list_add(chans_todelete, list_at(user->channels, i));
+
+    /* No se modifican las listas sobre las que se iteran. */
+    for (i = 0; i < chan_count; ++i)
     {
-        chan = list_at(user->channels, i);
+        chan = list_at(chans_todelete, i);
         irc_channel_part(data, chan, user);
         irc_channel_removeop(chan, user);
     }
 
+    list_destroy(chans_todelete, NULL);
     _user_destructor(user);
 }
 

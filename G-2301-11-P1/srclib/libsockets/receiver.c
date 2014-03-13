@@ -113,6 +113,7 @@ void *thread_receive(void *st)
             else if (pfds->fds[i].revents & POLLIN) /* Datos en el socket */
             {
                 ready_fds--;
+                message = NULL;
                 msglen = rcv_message(pfds->fds[i].fd, (void **)&message);
 
                 if (msglen > 0)
@@ -124,6 +125,7 @@ void *thread_receive(void *st)
                     i--; /* Reexploramos este elemento */
                     fds_len--;
                 }
+
                 if (message)
                     free(message);
             }

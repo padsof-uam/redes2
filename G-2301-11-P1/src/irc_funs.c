@@ -90,6 +90,7 @@ int irc_ping(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct sockcomm_data *msg_tosend = malloc(sizeof(struct sockcomm_data));
+    bzero(msg_tosend, sizeof(struct sockcomm_data*));
 
     slog(LOG_INFO, "ping!");
     strcpy(msg_tosend->data, "PONG\r\n");
@@ -210,9 +211,12 @@ int irc_join(void *data)
         {
             irc_send_numericreply_withtext(ircdata, RPL_TOPIC, channels[i], channel->topic);
             irc_send_names_messages(channel, ircdata);
+            irc_send_numericreply(ircdata, RPL_ENDOFNAMES, NULL);
             irc_channel_broadcast(channel, ircdata->msg_tosend, NULL, ":%s JOIN %s", user->nick, channel->name);
         }
     }
+
+
 
     return OK;
 }
@@ -805,11 +809,11 @@ static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan
 
         if(!(user->mode & user_invisible))
         {
-            snprintf(who_msg, 200, "%s %s %s %s %s H@", 
+            snprintf(who_msg, 200, "%s ~%s %s %s %s H@", 
                 chan->name, 
                 user->username, 
                 "unknown",
-                "unknown",
+                data->globdata->servername,
                 user->nick);
             snprintf(who_text, 200, "%d %s", 0, user->name);
             irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);

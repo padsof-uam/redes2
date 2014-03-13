@@ -13,6 +13,77 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t__irc_kill__killed() {
+
+    struct irc_globdata *irc = irc_init();
+    list *output;
+
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    _irc_register_withnick(irc, 2, "paco");
+
+    a->mode =  a->mode | user_op;
+
+    char str[] ="KILL paco :por tolai";
+
+    output = _process_message(irc_kill, irc, 1,str );
+    assert_generated(1);
+
+    assert_msgstr_eq(msgnum(0),":pepe KILL paco :por tolai");
+    
+    irc_testend;
+}
+int t__irc_kill__more_params() {
+
+    struct irc_globdata *irc = irc_init();
+    list *output;
+
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    _irc_register_withnick(irc, 2, "paco");
+
+    a->mode =  a->mode | user_op;
+
+    output = _process_message(irc_kill, irc, 1, "KILL oscar");
+    assert_generated(1);
+
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+    irc_testend;
+}
+int t__irc_kill__no_such_nick() {
+
+    struct irc_globdata *irc = irc_init();
+    list *output;
+
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    _irc_register_withnick(irc, 2, "paco");
+
+    a->mode =  a->mode | user_op;
+
+    char str[] = "KILL oscar :por tolai";
+
+    output = _process_message(irc_kill, irc, 1, str);
+    assert_generated(1);
+
+    assert_numeric_reply(msgnum(0), ERR_NOSUCHNICK, NULL);
+    irc_testend;
+}
+
+int t__irc_kill__no_privileges() {
+
+    struct irc_globdata *irc = irc_init();
+    list *output;
+
+    _irc_register_withnick(irc, 1, "pepe");
+    _irc_register_withnick(irc, 2, "paco");
+
+    char str[] ="KILL paco :por tolai";
+    output = _process_message(irc_kill, irc, 1,str );
+
+    assert_generated(1);
+
+    assert_numeric_reply(msgnum(0), ERR_NOPRIVILEGES, NULL);
+    irc_testend;
+}
+
 int t_irc_topic__topic_change__topic_changed_and_broadcast()
 {
     struct irc_globdata *irc = irc_init();
@@ -125,7 +196,8 @@ int t_irc_nick_collision()
     struct irc_globdata *irc = irc_init();
     list *output;
     _irc_register_withnick(irc, 4, "pedro");
-    output = _process_message(irc_nick, irc, 4, "NICK pedro");
+    _irc_register_withnick(irc, 5, "asdf");
+    output = _process_message(irc_nick, irc,5 , "NICK pedro");
 
     assert_generated(1);
     assert_numeric_reply(msgnum(0), ERR_NICKCOLLISION, NULL);
@@ -141,7 +213,7 @@ int t_irc_nick__set_nick__set()
 
     output = _process_message(irc_nick, irc, 1, "NICK Juan");
 
-    assert_generated(0);
+    assert_generated(1);
     mu_assert_streq(a->nick, "Juan", "Nick was not set");
 
     irc_testend;
@@ -303,6 +375,10 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t__irc_kill__killed);
+	mu_run_test(t__irc_kill__more_params);
+	mu_run_test(t__irc_kill__no_such_nick);
+	mu_run_test(t__irc_kill__no_privileges);
 	mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
     mu_run_test(t_irc_nick_collision);

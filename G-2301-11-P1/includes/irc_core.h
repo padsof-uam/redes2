@@ -3,11 +3,46 @@
 
 #include "types.h"
 
+/**
+ * Inicializa una estructura de irc_globdata.
+ * @return El puntero a la estructura.
+ */
 struct irc_globdata* irc_init();
+/**
+ * Busca un usuario por nick en la estructura general
+ * @param  gdata Estructura globdata en la que está el diccionario de usuarios.
+ * @param  nick  Nick del usuario que queremos buscar.
+ * @see    irc_globdata.
+ * @return       Puntero al usuario o NULL en caso de no encontrarse.
+ */
 struct ircuser* irc_user_bynick(struct irc_globdata* gdata, const char* nick);
+
+/**
+ * Busca un usuario por nick en la estructura general
+ * @param  gdata Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id  Id del usuario que queremos buscar.
+ * @see    irc_globdata.
+ * @return       Puntero al usuario o NULL en caso de no encontrarse.
+ */
 struct ircuser* irc_user_byid(struct irc_globdata* gdata, int id);
+
+/**
+ * Cambia el nick de un usuario.
+ * @param  data Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id   Id del usuario al que queremos cambiar el nick.
+ * @param  nick Nuevo nick para el usuario.
+ * @return      OK/ERR
+ */
 int irc_set_usernick(struct irc_globdata* data, int id, const char* nick);
+
+/**
+ * Crea un usuario nuevo.
+ * @param  data Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id   Id (fd asociado) con el que creamos el nuevo usuario.
+ * @return      OK/ERR
+ */
 int irc_create_user(struct irc_globdata* data, int id);
+
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);
 void irc_destroy(struct irc_globdata* data);
 

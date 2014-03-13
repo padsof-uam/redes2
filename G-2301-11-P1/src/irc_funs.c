@@ -515,6 +515,7 @@ int irc_mode(void *data)
     int pnum;
     char *target, *mode, *param;
     short was_op, mode_add;
+    char modeflags[20];
     struct ircflag chan_flags[] =
     {
         {'p', chan_priv},
@@ -536,7 +537,7 @@ int irc_mode(void *data)
 
     pnum = irc_parse_paramlist(ircdata->msg, params, 3);
 
-    if (pnum < 2)
+    if (pnum == 0)
     {
         irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "MODE");
         return OK;
@@ -557,10 +558,18 @@ int irc_mode(void *data)
         if (!chan)
         {
             irc_send_numericreply(ircdata, ERR_NOSUCHNICK, target);
+            return OK;
+        }
+        else if (pnum == 1)
+        {
+            irc_strflag(chan->mode, modeflags, 20, chan_flags);
+            irc_send_numericreply_withtext(ircdata, RPL_CHANNELMODEIS, target, modeflags);
+            return OK;
         }
         else if (!irc_is_channel_op(chan, user))
         {
             irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, NULL);
+            return OK;
         }
         else
         {
@@ -569,7 +578,10 @@ int irc_mode(void *data)
             if (strchr(mode, 'l'))
             {
                 if (mode_add && pnum < 3)
+                {
                     irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "MODE +l");
+                    return OK;
+                }
                 else if (mode_add)
                     _try_getint(param, &(chan->user_limit));
                 else
@@ -579,7 +591,10 @@ int irc_mode(void *data)
             if (strchr(mode, 'k'))
             {
                 if (mode_add && pnum < 3)
+                {
                     irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "MODE +k");
+                    return OK;
+                }
                 else if (mode_add)
                     irc_set_channel_pass(chan, param);
                 else
@@ -591,9 +606,25 @@ int irc_mode(void *data)
     {
         was_op = user->mode & user_op;
 
-        if (!strncmp(user->nick, target, MAX_NICK_LEN))
+        if (pnum == 1)
+        {
+            user = irc_user_bynick(ircdata->globdata, target);
+
+            if (!user)
+            {
+                irc_send_numericreply(ircdata, ERR_NOSUCHNICK, target);
+            }
+            else
+            {
+                irc_strflag(user->mode, modeflags, 20, user_flags);
+                irc_send_numericreply_withtext(ircdata, RPL_UMODEIS, target, modeflags);
+            }
+            return OK;
+        }
+        if (strncmp(user->nick, target, MAX_NICK_LEN))
         {
             irc_send_numericreply(ircdata, ERR_USERSDONTMATCH, target);
+            return OK;
         }
         else
         {
@@ -603,9 +634,12 @@ int irc_mode(void *data)
             {
                 slog(LOG_WARNING, "El usuario %s ha tratado de hacerse operador a través del comando MODE.", target);
                 user->mode &= ~(user_op);
+                return OK;
             }
         }
     }
+
+    irc_send_response(ircdata, ":%s MODE %s :%s", user->nick, target, mode);
 
     return OK;
 }

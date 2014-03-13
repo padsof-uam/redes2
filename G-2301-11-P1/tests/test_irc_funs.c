@@ -13,6 +13,217 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_mode__chan_provided__returns_chan_mode() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+    char msg[] = "MODE #testchan";
+    list* output;
+
+    chan->mode = chan_invite | chan_moderated;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+    assert_generated(1);
+    assert_numeric_reply_text(msgnum(0), RPL_CHANNELMODEIS, "#testchan", "+im");
+
+    irc_testend;
+}
+int t_irc_mode__user_provided__returns_user_mode() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* luis = _irc_register_withnick(irc, 2, "luis");
+    char msg[] = "MODE luis";
+    list* output;
+
+    _irc_register_withnick(irc, 1, "pepe");
+
+    luis->mode = user_op | user_rcvwallops;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+    assert_generated(1);
+    assert_numeric_reply_text(msgnum(0), RPL_UMODEIS, "luis", "+wo");
+
+    irc_testend;
+}
+int t_irc_mode__different_user__err_match() {
+    struct irc_globdata* irc = irc_init();
+    char msg[] = "MODE luis +i";
+    list* output;
+    _irc_register_withnick(irc, 1, "pepe");
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_USERSDONTMATCH, NULL);
+
+    irc_testend;
+}
+int t_irc_mode__user_minus_o_op__removes_op_privs() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    char msg[] = "MODE pepe -o";
+    list* output;
+
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    mu_assert_eq(user->mode, 0, "user is still op");
+
+    irc_testend;
+}
+int t_irc_mode__user_plus_o__ignored() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    char msg[] = "MODE pepe +o";
+    list* output;
+
+    user->mode = 0;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    mu_assert_eq(user->mode, 0, "user was changed to op");
+
+    irc_testend;
+}
+int t_irc_mode__plus_k_no_op__err_privsneeded() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    char msg[] = "MODE #testchan +k key";
+    list* output;
+    _irc_create_chan(irc, "#testchan", 1, user);
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_CHANOPRIVSNEEDED, NULL);
+
+    irc_testend;
+}
+int t_irc_mode__minus_k__removes_password() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+    char msg[] = "MODE #testchan -k";
+    list* output;
+    chan->has_password = 1;
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    mu_assert_eq(chan->has_password, 0, "password is still set");
+
+    irc_testend;
+}
+int t_irc_mode__plus_k_pass_provided__sets_password() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+    char msg[] = "MODE #testchan +k pass";
+    list* output;
+
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+    assert_generated(1);
+
+    mu_assert("password not set", chan->has_password);
+    mu_assert_streq(chan->password, "pass", "password is incorrect");
+
+    irc_testend;
+}
+int t_irc_mode__plus_k_no_pass_provided__err_moreparams() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    char msg[] = "MODE #testchan +k";
+    list* output;
+    _irc_create_chan(irc, "#testchan", 1, user);
+
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+
+    irc_testend;
+}
+int t_irc_mode__minus_l__removes_user_limit() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+    char msg[] = "MODE #testchan -l";
+    list* output;
+
+    user->mode = user_op;
+    chan->user_limit = 10;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    mu_assert_eq(chan->user_limit, -1, "limit is still set");
+
+    irc_testend;
+}
+int t_irc_mode__plus_l__sets_user_limit() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+    char msg[] = "MODE #testchan +l 100";
+    list* output;
+
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    mu_assert_eq(chan->user_limit, 100, "limit is wrong");
+
+    irc_testend;
+}
+int t_irc_mode__plus_o_noop__err_chanopprivsneeded() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    char msg[] = "MODE #testchan +o pepe";
+    list* output;
+    _irc_create_chan(irc, "#testchan", 1, user);
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_CHANOPRIVSNEEDED, NULL);
+
+    irc_testend;
+}
+int t_irc_mode__plus_o_op__gives_chanop_target() {
+    struct irc_globdata* irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser* op = _irc_register_withnick(irc, 2, "luis");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 2, user, op);
+    char msg[] = "MODE #testchan +o luis";
+    list* output;
+
+    user->mode = user_op;
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    mu_assert("luis is not op", irc_is_channel_op(chan, op));
+
+    irc_testend;
+}
+int t_irc_mode__no_target_provided__err_moreparams() {
+    struct irc_globdata* irc = irc_init();
+    char msg[] = "MODE";
+    list* output;
+    _irc_register_withnick(irc, 1, "pepe");
+
+    output = _process_message(irc_mode, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+
+    irc_testend;
+}
 int t_irc_topic__topic_change__topic_changed_and_broadcast()
 {
     struct irc_globdata *irc = irc_init();
@@ -303,6 +514,20 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_mode__chan_provided__returns_chan_mode);
+	mu_run_test(t_irc_mode__user_provided__returns_user_mode);
+	mu_run_test(t_irc_mode__different_user__err_match);
+	mu_run_test(t_irc_mode__user_minus_o_op__removes_op_privs);
+	mu_run_test(t_irc_mode__user_plus_o__ignored);
+	mu_run_test(t_irc_mode__plus_k_no_op__err_privsneeded);
+	mu_run_test(t_irc_mode__minus_k__removes_password);
+	mu_run_test(t_irc_mode__plus_k_pass_provided__sets_password);
+	mu_run_test(t_irc_mode__plus_k_no_pass_provided__err_moreparams);
+	mu_run_test(t_irc_mode__minus_l__removes_user_limit);
+	mu_run_test(t_irc_mode__plus_l__sets_user_limit);
+	mu_run_test(t_irc_mode__plus_o_noop__err_chanopprivsneeded);
+	mu_run_test(t_irc_mode__plus_o_op__gives_chanop_target);
+	mu_run_test(t_irc_mode__no_target_provided__err_moreparams);
 	mu_run_test(t_irc_user_bad_params);
     mu_run_test(t_irc_user);
     mu_run_test(t_irc_nick_collision);

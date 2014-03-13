@@ -306,7 +306,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
 
 int irc_is_channel_op(struct ircchan *chan, struct ircuser *user)
 {
-    return list_find(chan->operators, str_comparator, user->name) != -1;
+    return (user->mode & user_op) || (list_find(chan->operators, str_comparator, user->name) != -1);
 }
 
 

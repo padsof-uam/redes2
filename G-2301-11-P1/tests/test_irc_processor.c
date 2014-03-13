@@ -18,6 +18,16 @@ struct ircflag fldic[] =
 };
 
 /* BEGIN TESTS */
+int t_irc_strflag__parse_flag__str_correct() {
+	int flags = flg1 | flg2;
+	char str[10];
+
+	irc_strflag(flags, str, 10, fldic);
+
+	mu_assert_streq(str, "+ab", "");
+
+	mu_end;
+}
 int t_irc_flagparse__multiple_flags_minus__flags_removed()
 {
     int actual = flg1 | flg2 | flg3;
@@ -221,6 +231,7 @@ int test_irc_processor_suite(int *errors, int *success)
 
     printf("Begin test_irc_processor suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_strflag__parse_flag__str_correct);
     mu_run_test(t_irc_flagparse__multiple_flags_minus__flags_removed);
     mu_run_test(t_irc_flagparse__multiple_flags_add__flags_added);
     mu_run_test(t_irc_flagparse__one_flag_minus__flag_removed);

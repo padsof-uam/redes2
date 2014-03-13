@@ -96,6 +96,7 @@ void *thread_receive(void *st)
             if (pfds->fds[i].revents & POLLERR) /* algo malo ha pasado. Cerramos */
             {
                 slog(LOG_WARNING, "Error en conexión %d. Cerrando.", pfds->fds[i].fd);
+                send_to_main(recv_data->queue, -(pfds->fds[i].fd), NULL, 0);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                 i--; /* Reexploramos este elemento */
                 fds_len--;
@@ -103,7 +104,9 @@ void *thread_receive(void *st)
             else if ((pfds->fds[i].revents & POLLHUP) || (pfds->fds[i].revents & POLLNVAL))
             {
                 slog(LOG_NOTICE, "El socket %d ha sido cerrado.", pfds->fds[i].fd);
+                send_to_main(recv_data->queue, -(pfds->fds[i].fd), NULL, 0);
                 remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
+                close(pfds->fds[i].fd); /* Nos aseguramos de que se cierra */
                 i--; /* Reexploramos este elemento */
                 fds_len--;
             }
@@ -171,7 +174,10 @@ int send_to_main(int queue, int fd, char *message, int msglen)
     bzero(&data_to_send, sizeof(struct msg_sockcommdata));
 
     data_to_send.msgtype = 1;
-    strncpy(data_to_send.scdata.data, message, MAX_IRC_MSG);
+
+    if(message != NULL)
+        strncpy(data_to_send.scdata.data, message, MAX_IRC_MSG);
+    
     data_to_send.scdata.fd = fd;
     data_to_send.scdata.len = msglen;
 

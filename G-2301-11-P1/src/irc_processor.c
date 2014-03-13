@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 const char *_irc_cmds[] =
 {
@@ -71,11 +72,21 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     char *msg;
     char *msg_end;
     int i;
+    struct ircuser* user;
+
 
     ircdata.globdata = gdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
     ircdata.connection_to_terminate = 0;
+
+    if(data->fd < 0) /* Usuario eliminado */
+    {
+        user = irc_user_byid(gdata, - data->fd);
+        
+        if(user)
+            irc_delete_user(gdata, user);
+    }
 
     if (irc_user_byid(gdata, data->fd) == NULL)
         irc_register_user(gdata, data->fd);
@@ -103,7 +114,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     list_destroy(ircdata.msg_tosend, free);
 
     if (ircdata.connection_to_terminate)
-        close(ircdata.connection_to_terminate);
+        shutdown(ircdata.connection_to_terminate, SHUT_RD);
 }
 
 char *irc_msgsep(char *str, int len)
@@ -215,7 +226,7 @@ static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, c
     for (i = 0; i < chan_count; i++)
     {
         chan = list_at(user->channels, i);
-        irc_channel_broadcast(chan, msgqueue, ":%s %s :%s", user->nick, cmd, message);
+        irc_channel_broadcast(chan, msgqueue, NULL, ":%s %s :%s", user->nick, cmd, message);
     }
 
     return OK;
@@ -307,7 +318,7 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
 }
 
 
-int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char *message, ...)
+int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircuser* sender, const char* message, ...)
 {
     va_list ap;
     int i;
@@ -325,7 +336,12 @@ int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char 
     for (i = 0; i < list_count(channel->users); i++)
     {
         user = list_at(channel->users, i);
-        list_add(msg_tosend, irc_response_create(user->fd, msg));
+
+        /* Parece que no podemos hacer eso, pero sí podemos. Los punteros son siempre
+         *  constantes, un usuario siempre está en la misma estructura así que si el 
+         *  puntero es igual, los usuarios son iguales. */
+        if(sender == NULL || sender != user)  
+            list_add(msg_tosend, irc_response_create(user->fd, msg));
     }
 
     return OK;
@@ -362,7 +378,7 @@ int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *ircdata
     struct ircuser *user;
     list *users;
     int j;
-    
+
     users = channel->users;
     for (j = 0; j < list_count(users); j++)
     {

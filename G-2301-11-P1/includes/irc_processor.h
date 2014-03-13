@@ -178,6 +178,8 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
  * Envía un mensaje a todos los usuarios de un canal.
  * @param  channel    Canal.
  * @param  msg_tosend Lista de mensajes para enviar.
+ * @param  sender     Usuario que envía el mensaje, importante para no reenviarle a él las emisiones.
+ *                    	Se ignorará si es NULL.
  * @param  message    Texto del mensaje.
  * @param  ...		  Parámetros para formatear el mensaje.
  * @see printf
@@ -185,7 +187,7 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
  * @see irc_response_create
  * @return            Código OK/ERR.
  */
-int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, const char* message, ...);
+int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircuser* sender, const char* message, ...);
 
 /**
  * Analiza una cadena del estilo "[+|-]abcd" para extraer las distintas flags.

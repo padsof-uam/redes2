@@ -26,7 +26,7 @@ static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, c
         return OK;
     }
 
-    irc_channel_broadcast(chan, irc->msg_tosend, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text);
+    irc_channel_broadcast(chan, irc->msg_tosend, sender, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text);
 
     return OK;
 }
@@ -194,7 +194,7 @@ int irc_join(void *data)
         {
             irc_send_numericreply_withtext(ircdata, RPL_TOPIC, channels[i], channel->topic);
             irc_send_names_messages(channel, ircdata);
-            irc_channel_broadcast(channel, ircdata->msg_tosend, ":%s JOIN %s", user->nick, channel->name);
+            irc_channel_broadcast(channel, ircdata->msg_tosend, NULL, ":%s JOIN %s", user->nick, channel->name);
         }
     }
 
@@ -255,8 +255,8 @@ int irc_part(void *data)
             irc_send_numericreply(ircdata, ERR_USERNOTINCHANNEL, NULL);
         else
         {
+            irc_channel_broadcast(channel, ircdata->msg_tosend, NULL, ":%s PART %s", user->nick, channel_name);
             irc_channel_part(ircdata->globdata, channel, user);
-            irc_channel_broadcast(channel, ircdata->msg_tosend, ":%s PART %s", user->nick, channel_name);
         }
     }
 
@@ -305,7 +305,7 @@ int irc_topic(void *data)
     {
         topic = params[1];
         strncpy(chan->topic, topic, MAX_TOPIC_LEN);
-        irc_channel_broadcast(chan, ircdata->msg_tosend, ":%s TOPIC %s :%s", user->nick, chan_name, topic);
+        irc_channel_broadcast(chan, ircdata->msg_tosend, NULL, ":%s TOPIC %s :%s", user->nick, chan_name, topic);
     }
 
     return OK;
@@ -412,7 +412,7 @@ int irc_kick(void *data)
         return OK;
     }
 
-    irc_channel_broadcast(chan, ircdata->msg_tosend, ":%s PART %s %s", sender->nick, chan->name, kicked->nick);
+    irc_channel_broadcast(chan, ircdata->msg_tosend, NULL, ":%s PART %s %s", sender->nick, chan->name, kicked->nick);
     irc_channel_part(ircdata->globdata, chan, kicked);
 
     return OK;
@@ -680,8 +680,8 @@ int irc_kill(void *data)
         return OK;
     }
 
-    irc_create_kill_messages(user, ircdata->msg_tosend, params[0], params[1]);
-    list_add(ircdata->msg_tosend, irc_response_create(ircdata->msgdata->fd, ":%s KILL %s :%s", user->nick, params[0], params[1]));
+    irc_create_quit_messages(tokill, ircdata->msg_tosend, "Killed by operator");
+    list_add(ircdata->msg_tosend, irc_response_create(tokill->fd, ":%s KILL %s :%s", user->nick, params[0], params[1]));
 
     ircdata->connection_to_terminate = tokill->fd;
 

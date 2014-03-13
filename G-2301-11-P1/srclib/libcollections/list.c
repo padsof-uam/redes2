@@ -141,7 +141,7 @@ int list_remove(list* ls, int element)
 
 	/* Ponemos el último elemento en la posición que nos piden */
 	ls->count--;
-	ls->array[element] = ls->array[ls->count - 1];
+	ls->array[element] = ls->array[ls->count];
 
 	return OK;
 }

@@ -217,16 +217,10 @@ void irc_delete_user(struct irc_globdata *data, struct ircuser *user)
     _user_destructor(user);
 }
 
-int irc_compare_user(const void *user1, const void *user2)
-{
-    struct ircuser *first = (struct ircuser *) user1;
-    struct ircuser *second = (struct ircuser *) user2;
-    return strncmp(first->nick, second->nick, MAX_NICK_LEN);
-}
 
 short irc_user_inchannel(struct ircchan *channel, struct ircuser *user)
 {
-    if (list_find(channel->users, irc_compare_user, (void *)user ) == -1)
+    if (list_find(channel->users, ptr_comparator, (void *)user ) == -1)
         return ERR_NOTFOUND;
     else
         return OK;
@@ -258,15 +252,6 @@ int irc_channel_adduser(struct irc_globdata *data, struct ircchan *channel, stru
 
     if (list_count(user->channels) >= MAX_CHANNELES_USER)
         return ERR_TOOMANYCHANNELS;
-
-    /*
-    Comrprobados:
-        - Contraseña
-        - Invitados
-        - Already in channel
-        - Demasiada gente
-        - too many chanels;
-        */
 
     if (list_add(channel->users, user) != OK)
         return ERR;
@@ -332,6 +317,6 @@ int irc_set_channel_pass(struct ircchan *chan, const char *pass)
 
 int irc_channel_removeop(struct ircchan *chan, struct ircuser *user)
 {
-    list_remove_element(chan->operators, ptr_comparator, user);
+    return list_remove_element(chan->operators, ptr_comparator, user);
 }
 

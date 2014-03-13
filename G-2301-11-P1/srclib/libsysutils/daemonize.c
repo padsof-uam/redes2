@@ -19,7 +19,6 @@
 
 #define BT_DEPTH 20
 
-/* Hay alguna razón por la que esto sea estático? */
 char *_log_id;
 
 static void _open_log()

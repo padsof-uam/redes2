@@ -3,12 +3,50 @@
 
 #include "types.h"
 
+/**
+ * Inicializa una estructura de irc_globdata.
+ * @return El puntero a la estructura.
+ */
 struct irc_globdata* irc_init();
+/**
+ * Busca un usuario por nick en la estructura general
+ * @param  gdata Estructura globdata en la que está el diccionario de usuarios.
+ * @param  nick  Nick del usuario que queremos buscar.
+ * @see    irc_globdata.
+ * @return       Puntero al usuario o NULL en caso de no encontrarse.
+ */
 struct ircuser* irc_user_bynick(struct irc_globdata* gdata, const char* nick);
+
+/**
+ * Busca un usuario por nick en la estructura general
+ * @param  gdata Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id  Id del usuario que queremos buscar.
+ * @see    irc_globdata.
+ * @return       Puntero al usuario o NULL en caso de no encontrarse.
+ */
 struct ircuser* irc_user_byid(struct irc_globdata* gdata, int id);
+
+/**
+ * Cambia el nick de un usuario.
+ * @param  data Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id   Id del usuario al que queremos cambiar el nick.
+ * @param  nick Nuevo nick para el usuario.
+ * @return      OK/ERR
+ */
 int irc_set_usernick(struct irc_globdata* data, int id, const char* nick);
-int irc_create_user(struct irc_globdata* data, int id);
+
+/**
+ * Crea un usuario nuevo.
+ * @param  data Estructura globdata en la que está el diccionario de usuarios.
+ * @param  id   Id (fd asociado) con el que creamos el nuevo usuario.
+ * @return      El usuario creado o NULL si ya se encuentra. 
+ */
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);
+
+/**
+ * Libera la memoria de la estructura.
+ * @param data La estructura de tipo irc_globdata a liberar.
+ */
 void irc_destroy(struct irc_globdata* data);
 
 /**
@@ -69,8 +107,6 @@ short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 * @return	El ircchan correspondiente, o NULL en caso de no existir.
 */
 struct ircchan * irc_channel_byname(struct irc_globdata* data, const char * name);
-
-int irc_compare_user(const void * user1, const void * user2);
 
 /**
  * Devuelve si el usuario dado está en la lista de operadores del canal.

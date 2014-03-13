@@ -13,6 +13,54 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_join__all_together() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__invited__not_inv() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__1_invited_ok() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__1_channel_pass__ok() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__1_channel_pass__badpass() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__more_channel_no_pass() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__1_channel_no_pass() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
+int t_irc_join__bad_params() {
+
+	mu_fail("Not implemented");
+	mu_end;
+}
+
 int t_irc_mode__chan_provided__returns_chan_mode() {
     struct irc_globdata* irc = irc_init();
     struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
@@ -723,6 +771,14 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_join__all_together);
+	mu_run_test(t_irc_join__invited__not_inv);
+	mu_run_test(t_irc_join__1_invited_ok);
+	mu_run_test(t_irc_join__1_channel_pass__ok);
+	mu_run_test(t_irc_join__1_channel_pass__badpass);
+	mu_run_test(t_irc_join__more_channel_no_pass);
+	mu_run_test(t_irc_join__1_channel_no_pass);
+	mu_run_test(t_irc_join__bad_params);
 	mu_run_test(t_irc_mode__user_provided__returns_user_mode);
 	mu_run_test(t_irc_mode__different_user__err_match);
 	mu_run_test(t_irc_mode__user_minus_o_op__removes_op_privs);

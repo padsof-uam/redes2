@@ -1,50 +1,17 @@
 ==== TESTS === 
-- Hay que hacer tests sobre varias cosas. irc_notice, irc_kick, irc_oper, irc_mode, irc_flagparse e irc_channel_broadcast deberían tener pruebas. Además, deberíamos comprobar que se respetan los modos del canal tanto en PRIVMSG como en JOIN.
+- Hay que hacer tests sobre varias cosas. irc_notice deberían tener pruebas, irc_join (estaría bien que tuviera)
+
+Además, deberíamos comprobar que se respetan los modos del canal tanto en PRIVMSG como en JOIN.
 
 Mensajes de bienvenida.
 
-=== Cambios Guille sobre cosas De Juan
+Memorietor
 
-== receiver.c: commit 7ae47b8
+====DOCUMENTAR====
 
-Lo que enviamos a través de la cola es un msg_sockcommdata, que tiene el msgtype que necesita lo de la cola.
-
-Pero ahí el fallo importante es usar strlen para sacar la longitud del mensaje. Puede ser que la cadena no acabe en \0. Tenemos que usar la longitud de datos leídos desde el socket.
-
-Además, deberíamos usar rcv_message, que es una función que ya está hecha y preparada para recibir mensajes.
-
-== sender.c
-
-Error muy sutil: la estructura con la que pasas datos al hijo está en la pila. Se destruye cuando sale la función.
-
-=== Otras cosas
-
-Hay que crear mensajes KILL desde el hilo de recepción de datos para controlar la salida de conexiones.
-
-Usar colas POSIX (mqueue) si las cosas no van rápido.
-
-
-;;;;
-
-strnstr 
-
-==== Pondría el commit, pero me entero más poniendo una fecha xD 4/03-10:00
-
-Estoy definiendo funciones implícitas que habrá que hacer, pero voy a ver cuántas necesito en cada función para ver si se pueden hacer genéricas.
-
-==== Jueves por la mañana.
-Interpretación de errores de channel... 
-
-rellenar irc_build_msg con las cadenas a partir de los errores. ¿Incluimos el syslog aquí y así nos olvidamos?
-
-Falta:
-- Completar irc_user_inchannel. ¿Pertenencia a una lista?
-- Hacer irc_channbyname
-- irc_channel_create
-- paramlist
-- irc_user_byid
-
-
-- ircuser->channels es una lista de canales 
-- irccjan->users es lista de usuarios 
-
+ - List_helpers?.
+ - cmp_processor.
+ - comparser.
+ - errors.
+ - log.
+ - suites de test.

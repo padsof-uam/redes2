@@ -8,19 +8,25 @@
 #include "types.h"
 #include "irc_core.h"
 
+#define MAX_CONF_LEN 100
+
 struct proc_thdata
 {
     int rcv_qid;
     int snd_qid;
     msg_process pfun;
+    char conffile[MAX_CONF_LEN + 1];
 };
 
-int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun)
+int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun, const char* conf_file)
 {
     struct proc_thdata *thdata = malloc(sizeof(struct proc_thdata));
     thdata->rcv_qid = rcv_qid;
     thdata->snd_qid = snd_qid;
     thdata->pfun = pfun;
+
+    strncpy(thdata->conffile, conf_file, MAX_CONF_LEN);
+    thdata->conffile[MAX_CONF_LEN] = '\0';
 
     if (pthread_create(pth, NULL, proc_thread_entrypoint, thdata) < 0 )
     {
@@ -45,6 +51,7 @@ void *proc_thread_entrypoint(void *data)
     struct proc_thdata *thdata = (struct proc_thdata *) data;
     struct msg_sockcommdata msg;
     struct irc_globdata* gdata; 
+    int retval;
 
     gdata = irc_init();
 
@@ -55,6 +62,13 @@ void *proc_thread_entrypoint(void *data)
 
     if (gdata)
     {
+        retval = irc_load_config(gdata, thdata->conffile);
+
+        if(retval != OK)
+            slog(LOG_WARNING, "No se ha podido cargar correctamente la configuración: %d. %s", retval, strerror(errno));
+        else
+            slog(LOG_NOTICE, "Cargada configuración.");
+
         while (1)
         {
             if (msgrcv(thdata->rcv_qid, &msg, sizeof(struct sockcomm_data), 0, 0) != -1)

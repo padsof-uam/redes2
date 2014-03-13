@@ -31,6 +31,7 @@
 #define MASTER_QKEY 3983
 #define PID_FILE "/tmp/redirc.pid"
 #define LOCK_FILE "/tmp/redirc.lock"
+#define DEFAULT_CONF_FILE "/tmp/redirc.conf"
 
 /**
  * Macro para cancelar un hilo si está funcionando.
@@ -78,6 +79,8 @@ int main(int argc, char const *argv[])
     int rcv_qid = 0, snd_qid = 0, master_qid = 0;
     int retval = EXIT_SUCCESS;
     int kill_retval;
+    const char *conffile;
+    char conf_path[200];
 
     if (argc > 1 && !strcmp(argv[1], "stop"))
     {
@@ -92,6 +95,17 @@ int main(int argc, char const *argv[])
             fprintf(stderr, "No se ha podido parar el daemon: %s\n", strerror(errno));
 
         exit(EXIT_SUCCESS);
+    }
+
+    if (argc > 1)
+        conffile = argv[1];
+    else
+        conffile = DEFAULT_CONF_FILE;
+
+    if(realpath(conffile, conf_path) == NULL)
+    {
+        fprintf(stderr, "Archivo de configuración inexistente.\n");
+        strncpy(conf_path, conffile, 200);
     }
 
     comm_socks[0] = 0;
@@ -168,7 +182,7 @@ int main(int argc, char const *argv[])
     }
     receiver_running = 1;
 
-    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess) < 0)
+    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess, conf_path) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);

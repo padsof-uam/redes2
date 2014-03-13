@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 const char *_irc_cmds[] =
 {
@@ -30,7 +31,13 @@ const char *_irc_cmds[] =
     "TIME",
     "NOTICE",
     "PONG",
-    "USERS"
+    "USERS",
+    "OPER",
+    "MODE",
+    "INVITE",
+    "VERSION",
+    "KILL",
+    "AWAY"
 };
 
 cmd_action _irc_actions[] =
@@ -49,7 +56,13 @@ cmd_action _irc_actions[] =
     irc_time,
     irc_notice,
     irc_pong,
-    irc_users
+    irc_users,
+    irc_oper,
+    irc_mode,
+    irc_invite,
+    irc_version,
+    irc_kill,
+    irc_away
 };
 
 void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
@@ -62,6 +75,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     ircdata.globdata = gdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
+    ircdata.connection_to_terminate = 0;
 
     if (irc_user_byid(gdata, data->fd) == NULL)
         irc_register_user(gdata, data->fd);
@@ -75,7 +89,10 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         ircdata.msg = msg;
 
         if (parse_exec_command(msg, _irc_cmds, _irc_actions, (sizeof(_irc_actions) / sizeof(cmd_action)), &ircdata) == -1)
-            slog(LOG_WARNING, "Error parsing command %s", data->data);
+        {
+            slog(LOG_WARNING, "Error parsing command %s", msg);
+            irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);
+        }
 
         msg = msg_end;
     }
@@ -84,6 +101,9 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
         irc_enqueue_msg(list_at(ircdata.msg_tosend, i), snd_qid);
 
     list_destroy(ircdata.msg_tosend, free);
+
+    if (ircdata.connection_to_terminate)
+        close(ircdata.connection_to_terminate);
 }
 
 char *irc_msgsep(char *str, int len)
@@ -184,31 +204,33 @@ char *irc_remove_prefix(char *msg)
         return space + 1;
 }
 
-int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message)
+static int _irc_create_quitkill_messages(struct ircuser *user, list *msgqueue, const char *message, const char *cmd)
 {
-    int i, j;
-    int chan_count, user_count;
+    int i;
+    int chan_count;
     struct ircchan *chan;
-    list *user_list;
-    struct ircuser *target;
 
     chan_count = list_count(user->channels);
 
     for (i = 0; i < chan_count; i++)
     {
         chan = list_at(user->channels, i);
-        user_list = chan->users;
-        user_count = list_count(user_list);
-
-        for (j = 0; j < user_count; j++)
-        {
-            target = list_at(user_list, j);
-            if (irc_compare_user(target, user) != 0) /* No enviamos mensaje al mismo usuario */
-                list_add(msgqueue, irc_response_create(target->fd, ":%s QUIT :%s", user->nick, message));
-        }
+        irc_channel_broadcast(chan, msgqueue, ":%s %s :%s", user->nick, cmd, message);
     }
 
     return OK;
+}
+
+int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *message)
+{
+    return _irc_create_quitkill_messages(user, msgqueue, message, "QUIT");
+}
+
+int irc_create_kill_messages(struct ircuser *user, list *msgqueue, const char *tokill_name, const char *message)
+{
+    char cmd[20];
+    snprintf(cmd, 20, "KILL %s", tokill_name);
+    return _irc_create_quitkill_messages(user, msgqueue, message, cmd);
 }
 
 struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcode, const char *additional_params)
@@ -304,6 +326,31 @@ int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, const char 
     {
         user = list_at(channel->users, i);
         list_add(msg_tosend, irc_response_create(user->fd, msg));
+    }
+
+    return OK;
+}
+
+int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic)
+{
+    int i;
+    short adding;
+
+    adding = flags[0] == '+';
+    flags++;
+
+    while (*flags != ' ' && *flags != '\0')
+    {
+        for (i = 0; !IS_IRCFLAGS_END(flagdic[i]); i++)
+        {
+            if (*flags == flagdic[i].code)
+            {
+                if (adding)
+                    *flagval |= flagdic[i].value;
+                else
+                    *flagval &= ~(flagdic[i].value);
+            }
+        }
     }
 
     return OK;
@@ -407,6 +454,12 @@ char *irc_errstr(int errcode)
         return "No topic is set";
     case RPL_ENDOFNAMES:
         return "End of /NAMES list";
+    case RPL_YOUREOPER:
+        return "You're now an IRC operator";
+    case RPL_NOWAWAY:
+        return "You have been marked as being away";
+    case RPL_UNAWAY:
+        return "You are no longer marked as being away";
     default:
         return "I don't know that error";
     }

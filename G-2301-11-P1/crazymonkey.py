@@ -53,6 +53,16 @@ profiles = {
 		'ping_interval': 1,
 		'threshold_manual_control': -1,
 		'enable_sending': True
+	},
+	'crazyconns': {
+		'cmdsend_delay': 0.2,
+		'client_spawndelay': 0.01,
+		'client_batch': 50,
+		'client_max': 1000 ,
+		'batch_time_sec': 3,
+		'ping_interval': 0.2,
+		'threshold_manual_control': -1,
+		'enable_sending': False
 	}
 }
 

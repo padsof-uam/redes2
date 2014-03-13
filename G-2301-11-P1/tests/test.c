@@ -17,6 +17,33 @@
 #include <time.h>
 #include <string.h>
 #include <strings.h>
+#include <signal.h>
+#include <execinfo.h>
+#include <unistd.h>
+
+#define BT_DEPTH 100
+
+static void _critical_stop_handler(int signum)
+{
+    void *callstack[BT_DEPTH];
+    int i, frames;
+    char **strs;
+
+    signal(signum, SIG_DFL); /* No queremos quedarnos en un bucle infinito capturando la misma señal siempre */
+    fflush(stdout);
+    fprintf(stderr, TRESET "\n\nError grave: recibida señal %d (%s). Salida inesperada.\n", signum, strsignal(signum));
+    fprintf(stderr, "Tratando de extraer backtrace (prof. %d)...\n", BT_DEPTH);
+
+    frames = backtrace(callstack, BT_DEPTH);
+    strs = backtrace_symbols(callstack, frames);
+    
+    for (i = 0; i < frames; ++i)
+        fprintf(stderr, "%s\n", strs[i]);
+
+    free(strs);
+
+    abort();
+}
 
 int include_test(const char *testname, int argc, const char **argv)
 {
@@ -45,6 +72,15 @@ int main(int argc, const char **argv)
     time_t t;
     int success = 0, error = 0, run = 0;
     time(&t);
+
+     if (signal(SIGSEGV, _critical_stop_handler))
+        perror("signal: SIGSEGV");
+
+    if (signal(SIGILL, _critical_stop_handler))
+        perror("signal: SIGILL");
+
+    if (signal(SIGBUS, _critical_stop_handler))
+        perror("signal: SIGBUS");
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */

@@ -22,13 +22,15 @@
 
 #define MAX_ERR_THRESHOLD 5
 
+#define SERVER_VERSION 0
+
 typedef enum  { 
-	chan_op = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 
-	chan_topiclock = 16, chan_nooutside = 32, chan_moderated = 64 
+	chan_moderated = 1, chan_priv = 2, chan_secret = 4, chan_invite = 8, 
+	chan_topiclock = 16, chan_nooutside = 32 
 } chan_mode;
 
 typedef enum {
-	user_invisible = 1, user_rcvnotices = 2, user_rcvwallops = 4, user_wallops = 8
+	user_invisible = 1, user_rcvnotices = 2, user_rcvwallops = 4, user_op = 8
 } user_mode;
 
 struct ircchan {
@@ -40,12 +42,14 @@ struct ircchan {
 	list* operators; /**< Lista de cadenas con los nicks de los operadores */
 	char password[MAX_KEY_LEN + 1];
 	short has_password;
+	int user_limit;
 };
 
 struct ircuser {
 	int fd;
 	char nick[MAX_NICK_LEN + 1];
 	char name[MAX_NAME_LEN + 1];
+	char username[MAX_NICK_LEN + 1];
 	short is_away;
 	char away_msg[MAX_AWAYMSG_LEN + 1];
 	user_mode mode;
@@ -57,6 +61,7 @@ struct irc_globdata {
 	dictionary* nick_user_map;
 	dictionary* chan_map;
 	list* chan_list;
+	dictionary* oper_passwords; /**< Diccionario usuario -> contraseña operador */
 	char servername[MAX_SERVER_NAME];
 };
 
@@ -65,6 +70,7 @@ struct irc_msgdata {
 	struct irc_globdata* globdata;
 	char* msg;
 	list* msg_tosend;
+	int connection_to_terminate;
 };	
 
 struct sockcomm_data {

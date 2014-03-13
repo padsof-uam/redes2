@@ -183,11 +183,6 @@ int t_irc_join__1_invited_ok() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    for (int i = 0; i < 5; ++i)
-    {
-        printf("%s\n", msgnum(i)->data);
-    }
-
     assert_generated(5);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 

@@ -39,11 +39,14 @@ int irc_set_usernick(struct irc_globdata* data, int id, const char* nick);
  * Crea un usuario nuevo.
  * @param  data Estructura globdata en la que está el diccionario de usuarios.
  * @param  id   Id (fd asociado) con el que creamos el nuevo usuario.
- * @return      OK/ERR
+ * @return      El usuario creado o NULL si ya se encuentra. 
  */
-int irc_create_user(struct irc_globdata* data, int id);
-
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);
+
+/**
+ * Libera la memoria de la estructura.
+ * @param data La estructura de tipo irc_globdata a liberar.
+ */
 void irc_destroy(struct irc_globdata* data);
 
 /**
@@ -104,8 +107,6 @@ short irc_user_inchannel(struct ircchan * channel, struct ircuser * user);
 * @return	El ircchan correspondiente, o NULL en caso de no existir.
 */
 struct ircchan * irc_channel_byname(struct irc_globdata* data, const char * name);
-
-int irc_compare_user(const void * user1, const void * user2);
 
 /**
  * Devuelve si el usuario dado está en la lista de operadores del canal.

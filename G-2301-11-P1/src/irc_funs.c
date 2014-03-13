@@ -865,7 +865,7 @@ int irc_ison(void * data)
 
     if (num_params == 0)
     {
-        irc_send_numericreply_withtext(ircdata, ERR_NEEDMOREPARAMS,NULL, "ISON nick_1 nick_2");
+        irc_send_numericreply_withtext(ircdata, ERR_NEEDMOREPARAMS,NULL, "ISON nick_to_check");
         free(to_ret);
         return OK;        
     }

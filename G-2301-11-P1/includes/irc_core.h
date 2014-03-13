@@ -140,4 +140,12 @@ int irc_set_channel_pass(struct ircchan* chan, const char* pass);
  */
 int irc_channel_removeop(struct ircchan* chan, struct ircuser* user);
 
+/**
+ * Invita a un usuario a un canal.
+ * @param  channel El canal al que invitar al usuario.
+ * @param  user    Usuario invitado.
+ * @return         OK/ERR.
+ */
+int irc_invite_user(struct ircchan * channel,struct ircuser * user);
+
 #endif

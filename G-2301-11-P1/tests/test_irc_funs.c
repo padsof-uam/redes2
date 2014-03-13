@@ -13,52 +13,200 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
-int t_irc_join__all_together() {
+int t_irc_join__create() {
 
-	mu_fail("Not implemented");
-	mu_end;
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    _irc_register_withnick(irc, 1, "Paco");
+    _irc_create_chan(irc, "#foobar", 0);
+
+    char str[]="JOIN #foobar";
+    output = _process_message(irc_join, irc, 1, str);
+    assert_generated(4);
+    assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
+
+    /* Los mensajes 1,2 son NAMES */
+    
+    assert_msgstr_eq(msgnum(3), ":Paco JOIN #foobar");
+    irc_testend;
+
+}
+int t_irc_join__all_together() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
+    
+    struct ircchan * chan_1 = _irc_create_chan(irc, "#foobar", 1,user_1);
+    chan_1->has_password = 1;
+    strcpy(chan_1->password,"foopass");    
+    
+    struct ircchan * chan_2 = _irc_create_chan(irc, "#patata", 1,user_1);
+    chan_2->has_password = 1;
+    chan_2->mode |= chan_invite;
+    dic_add(chan_2->invited_users, "Pepe" ,user_2);
+    strcpy(chan_2->password,"patapass");    
+
+    char str[]="JOIN #foobar,&patata,#redes2 foopass,patapass";
+    output = _process_message(irc_join, irc, 2, str);
+
+
+    mu_assert("Se ha saltado la contraseña de foobar", irc_user_inchannel(chan_1, user_2)==OK && list_find(chan_1->users,ptr_comparator, user_2)!=-1);
+
+    mu_assert("Se ha saltado el control de la invitación/contraseña del canal patata", irc_user_inchannel(chan_2, user_2)==OK && list_find(chan_2->users,ptr_comparator, user_2)!=-1);
+    
+    mu_assert("No se ha creado el canal", irc_user_inchannel(irc_channel_byname(irc, "#redes2"), user_2)==OK && list_find(irc_channel_byname(irc, "#redes2")->users,ptr_comparator, user_2)!=-1);
+ 
+
+    irc_testend;
 }
 
 int t_irc_join__invited__not_inv() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1,user_1);
 
-	mu_fail("Not implemented");
-	mu_end;
+    chan->mode|=chan_invite;
+
+    char str[]="JOIN #foobar";
+    output = _process_message(irc_join, irc, 2, str);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_INVITEONLYCHAN, NULL);
+
+    mu_assert("Se ha saltado el control de la invitación", irc_user_inchannel(chan, user_2)!=OK && list_find(chan->users,ptr_comparator, user_2)==-1);
+
+    irc_testend;
+
 }
 
 int t_irc_join__1_invited_ok() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1,user_1);
 
-	mu_fail("Not implemented");
-	mu_end;
+    chan->mode|=chan_invite;
+
+    dic_add(chan->invited_users, "Pepe", user_2);
+
+
+    char str[]="JOIN #foobar";
+    output = _process_message(irc_join, irc, 2, str);
+
+    assert_generated(6);
+    assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
+
+    mu_assert("Se ha saltado el control de la invitación", list_find(chan->users,ptr_comparator, user_2)!=-1);
+    mu_assert("Se ha saltado el control de la invitación", irc_user_inchannel(chan, user_2)==OK);
+
+    irc_testend;
 }
 
 int t_irc_join__1_channel_pass__ok() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1,user_1);
+    char str[]="JOIN #foobar password";
 
-	mu_fail("Not implemented");
-	mu_end;
+    chan->has_password = !chan->has_password;
+    strcpy(chan->password,"password");
+
+    output = _process_message(irc_join, irc, 2, str);
+
+    assert_generated(6);
+
+    mu_assert("Se ha saltado el control de la contraseña", list_find(chan->users,ptr_comparator, user_2)!=-1);
+    mu_assert("Se ha saltado el control de la contraseña", irc_user_inchannel(chan, user_2)==OK);
+
+
+    irc_testend;
 }
 
 int t_irc_join__1_channel_pass__badpass() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1,user_1);
 
-	mu_fail("Not implemented");
-	mu_end;
+    chan->has_password = !chan->has_password;
+    strcpy(chan->password,"pass");
+    
+    char str[]="JOIN #foobar password";
+    
+    output = _process_message(irc_join, irc, 2, str);
+    
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_BADCHANNELKEY, NULL);
+
+    mu_assert("Se ha saltado el control de la contraseña", list_find(chan->users,ptr_comparator, user_2)==-1);
+    mu_assert("Se ha saltado el control de la contraseña", irc_user_inchannel(chan, user_2)==ERR_NOTFOUND);
+
+    irc_testend;
 }
 
 int t_irc_join__more_channel_no_pass() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user_2 = _irc_register_withnick(irc, 2, "Pepe");
 
-	mu_fail("Not implemented");
-	mu_end;
+    struct ircchan * channel_2 = _irc_create_chan(irc, "#patata", 1,user_1);
+    struct ircchan * channel_1 = _irc_create_chan(irc, "#foobar", 1,user_1);
+    
+    char str[]="JOIN #patata,#foobar ";
+    output = _process_message(irc_join, irc, 2, str);
+    assert_generated(12);
+
+    assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
+
+    mu_assert_eq(irc_user_inchannel(channel_1, user_2), OK, "No pertenece al canal");
+    mu_assert_eq(irc_user_inchannel(channel_2, user_2), OK, "No pertenece al canal");
+
+    mu_assert("El canal no está en el usuario", list_find(user_2->channels,ptr_comparator,channel_1)!=-1);
+    mu_assert("El canal no está en el usuario", list_find(user_2->channels,ptr_comparator,channel_2)!=-1);
+
+    irc_testend;
 }
 
 int t_irc_join__1_channel_no_pass() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    _irc_register_withnick(irc, 2, "Pepe");
+    _irc_create_chan(irc, "#foobar", 1,user_1);
 
-	mu_fail("Not implemented");
-	mu_end;
+    char str[]="JOIN #foobar";
+    output = _process_message(irc_join, irc, 2, str);
+
+    assert_generated(6);
+    assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
+
+    /* Los mensajes 1-4 son NAMES */
+    
+    assert_msgstr_eq(msgnum(5), ":Pepe JOIN #foobar");
+
+    irc_testend;
 }
 
 int t_irc_join__bad_params() {
-
-	mu_fail("Not implemented");
-	mu_end;
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
+    _irc_register_withnick(irc, 2, "Pepe");
+    _irc_create_chan(irc, "#foobar", 1,user_1);
+    char str[]="JOIN";
+    output = _process_message(irc_join, irc, 1, str);
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+    irc_testend;
 }
 
 int t_irc_mode__chan_provided__returns_chan_mode() {
@@ -771,6 +919,7 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_join__create);
 	mu_run_test(t_irc_join__all_together);
 	mu_run_test(t_irc_join__invited__not_inv);
 	mu_run_test(t_irc_join__1_invited_ok);

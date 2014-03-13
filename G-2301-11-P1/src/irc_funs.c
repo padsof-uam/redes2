@@ -555,7 +555,8 @@ int irc_mode(void *data)
     mode = params[1];
     param = params[2];
 
-    mode_add = mode[0] == '+';
+    if (pnum>1)
+        mode_add = mode[0] == '+';
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 

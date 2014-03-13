@@ -200,6 +200,7 @@ void irc_delete_user(struct irc_globdata *data, struct ircuser *user)
 {
     int chan_count;
     int i;
+    struct ircchan *chan;
 
     dic_remove(data->fd_user_map, &(user->fd));
     dic_remove(data->nick_user_map, user->name);
@@ -207,7 +208,11 @@ void irc_delete_user(struct irc_globdata *data, struct ircuser *user)
     chan_count = list_count(user->channels);
 
     for (i = 0; i < chan_count; ++i)
-        irc_channel_part(data, list_at(user->channels, i), user);
+    {
+        chan = list_at(user->channels, i);
+        irc_channel_part(data, chan, user);
+        irc_channel_removeop(chan, user);
+    }
 
     _user_destructor(user);
 }
@@ -306,14 +311,14 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
 
 int irc_channel_addop(struct ircchan *channel, struct ircuser *user)
 {
-    if (irc_user_inchannel(channel, user)==OK)
+    if (irc_user_inchannel(channel, user) == OK)
         return list_add(channel->operators, user);
-    else 
+    else
         return ERR;
 }
 int irc_is_channel_op(struct ircchan *chan, struct ircuser *user)
 {
-    return list_find(chan->operators,ptr_comparator, user) != -1;
+    return (user->mode & user_op) || (list_find(chan->operators, ptr_comparator, user) != -1);
 }
 
 
@@ -324,3 +329,9 @@ int irc_set_channel_pass(struct ircchan *chan, const char *pass)
 
     return OK;
 }
+
+int irc_channel_removeop(struct ircchan *chan, struct ircuser *user)
+{
+    list_remove_element(chan->operators, ptr_comparator, user);
+}
+

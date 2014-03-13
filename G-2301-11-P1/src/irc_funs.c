@@ -518,7 +518,7 @@ int irc_mode(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan *chan;
-    struct ircuser *user;
+    struct ircuser *user, *op;
     char *params[3];
     int pnum;
     char *target, *mode, *param;
@@ -607,6 +607,26 @@ int irc_mode(void *data)
                     irc_set_channel_pass(chan, param);
                 else
                     chan->has_password = 0;
+            }
+
+            if(strchr(mode, 'o'))
+            {
+                if (pnum < 3)
+                {
+                    irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, "MODE +k");
+                    return OK;
+                }
+
+                op = irc_user_bynick(ircdata->globdata, param);
+
+                if(!op)
+                    irc_send_numericreply(ircdata, ERR_NOSUCHNICK, param);
+                else if (irc_user_inchannel(chan, op) == ERR_NOTFOUND)
+                    irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, param);
+                else if (mode_add)
+                    irc_channel_addop(chan, op);
+                else
+                    irc_channel_removeop(chan, op);
             }
         }
     }

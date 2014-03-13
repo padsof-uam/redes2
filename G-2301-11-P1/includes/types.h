@@ -39,7 +39,7 @@ struct ircchan {
 	chan_mode mode;
 	list* users; /* Lista de usuarios. */
 	dictionary* invited_users;
-	list* operators; /**< Lista de cadenas con los nicks de los operadores */
+	list* operators; /**< Lista de punteros a las estructuras de usuario de los operadores */
 	char password[MAX_KEY_LEN + 1];
 	short has_password;
 	int user_limit;

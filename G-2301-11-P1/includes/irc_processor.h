@@ -216,5 +216,13 @@ int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *irc);
  */
 int irc_send_response(struct irc_msgdata *irc, const char *msg_format, ...);
 
+/**
+ * Devuelve si dos usuarios tienen algún canal en común.
+ * @param  a Usuario a
+ * @param  b Usuario b
+ * @return   0 o valor distinto de 0.
+ */
+int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b);
+
 #endif
 

@@ -277,7 +277,32 @@ int irc_part(void *data)
     return OK;
 }
 
-/** Pendientes **/
+int irc_names(void *data)
+{
+    char *params[1];
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircchan *chan;
+    struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    char *chanlist = NULL;
+    int i;
+
+    if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
+        chanlist = params[0];
+
+    for (i = 0; i < list_count(ircdata->globdata->chan_list); i++)
+    {
+        chan = list_at(ircdata->globdata->chan_list, i);
+
+        if ((!(chan->mode & (chan_priv | chan_secret)) || irc_user_inchannel(chan, source) == OK) /* No mostramos canales ni secretos ni privados si el usuario no está en ellos */
+                && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
+        {
+            irc_send_names_messages(chan, ircdata);
+        }
+    }
+
+    return OK;
+}
+
 int irc_topic(void *data)
 {
     char *params[2];
@@ -325,31 +350,6 @@ int irc_topic(void *data)
     return OK;
 }
 
-int irc_names(void *data)
-{
-    char *params[1];
-    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
-    struct ircchan *chan;
-    struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
-    char *chanlist = NULL;
-    int i;
-
-    if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
-        chanlist = params[0];
-
-    for (i = 0; i < list_count(ircdata->globdata->chan_list); i++)
-    {
-        chan = list_at(ircdata->globdata->chan_list, i);
-
-        if ((!(chan->mode & (chan_priv | chan_secret)) || irc_user_inchannel(chan, source) == OK) /* No mostramos canales ni secretos ni privados si el usuario no está en ellos */
-                && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
-        {
-            irc_send_names_messages(chan, ircdata);
-        }
-    }
-
-    return OK;
-}
 
 int irc_list(void *data)
 {
@@ -780,6 +780,69 @@ int irc_away(void *data)
         strncpy(user->away_msg, params[0], MAX_AWAYMSG_LEN);
         irc_send_numericreply(ircdata, RPL_NOWAWAY, NULL);
     }
+
+    return OK;
+}
+
+static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan, struct ircuser* sender)
+{
+    char who_msg[200];
+    char who_text[200];
+    struct ircuser* user;
+    int i;
+
+    for(i = 0; i < list_count(chan->users); i++)
+    {
+        user = list_at(chan->users, i);
+
+        if(irc_users_have_common_chans(user, sender))
+                continue;
+
+        if(!(user->mode & user_invisible))
+        {
+            snprintf(who_msg, 200, "%s %s %s %s %s H@", 
+                chan->name, 
+                user->username, 
+                "unknown",
+                "unknown",
+                user->nick);
+            snprintf(who_text, 200, "%d %s", 0, user->name);
+            irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);
+        }
+    }
+
+
+}
+
+int irc_who(void *data)
+{
+    char *params[1];
+    struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
+    struct ircchan *chan;
+    struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    char *channame = NULL;
+    int i;
+
+    if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
+        channame = params[0];
+
+    if(!channame)
+    {
+        for(i = 0; i < list_count(ircdata->globdata->chan_list); i++)
+        {
+            chan = list_at(ircdata->globdata->chan_list, i);
+            _send_who_msgs_channel(ircdata, chan, source);            
+        }
+    }
+    else
+    {
+        chan = irc_channel_byname(ircdata->globdata, channame);
+
+        if(chan)
+            _send_who_msgs_channel(ircdata, chan, NULL);
+    }
+
+    irc_send_numericreply(ircdata, RPL_ENDOFWHO, NULL);
 
     return OK;
 }

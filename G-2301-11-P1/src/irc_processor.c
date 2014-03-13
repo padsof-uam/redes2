@@ -72,7 +72,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     char *msg;
     char *msg_end;
     int i;
-    struct ircuser* user;
+    struct ircuser *user;
 
 
     ircdata.globdata = gdata;
@@ -80,11 +80,11 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     ircdata.msg_tosend = list_new();
     ircdata.connection_to_terminate = 0;
 
-    if(data->fd < 0) /* Usuario eliminado */
+    if (data->fd < 0) /* Usuario eliminado */
     {
         user = irc_user_byid(gdata, - data->fd);
-        
-        if(user)
+
+        if (user)
             irc_delete_user(gdata, user);
 
         return;
@@ -320,7 +320,7 @@ int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const c
 }
 
 
-int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircuser* sender, const char* message, ...)
+int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, struct ircuser *sender, const char *message, ...)
 {
     va_list ap;
     int i;
@@ -340,9 +340,9 @@ int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircu
         user = list_at(channel->users, i);
 
         /* Parece que no podemos hacer eso, pero sí podemos. Los punteros son siempre
-         *  constantes, un usuario siempre está en la misma estructura así que si el 
+         *  constantes, un usuario siempre está en la misma estructura así que si el
          *  puntero es igual, los usuarios son iguales. */
-        if(sender == NULL || sender != user)  
+        if (sender == NULL || sender != user)
             list_add(msg_tosend, irc_response_create(user->fd, msg));
     }
 
@@ -369,7 +369,29 @@ int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic
                     *flagval &= ~(flagdic[i].value);
             }
         }
+
+        flags++;
     }
+
+    return OK;
+}
+
+int irc_strflag(int flags, char *str, size_t len, const struct ircflag *flagdic)
+{
+    int sp, i;
+    str[0] = '+';
+    sp = 1;
+
+    for (i = 0; !IS_IRCFLAGS_END(flagdic[i]) && sp < len - 1; i++)
+    {
+        if (flags & flagdic[i].value)
+        {
+            str[sp] = flagdic[i].code;
+            sp++;
+        }
+    }
+
+    str[sp] = '\0';
 
     return OK;
 }
@@ -391,6 +413,21 @@ int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *ircdata
     irc_send_numericreply(ircdata, RPL_ENDOFNAMES, channel->name);
 
     return OK;
+}
+
+
+int irc_send_response(struct irc_msgdata* irc, const char* msg_format,...)
+{
+    struct sockcomm_data* msg;
+    va_list ap;
+    va_start(ap, msg_format);
+    msg = irc_response_vcreate(irc->msgdata->fd, msg_format, ap);
+    va_end(ap);
+
+    if(!msg)
+        return ERR;
+
+    return list_add(irc->msg_tosend, msg);
 }
 
 char *irc_errstr(int errcode)

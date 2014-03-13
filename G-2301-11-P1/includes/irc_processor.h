@@ -6,13 +6,14 @@
 
 #include <stdarg.h>
 
-struct ircflag {
-	char code;
-	int value;
+struct ircflag
+{
+    char code;
+    int value;
 };
 
 #define IRCFLAGS_END { -1, -1 }
-#define IS_IRCFLAGS_END(flag) ((flag).code != -1 && (flag).value != -1)
+#define IS_IRCFLAGS_END(flag) ((flag).code == -1 && (flag).value == -1)
 /**
  * Procesa un mensaje IRC.
  * @param snd_qid ID de la cola donde enviar los mensajes generados.
@@ -77,10 +78,10 @@ struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcod
  * @param  errcode           Código de respuesta.
  * @see irc_codes.h
  * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
- * @param  msg_text			 Texto adicional de la respuesta.
+ * @param  msg_text          Texto adicional de la respuesta.
  * @return                   Estructura rellena con el mensaje.
  */
-struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
+struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text);
 
 /**
 * Recibe un código de error y devuelve una frase interpretando el error.
@@ -114,7 +115,7 @@ int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *m
  * @param  message  Comentario de kill.
  * @return          Código de error.
  */
-int irc_create_kill_messages(struct ircuser* user, list* msgqueue, const char* tokill_name, const char* message);
+int irc_create_kill_messages(struct ircuser *user, list *msgqueue, const char *tokill_name, const char *message);
 
 /**
  * Crea un mensaje para un cliente con el texto que se dé como formato
@@ -124,11 +125,11 @@ int irc_create_kill_messages(struct ircuser* user, list* msgqueue, const char* t
  * @param  ...        Lista de parámetros para printf.
  * @return            Estructura sockcomm_data lista para enviar.
  */
-struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...);
+struct sockcomm_data *irc_response_create(int fd, const char *fmt_string, ...);
 
 /**
- * Crea un mensaje para un cliente con el texto que se dé como formato, con la lista 
- * 	de argumentos en formato va_list.
+ * Crea un mensaje para un cliente con el texto que se dé como formato, con la lista
+ *  de argumentos en formato va_list.
  * @see vfprintf
  * @see stdarg
  * @param  fd         Socket de destino.
@@ -136,7 +137,7 @@ struct sockcomm_data* irc_response_create(int fd, const char* fmt_string, ...);
  * @param  ap         Lista de parámetros para printf.
  * @return            Estructura sockcomm_data lista para enviar.
  */
-struct sockcomm_data* irc_response_vcreate(int fd, const char* fmt_string, va_list ap);
+struct sockcomm_data *irc_response_vcreate(int fd, const char *fmt_string, va_list ap);
 
 
 /**
@@ -152,31 +153,31 @@ int irc_send_numericreply(struct irc_msgdata *irc, int errcode, const char *addi
 
 /**
  * Construye un mensaje de respuesta con texto adicional y lo inserta en la lista
- * 	de mensajes a enviar.
+ *  de mensajes a enviar.
  * @param  irc               Estructura con los datos de un mensaje IRC.
  * @param  errcode           Código de respuesta.
  * @see irc_codes.h
  * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
- * @param  msg_text			 Texto adicional de la respuesta.
+ * @param  msg_text          Texto adicional de la respuesta.
  * @return                   Código OK/ERR.
  * @see irc_build_numericreply_withtext
  */
-int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char* text);
+int irc_send_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text);
 
 /**
  * Envía un mensaje a todos los usuarios de un canal.
  * @param  channel    Canal.
  * @param  msg_tosend Lista de mensajes para enviar.
  * @param  sender     Usuario que envía el mensaje, importante para no reenviarle a él las emisiones.
- *                    	Se ignorará si es NULL.
+ *                      Se ignorará si es NULL.
  * @param  message    Texto del mensaje.
- * @param  ...		  Parámetros para formatear el mensaje.
+ * @param  ...        Parámetros para formatear el mensaje.
  * @see printf
  * @see stdarg.h
  * @see irc_response_create
  * @return            Código OK/ERR.
  */
-int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircuser* sender, const char* message, ...);
+int irc_channel_broadcast(struct ircchan *channel, list *msg_tosend, struct ircuser *sender, const char *message, ...);
 
 /**
  * Analiza una cadena del estilo "[+|-]abcd" para extraer las distintas flags.
@@ -185,9 +186,35 @@ int irc_channel_broadcast(struct ircchan* channel, list* msg_tosend, struct ircu
  * @param  flagdic Lista de estructuras ircflag terminada en IRCFLAG_END
  * @return         OK/ERR.
  */
-int irc_flagparse(const char* flags, int* flagval, const struct ircflag* flagdic);
+int irc_flagparse(const char *flags, int *flagval, const struct ircflag *flagdic);
 
-int irc_send_names_messages(struct ircchan* channel, struct irc_msgdata* irc);
+/**
+ * Analiza los valores de una variable almacenando banderas y guarda sus valores
+ * @param  flags   Banderas.
+ * @param  str     Buffer donde guardar la cadena
+ * @param  len     Longitud del buffer
+ * @param  flagdic Diccionario valor de flag-carácter.
+ * @return         OK/ERR
+ */
+int irc_strflag(int flags, char *str, size_t len, const struct ircflag *flagdic);
+
+
+/**
+ * Crea una respuesta tipo NAMES para un canal dado.
+ * @param  channel Canal
+ * @param  irc     Datos del mensaje
+ * @return         OK/ERR.
+ */
+int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *irc);
+
+/**
+ * Envía una respuesta con la cadena formateada.
+ * @param  irc        Datos de mensaje.
+ * @param  msg_format Cadena de formato.
+ * @param  ...        Variables a formatear.
+ * @return            OK/ERR
+ */
+int irc_send_response(struct irc_msgdata *irc, const char *msg_format, ...);
 
 #endif
 

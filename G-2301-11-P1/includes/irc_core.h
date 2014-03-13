@@ -131,4 +131,12 @@ int irc_load_config(struct irc_globdata* irc, const char *file);
  */
 int irc_set_channel_pass(struct ircchan* chan, const char* pass);
 
+/**
+ * Elimina privilegios de operador en un canal a un usuario, si los tiene.
+ * @param  chan Canal.
+ * @param  user Usuario
+ * @return      OK/ERR.
+ */
+int irc_channel_removeop(struct ircchan* chan, struct ircuser* user);
+
 #endif

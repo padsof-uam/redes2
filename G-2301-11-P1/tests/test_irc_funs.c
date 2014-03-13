@@ -13,6 +13,89 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_names__user_in_channel__list_users_inside() {
+    struct irc_globdata *irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser* user2 = _irc_register_withnick(irc, 2, "paco");
+    char msg[] = "NAMES #testchan";
+    list* output;
+
+    _irc_create_chan(irc, "#testchan", 2, user, user2);
+
+    output = _process_message(irc_names, irc, 1, msg);
+
+    assert_generated(3);
+    assert_numeric_reply_text(msgnum(0), RPL_NAMREPLY, "#testchan", "pepe");
+    assert_numeric_reply_text(msgnum(1), RPL_NAMREPLY, "#testchan", "paco");
+    assert_numeric_reply(msgnum(2), RPL_ENDOFNAMES, NULL);
+
+    irc_testend;
+	mu_end;
+}
+int t_irc_names__private_channel__not_listed() {
+    struct irc_globdata *irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 2, "pepe");
+	char msg[] = "NAMES #testchan";
+    list* output;
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 1, user);
+
+    chan->mode |= chan_priv;
+
+    output = _process_message(irc_names, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), RPL_ENDOFNAMES, NULL);
+    irc_testend;
+}
+int t_irc_names__multiple_channels_created__list_provided_only() {
+    struct irc_globdata *irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser* user2 = _irc_register_withnick(irc, 2, "paco");
+	char msg[] = "NAMES #testchan";
+    list* output;
+
+    _irc_create_chan(irc, "#testchan", 2, user, user2);
+    _irc_create_chan(irc, "#testchan2", 2, user, user2);
+
+    output = _process_message(irc_names, irc, 1, msg);
+
+    assert_generated(3);
+    assert_numeric_reply_text(msgnum(0), RPL_NAMREPLY, "#testchan", "pepe");
+    assert_numeric_reply_text(msgnum(1), RPL_NAMREPLY, "#testchan", "paco");
+    assert_numeric_reply(msgnum(2), RPL_ENDOFNAMES, NULL);
+
+    irc_testend;
+}
+int t_irc_names__no_argument__provided__lists_all_channels() {
+    struct irc_globdata *irc = irc_init();
+    struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
+	char msg[] = "NAMES";
+    list* output;
+
+    _irc_create_chan(irc, "#testchan", 1, user);
+    _irc_create_chan(irc, "#testchan2", 1, user);
+
+    output = _process_message(irc_names, irc, 1, msg);
+
+    assert_generated(3);
+    assert_numeric_reply_text(msgnum(0), RPL_NAMREPLY, "#testchan", "pepe");
+    assert_numeric_reply_text(msgnum(1), RPL_NAMREPLY, "#testchan2", "pepe");
+    assert_numeric_reply(msgnum(2), RPL_ENDOFNAMES, NULL);
+
+    irc_testend;
+}
+int t_irc_names__no_channels__empty_reply() {
+    struct irc_globdata *irc = irc_init();
+    char msg[] = "NAMES";
+    list* output;
+
+    _irc_register_withnick(irc, 1, "pepe");
+    output = _process_message(irc_names, irc, 1, msg);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), RPL_ENDOFNAMES, NULL);
+    irc_testend;
+}
 int t_irc_join__all_together() {
 
 	mu_fail("Not implemented");
@@ -771,6 +854,11 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_names__user_in_channel__list_users_inside);
+	mu_run_test(t_irc_names__private_channel__not_listed);
+	mu_run_test(t_irc_names__multiple_channels_created__list_provided_only);
+	mu_run_test(t_irc_names__no_argument__provided__lists_all_channels);
+	mu_run_test(t_irc_names__no_channels__empty_reply);
 	mu_run_test(t_irc_join__all_together);
 	mu_run_test(t_irc_join__invited__not_inv);
 	mu_run_test(t_irc_join__1_invited_ok);

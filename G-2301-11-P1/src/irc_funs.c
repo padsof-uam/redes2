@@ -294,11 +294,13 @@ int irc_names(void *data)
         chan = list_at(ircdata->globdata->chan_list, i);
 
         if ((!(chan->mode & (chan_priv | chan_secret)) || irc_user_inchannel(chan, source) == OK) /* No mostramos canales ni secretos ni privados si el usuario no está en ellos */
-                && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) == 0)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
+                && (chanlist == NULL || strnstr(chanlist, chan->name, MAX_IRC_MSG) != NULL)) /* Si el usuario ha especificado un canal, mostrar sólo esos */
         {
             irc_send_names_messages(chan, ircdata);
         }
     }
+
+    irc_send_numericreply(ircdata, RPL_ENDOFNAMES, NULL);
 
     return OK;
 }

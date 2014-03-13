@@ -412,8 +412,6 @@ int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *ircdata
         irc_send_numericreply_withtext(ircdata, RPL_NAMREPLY, channel->name, user->nick);
     }
 
-    irc_send_numericreply(ircdata, RPL_ENDOFNAMES, channel->name);
-
     return OK;
 }
 

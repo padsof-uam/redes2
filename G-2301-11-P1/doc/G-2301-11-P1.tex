@@ -20,4 +20,18 @@ En cuanto a los hilos auxiliares, escogen un comando aleatorio de una lista pred
 
 Esto es, comandos de cambio de nombre, entrada y salida de canales y envío de mensajes a usuarios y canales. Tanto los usuarios como los canales se obtienen de listas fijas, globales para todos los hilos, de tal forma que se simula una actividad más o menos real.
 
+\section{Arquitectura}
+
+\subsection{Explicación}
+
+Nuestro servidor funciona con 4 hilos, que a grandes rasgos se distribuyen así:
+\begin{itemize}
+\item  Un hilo a la escucha de nuevas conexiones. (\emph{listener})
+\item Un hilo recibiendo datos de esas conexiones (\emph{receiver}) y encolando los mensajes mediante una cola de sistema con la que se comunica con el principal.
+\item El hilo principal, que gestiona las estructuras de datos y realiza los cambios necesarios a partir de los mensajes. Es el encargado de parsear los mensajes también y de encolarlos (con otra cola de sistema) para el hilo encargado de eso.
+\item El hilo que envía los mensajes (\emph{sender}). Recibe los mensajes encolados para enviarlos.
+\end{itemize}
+
+En la estructura de datos globales de irc (irc_globdata) tenemos 2 diccionarios de usuarios. Unos cuya clave es el descriptor del socket de comunicación y otro cuya clave es el nick, pero ambos tienen como valor el mismo puntero a la misma dirección de memoria. Esta decisión, aunque nos ha complicado la consistencia de de los datos, nos ha sido realmente útil, ya que desde el hilo principal podemos tener acceso a la información de en qué socket esta conectado cada usuario, a parte del nick.
+
 \end{document}

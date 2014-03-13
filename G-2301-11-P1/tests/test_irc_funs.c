@@ -100,18 +100,18 @@ int t_irc_join__create() {
 
     struct irc_globdata * irc=irc_init();
     list * output;
-    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Pepe");
     struct ircchan * chan = _irc_create_chan(irc, "#foobar", 0);
 
-    char str[]="JOIN #foobar foopas";
+    char str[]="JOIN #foobar";
     output = _process_message(irc_join, irc, 1, str);
     
-    assert_generated(4);
+    assert_generated(3);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     /* Los mensajes 1,2 son NAMES */
     
-    assert_msgstr_eq(msgnum(3), ":Paco JOIN #foobar");
+    assert_msgstr_eq(msgnum(2), ":Pepe JOIN #foobar");
     mu_assert("No se ha unido al canal creado.", irc_user_inchannel(chan, user)==OK && list_find(chan->users,ptr_comparator, user)!=-1);
 
 
@@ -183,7 +183,12 @@ int t_irc_join__1_invited_ok() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(6);
+    for (int i = 0; i < 5; ++i)
+    {
+        printf("%s\n", msgnum(i)->data);
+    }
+
+    assert_generated(5);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     mu_assert("Se ha saltado el control de la invitación", list_find(chan->users,ptr_comparator, user_2)!=-1);
@@ -205,7 +210,7 @@ int t_irc_join__1_channel_pass__ok() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(6);
+    assert_generated(5);
 
     mu_assert("Se ha saltado el control de la contraseña", list_find(chan->users,ptr_comparator, user_2)!=-1);
     mu_assert("Se ha saltado el control de la contraseña", irc_user_inchannel(chan, user_2)==OK);
@@ -246,9 +251,9 @@ int t_irc_join__more_channel_no_pass() {
     struct ircchan * channel_2 = _irc_create_chan(irc, "#patata", 1,user_1);
     struct ircchan * channel_1 = _irc_create_chan(irc, "#foobar", 1,user_1);
     
-    char str[]="JOIN #patata,#foobar ";
+    char str[]="JOIN #patata,#foobar";
     output = _process_message(irc_join, irc, 2, str);
-    assert_generated(12);
+    assert_generated(10);
 
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
@@ -271,12 +276,12 @@ int t_irc_join__1_channel_no_pass() {
 
     output = _process_message(irc_join, irc, 2, str);
 
-    assert_generated(6);
+    assert_generated(5);
     assert_numeric_reply(msgnum(0), RPL_TOPIC, NULL);
 
     /* Los mensajes 1-4 son NAMES */
     
-    assert_msgstr_eq(msgnum(5), ":Pepe JOIN #foobar");
+    assert_msgstr_eq(msgnum(4), ":Pepe JOIN #foobar");
 
     irc_testend;
 }

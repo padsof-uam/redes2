@@ -1,6 +1,61 @@
 \documentclass[nochap]{apuntes}
 
+\title{Práctica 2 Redes II Grupo 2301 Pareja 11}
+\author{ Guillermo Julián Moreno  y Víctor de Juan Sanz}
+\date{10 - Marzo - 2014}
 \begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Arquitectura}
+
+\subsection{Hilos}
+Nuestro servidor funciona con 4 hilos, que a grandes rasgos se distribuyen así:
+\begin{itemize}
+\item  Un hilo a la escucha de nuevas conexiones. (\emph{listener})
+\item Un hilo que recibe los datos de esas conexiones (\emph{receiver}) y encola los mensajes mediante una cola de sistema con la que se comunica con el principal.
+\item El hilo principal, que gestiona las estructuras de datos y realiza los cambios necesarios a partir de los comandos. Es el encargado de parsear los mensajes también y de encolarlos (con otra cola de sistema) para el hilo encargado de eso.
+\item El hilo que envía los mensajes (\emph{sender}). Recibe los mensajes encolados para enviarlos.
+\end{itemize}
+
+En cuanto a la comunicación entre los hilos utilizamos las colas del sistema, con las funciones msgrv,msgsnd... Encolando mensajes de tipo \textit{sockcomm\_data} que contienen el descriptor de socket (que identifica unívocamente al usuario) del que se ha recibido el mensaje o al que hay que enviar el mensaje, además del mensaje en sí (recibido o enviado) y la longitud. 
+
+Este tipo de estructura tiene que encapsularse en una estructura del tipo msgbuf. En nuestro caso es \textit{msg\_sockcommdata}.
+
+\paragraph{Justificación de diseño}
+
+Encontramos esta arquitectura con ventajosa frente a otras posibilidades como 1 hilo por cliente. La principal ventaja que esta arquitectura presenta es que no hay problemas de sincronización entre hilos que acceden a información, que siempre es un problema difícil de resolver, ya que solo hay un único hilo que accede a la información y la comunicación entre hilos ya está gestionada sincronizadamente (por las colas).
+
+La desventaja, es que perdemos capacidad de escalabilidad, pero nos aseguramos de comprobar el rendimiento y comprobamos que los retardos no eran muy grandes (en comparación con lo que luego puede ser el retardo de red) para un número de usuarios suficientemente grande. Aun así, si se quisiera aumentar el potencial del servidor, sería suficiente con poner a escuchar conexiones y a enviar a más de un hilo.
+
+\subsection{Datos}
+
+En la estructura de datos globales de irc (irc\_globdata) tenemos 2 diccionarios de \textbf{usuarios}. Unos cuya clave es el descriptor del socket de comunicación y otro cuya clave es el nick, pero ambos tienen como valor el puntero a la misma dirección de memoria. Esta decisión, aunque en algún caso nos ha complicado la consistencia de los datos, nos ha sido realmente útil, ya que, por ejemplo, desde el hilo principal podemos tener acceso a la información de en qué socket esta conectado cada usuario.
+
+Con los \textbf{canales} tenemos algo muy parecido. Un diccionario (por la velocidad de acceso) y una lista (para poder iterar).
+
+\paragraph{REVISAR}
+La implementación de esta librería de diccionario y de lista (ambos de punteros a void) fueron implementadas por nosotros en la asignatura Proyecto de Programación y han sido reutilizadas. 
+
+Salvo listas y diccionario (que tienen su propia fuente), el resto de estructuras importantes están en \textit{types.h}.
+
+
+\section{Tests}
+Hemos ido realizando test de las funciones que íbamos implementando y los hemos organizado en 3 níveles. 
+
+\begin{itemize}
+\item[1] \textbf{Test} Genera el ejecutable llamando a las \textit{suites}.
+\item[2] \textbf{Suites} Colecciones de test para cada uno de los módulos, como los hilos o las funciones de IRC.
+\item[3] Cada una de las \textit{suites} tiene las funciones que van probando las funcionalidades del programa.
+\end{itemize}
+
+Estos test nos han asegurado, que al conectar con telnet o con xchat todo funcionaba correctamente, ya que nos habíamos cerciorado a medida que escribíamos el código que éste funcionaba.
+
+Un test que nos ha dado problemas es el de daemonizar. Para este test tuvimos que utilizar semáforos para gestionar el orden de las sálidas de los procesos, y así poder automatizar el test y no hacerlo a mano.
+
+Hemos comprobado también que el kernel de linux 3.11.0-18 no permite daemonizar como los anteriores. Este es el kernel que utiliza el ubuntu 13.10 (instalado en el ordenador de Víctor) por lo que este test falla en su ordenador. Este problema no hemos podido arreglarlo, y ya lo comentamos en clase. Sin embargo nos hemos asegurado de comprobar que funciona correctamente ejecutándolo en otros sistemas.
 
 \section{Rendimiento}
 
@@ -20,18 +75,18 @@ En cuanto a los hilos auxiliares, escogen un comando aleatorio de una lista pred
 
 Esto es, comandos de cambio de nombre, entrada y salida de canales y envío de mensajes a usuarios y canales. Tanto los usuarios como los canales se obtienen de listas fijas, globales para todos los hilos, de tal forma que se simula una actividad más o menos real.
 
-\section{Arquitectura}
+Los resultados de la ejecución del programa de pruebas han sido:
 
-\subsection{Explicación}
+\paragraph{Completar resultados ejecución}
 
-Nuestro servidor funciona con 4 hilos, que a grandes rasgos se distribuyen así:
-\begin{itemize}
-\item  Un hilo a la escucha de nuevas conexiones. (\emph{listener})
-\item Un hilo recibiendo datos de esas conexiones (\emph{receiver}) y encolando los mensajes mediante una cola de sistema con la que se comunica con el principal.
-\item El hilo principal, que gestiona las estructuras de datos y realiza los cambios necesarios a partir de los mensajes. Es el encargado de parsear los mensajes también y de encolarlos (con otra cola de sistema) para el hilo encargado de eso.
-\item El hilo que envía los mensajes (\emph{sender}). Recibe los mensajes encolados para enviarlos.
-\end{itemize}
+\section{Conclusiones}
 
-En la estructura de datos globales de irc (irc_globdata) tenemos 2 diccionarios de usuarios. Unos cuya clave es el descriptor del socket de comunicación y otro cuya clave es el nick, pero ambos tienen como valor el mismo puntero a la misma dirección de memoria. Esta decisión, aunque nos ha complicado la consistencia de de los datos, nos ha sido realmente útil, ya que desde el hilo principal podemos tener acceso a la información de en qué socket esta conectado cada usuario, a parte del nick.
+Hemos descubierto la importancia de ir trabajando bien poco a poco y no hacer \textit{apaños}. El empleo de test nos ha facilitado mucho la tarea. 
+
+No solo con los test, sino también la documentación. Al ir documentando correctamente el código luego hemos podido autogenerar el manual con \textit{doxygen}. Solo tuvimos que completar algunos ficheros que no estaban documentados (como los reciclados de Proyecto de Programación).
+
+Por último, el empleo de herramientas auxiliares para facilitarnos trabajo. Por ejemplo, el crazymonkey para comprobar el rendimiento o una herramienta de la que disponemos para generar e ir añadiendo a test.c y a las suites los test que nos interesaban, de tal forma que sólo hacía falta rellenar el código del test, 
+
+Por otro lado, al llevar todos el mismo estilo nos han permitido utilizar macros facilitando muchísimo la tarea de los tests.
 
 \end{document}

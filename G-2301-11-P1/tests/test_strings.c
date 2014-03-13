@@ -8,6 +8,13 @@
 #include <stdlib.h>
 
 /* BEGIN TESTS */
+int t_str_arrsep__null_str__returns_zero() {
+    char* parts[2];
+    int partnum = str_arrsep(NULL, "," , parts, 2);
+
+    mu_assert_eq(partnum, 0, "partnum is not zero");
+	mu_end;
+}
 int t_str_arrsep__no_separators__one_part() {
     char* parts[3];
     char str[] = "nocommashere";
@@ -143,6 +150,7 @@ int test_strings_suite(int *errors, int *success)
 
     printf("Begin test_strings suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_str_arrsep__null_str__returns_zero);
 	mu_run_test(t_str_arrsep__no_separators__one_part);
 	mu_run_test(t_str_arrsep__nullstring__returns_zero);
 	mu_run_test(t_str_arrsep__fill_param_array_minusone__no_overflow);

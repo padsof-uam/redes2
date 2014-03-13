@@ -286,7 +286,7 @@ int t_irc_join__bad_params() {
     list * output;
     struct ircuser * user_1 = _irc_register_withnick(irc, 1, "Paco");
     char str[]="JOIN";
-    
+
     _irc_register_withnick(irc, 2, "Pepe");
     _irc_create_chan(irc, "#foobar", 1,user_1);
 
@@ -1007,15 +1007,11 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
-<<<<<<< HEAD
-	mu_run_test(t_irc_names__user_in_channel__list_users_inside);
 	mu_run_test(t_irc_names__private_channel__not_listed);
 	mu_run_test(t_irc_names__multiple_channels_created__list_provided_only);
 	mu_run_test(t_irc_names__no_argument__provided__lists_all_channels);
 	mu_run_test(t_irc_names__no_channels__empty_reply);
-=======
 	mu_run_test(t_irc_join__create);
->>>>>>> 67f589618c7d4c895ff4e970d39c28f7332fabe8
 	mu_run_test(t_irc_join__all_together);
 	mu_run_test(t_irc_join__invited__not_inv);
 	mu_run_test(t_irc_join__1_invited_ok);

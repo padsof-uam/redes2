@@ -1,5 +1,4 @@
-CC = cc
-CFLAGS = -ggdb -Wall -pedantic -std=c99 -D_GNU_SOURCE
+CFLAGS =  -Wall -pedantic -std=c99 -D_GNU_SOURCE
 E_LIBS = -lpthread
 
 OBJDIR = obj
@@ -55,11 +54,13 @@ final: all docs pack
 
 ### Compilation
 
-debug: CFLAGS += -DDEBUG 
+debug: CFLAGS += -DDEBUG -ggdb
 debug: $(TARGET)
 
-no-daemon: CFLAGS += -DDEBUG
-no-daemon: CFLAGS += -DNODAEMON
+release: CFLAGS += -02
+release: $(TARGET)
+
+no-daemon: CFLAGS += -DDEBUG -DNODAEMON
 no-daemon: $(TARGET)
 
 scan: clean

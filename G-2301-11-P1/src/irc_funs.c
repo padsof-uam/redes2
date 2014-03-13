@@ -173,6 +173,8 @@ int irc_join(void *data)
     struct ircuser *user;
     int retval = OK;
 
+    bzero(params, 2 * sizeof(char*));
+
     if (irc_parse_paramlist(ircdata->msg, params, 2) == 0)
     {
         list_add(ircdata->msg_tosend, irc_build_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL));

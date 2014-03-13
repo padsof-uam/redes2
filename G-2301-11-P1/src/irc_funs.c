@@ -128,6 +128,9 @@ int irc_nick(void *data)
             irc_send_numericreply(ircdata, ERR_NICKCOLLISION, NULL);
         else
             slog(LOG_ERR, "Error desconocido %d al cambiar nick del usuario a %s", retval, new_nick[0]);
+
+        free(old_nick);
+        return OK;
     }
 
     for (i = 0; i < list_count(user->channels); ++i)
@@ -408,16 +411,21 @@ int irc_kick(void *data)
         return OK;
     }
 
+
     sender = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     kicked = irc_user_bynick(ircdata->globdata, username);
 
-    if (!kicked || !irc_user_inchannel(chan, kicked))
+    if(irc_user_inchannel(chan, sender)!=OK)
     {
-        irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name); /* No estoy seguro de esto */
+        irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name);
         return OK;
     }
-
-    if (!irc_is_channel_op(chan, sender))
+    else if (!kicked || irc_user_inchannel(chan, kicked)!=OK)
+    {
+        irc_send_numericreply(ircdata, ERR_USERNOTINCHANNEL, chan_name);
+        return OK;
+    }
+    else if (!irc_is_channel_op(chan, sender))
     {
         irc_send_numericreply(ircdata, ERR_CHANOPRIVSNEEDED, chan_name);
         return OK;

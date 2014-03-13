@@ -13,6 +13,7 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+<<<<<<< HEAD
 int t_irc_mode__chan_provided__returns_chan_mode() {
     struct irc_globdata* irc = irc_init();
     struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
@@ -224,18 +225,18 @@ int t_irc_mode__no_target_provided__err_moreparams() {
 
     irc_testend;
 }
-
+=======
 int t_irc_kick__you_are_not_in_channel()
 {
 
     struct irc_globdata *irc = irc_init();
     list *output;
     char str[] = "KICK #testchan Paco";
-    struct ircuser *b = _irc_register_withnick(irc, 2, "Paco");
-    _irc_create_chan(irc, "#testchan", 1, b);
 
     _irc_register_withnick(irc, 1, "Pepe");
+    struct ircuser *b = _irc_register_withnick(irc, 2, "Paco");
 
+    struct ircchan * channel = _irc_create_chan(irc, "#testchan", 1, b);
 
     output = _process_message(irc_kick, irc, 1, str);
 
@@ -320,10 +321,11 @@ int t_irc_kick__no_such_channel()
 }
 int t_irc_oper__bad_password()
 {
+
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "OPER Pepe bad_pass";
     _irc_register_withnick(irc, 1, "Pepe");
+    char str[] = "OPER Pepe bad_pass";
 
     dic_add(irc->oper_passwords, "Pepe", "password");
 
@@ -337,8 +339,8 @@ int t_irc_oper__not_set()
 {
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "OPER Pepe password";
     _irc_register_withnick(irc, 1, "Pepe");
+    char str[] = "OPER Pepe password";
 
     output = _process_message(irc_oper, irc, 1, str);
     assert_generated(1);
@@ -350,8 +352,8 @@ int t_irc_oper__set()
 {
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "OPER Pepe password";
     _irc_register_withnick(irc, 1, "Pepe");
+    char str[] = "OPER Pepe password";
 
     dic_add(irc->oper_passwords, "Pepe", "password");
     output = _process_message(irc_oper, irc, 1, str);
@@ -362,15 +364,16 @@ int t_irc_oper__set()
 }
 int t__irc_kill__killed()
 {
+
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "KILL paco :por tolai";
 
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     _irc_register_withnick(irc, 2, "paco");
 
     a->mode =  a->mode | user_op;
 
+    char str[] = "KILL paco :por tolai";
 
     output = _process_message(irc_kill, irc, 1, str );
     assert_generated(1);
@@ -398,15 +401,16 @@ int t__irc_kill__more_params()
 }
 int t__irc_kill__no_such_nick()
 {
+
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "KILL oscar :por tolai";
 
     struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
     _irc_register_withnick(irc, 2, "paco");
 
     a->mode =  a->mode | user_op;
 
+    char str[] = "KILL oscar :por tolai";
 
     output = _process_message(irc_kill, irc, 1, str);
     assert_generated(1);
@@ -417,13 +421,14 @@ int t__irc_kill__no_such_nick()
 
 int t__irc_kill__no_privileges()
 {
+
     struct irc_globdata *irc = irc_init();
     list *output;
-    char str[] = "KILL paco :por tolai";
 
     _irc_register_withnick(irc, 1, "pepe");
     _irc_register_withnick(irc, 2, "paco");
 
+    char str[] = "KILL paco :por tolai";
     output = _process_message(irc_kill, irc, 1, str );
 
     assert_generated(1);
@@ -432,6 +437,7 @@ int t__irc_kill__no_privileges()
     irc_testend;
 }
 
+>>>>>>> 239cbe42fc5ee65e94227e21c6fa5a1ae10fc734
 int t_irc_topic__topic_change__topic_changed_and_broadcast()
 {
     struct irc_globdata *irc = irc_init();
@@ -723,6 +729,8 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+<<<<<<< HEAD
+	mu_run_test(t_irc_mode__chan_provided__returns_chan_mode);
 	mu_run_test(t_irc_mode__user_provided__returns_user_mode);
 	mu_run_test(t_irc_mode__different_user__err_match);
 	mu_run_test(t_irc_mode__user_minus_o_op__removes_op_privs);
@@ -737,6 +745,7 @@ int test_irc_funs_suite(int *errors, int *success)
 	mu_run_test(t_irc_mode__plus_o_op__gives_chanop_target);
 	mu_run_test(t_irc_mode__no_target_provided__err_moreparams);
 	mu_run_test(t_irc_user_bad_params);
+=======
     mu_run_test(t_irc_kick__you_are_not_in_channel);
     mu_run_test(t_irc_kick__kicked);
     mu_run_test(t_irc_kick__chan_op_priv_need);
@@ -750,6 +759,7 @@ int test_irc_funs_suite(int *errors, int *success)
     mu_run_test(t__irc_kill__no_such_nick);
     mu_run_test(t__irc_kill__no_privileges);
     mu_run_test(t_irc_user_bad_params);
+>>>>>>> 239cbe42fc5ee65e94227e21c6fa5a1ae10fc734
     mu_run_test(t_irc_user);
     mu_run_test(t_irc_nick_collision);
     mu_run_test(t_irc_nick__set_nick__set);

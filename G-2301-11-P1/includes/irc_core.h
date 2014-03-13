@@ -11,6 +11,13 @@ int irc_create_user(struct irc_globdata* data, int id);
 struct ircuser* irc_register_user(struct irc_globdata* data, int id);
 void irc_destroy(struct irc_globdata* data);
 
+/**
+ * Añade el usuario como operador del canal.
+ * @param  channel Canal en el que añadir el usuario.
+ * @param  user    Usuario que se convertirá en operador.
+ * @return         OK/ERR.
+ */
+int irc_channel_addop(struct ircchan * channel, struct ircuser * user);
 
 /**
  * Elimina a un usuario del canal.

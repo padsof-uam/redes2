@@ -84,17 +84,6 @@ struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcod
 struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text);
 
 /**
- * Crea el mensaje de respuesta numérica para el código de error dato.
- * @param irc     Estructura de datos IRC:
- * @param errcode Código de error.
- * @param additional_params (Opcional) Parámetros adicionales del mensaje de error.
- * @param[out] message_str  Cadena donde escribir el código.
- * @return Número de caracteres escritos.
- */
-/*int irc_build_numeric_response(struct irc_msgdata *irc, int errcode, const char* additional_params, char *message_str);
-*/
-
-/**
 * Recibe un código de error y devuelve una frase interpretando el error.
 * @param    errcode     Código de error.
 * @return   Interpretación del error.

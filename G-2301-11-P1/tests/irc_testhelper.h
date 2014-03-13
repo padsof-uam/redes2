@@ -1,6 +1,7 @@
 #ifndef IRC_TESTHELPER_H
 #define IRC_TESTHELPER_H
 
+#include "strings.h"
 #include "irc_processor.h"
 #include "types.h"
 #include "irc_core.h"

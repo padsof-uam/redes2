@@ -169,7 +169,7 @@ Además de todas las pruebas automáticas y con XChat/Telnet, hemos pasado regul
 
 \section{Rendimiento}
 
-Hemos hecho varias pruebas para verificar el rendimiento de nuestro servidor. Para ello hemos usado el script \texttt{crazymonkey.py}, que crea múltiples hilos que se conectan al servidor y que envían comandos predefinidos de forma aleatoria.
+Hemos hecho varias pruebas para verificar el rendimiento de nuestro servidor. Para ello hemos usado el script \texttt{crazymonkey.py}, que crea múltiples hilos que se conectan al servidor y que envían comandos predefinidos de forma aleatoria. Hemos creado diferentes perfiles de prueba con varios parámetros de intervalo de envío de comandos, clientes conectados y más.s
 
 La medida del tiempo de respuesta se hace con el comando \textit{PING}. El hilo principal del script envía un comando \textit{PING} y mide el tiempo que tarda hasta recibir el correspondiente \textit{PONG}. No han sido necesarios identificadores ya que en ningún momento el script está esperando respuesta a más de un \textit{PING}.
 
@@ -185,9 +185,33 @@ En cuanto a los hilos auxiliares, escogen un comando aleatorio de una lista pred
 
 Esto es, comandos de cambio de nombre, entrada y salida de canales y envío de mensajes a usuarios y canales. Tanto los usuarios como los canales se obtienen de listas fijas, globales para todos los hilos, de tal forma que se simula una actividad más o menos real.
 
-Los resultados de la ejecución del programa de pruebas han sido:
+Los resultados de la ejecución del programa de pruebas han sido considerablemente buenos. Nuestro servidor soporta sin problemas centenares de usuarios, y los tiempos de respuesta no se disparan. 
 
-\paragraph{Completar resultados ejecución}
+Hemos hecho dos pruebas, ambas en el mismo ordenador (Intel Core 2 Duo, 2.26 GHz, 4 GB RAM). La primera era una prueba con el perfil \textit{crazyconns}, que llega a conectar hasta mil clientes al servidor sin enviar ningún comando. 
+
+En este caso, tal y como se ve en la figura \ref{imgCrazyconns}, la media de tiempo de respuesta es de algo menos de 3 milisegundos, con un crecimiento muy lento. Además, el servidor se recuperó sin ningún problema del cierre de esas mil conexiones de forma simultánea.
+
+\begin{figure}[hbtp]
+\centering
+\includegraphics[width=0.8\textwidth]{scatter.png}
+\caption{Respuestas con perfil \textit{crazyconns}. El intervalo entre pings es de 200 milisegundos, y aproximadamente cada 15 pings se conectan 50 nuevos clientes.}
+\label{imgCrazyconns}
+\end{figure}
+
+También queríamos comprobar el rendimiento cuando los usuarios están enviando mensajes. Para ello usamos el perfil \textit{longrun}, obteniendo los resultados de la figura \ref{imgLongrun} con hasta 500 usuarios (no probamos hasta más usuarios porque el script en Python no es muy eficiente y llegaba a parar el ordenador al enviar muchos mensajes).
+
+\begin{figure}[hbtp]
+\centering
+\includegraphics[width=0.8\textwidth]{longrun.png}
+\caption{Respuestas con perfil \textit{longrun}. Cada tanda representa cuarenta clientes más conectados, las barras de error indica la desviación típica de los tiempos de respuesta en cada tanda.}
+\label{imgLongrun}
+\end{figure}
+
+De nuevo, los resultados son buenos, más aún teniendo en cuenta que es un caso más exigente que un escenario real, donde los clientes envían comandos en intervalos más espaciados. Sería conveniente estudiar la razón del aumento de la variabilidad de los tiempos de respuesta al aumentar el número de clientes, aunque en ningún caso se sale de valores razonables.
+
+Además, durante la duración de las pruebas monitorizamos el consumo de CPU y memoria del servidor, que en ningún momento pasó del 20\% ni de 1MB respectivamente. Así mismo, aprovechamos para comprobar con \textit{valgrind} que no había fugas de memoria.
+
+
 
 \section{Uso}
 
@@ -203,7 +227,6 @@ Nuestro Makefile cuenta con varios objetivos que pasamos a comentar:
 
 \begin{description}
 \item[debug] Compilación con banderas de depuración (\textit{-DDEBUG -ggdb}) del ejecutable principal.
-\item[release] Compilación con banderas de \textit{release} (\textit{-O2}) del ejecutable principal.
 \item[no-daemon] Compilación con la bandera \texttt{NODAEMON} definida que evita que el servidor se \textit{daemonice}. Especialmente útil a la hora de depurar con \textit{gdb/lldb} o ejecutar con \textit{valgrind}.
 \item[clean] Limpieza de ficheros ejecutables, de compilación y documentación autogenerada.
 \item[test] Compilación con banderas de depuración del ejecutable de pruebas.

@@ -13,6 +13,35 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_ison__ok() {
+    struct irc_globdata * irc = irc_init();
+    list * output;
+    char str[] = "ISON Pepe Patata PacoPepe PepePaco Paco";
+    _irc_register_withnick(irc, 1, "PacoPepe");
+    _irc_register_withnick(irc, 2, "Pepe");
+    _irc_register_withnick(irc, 3, "Paco");
+
+
+    output = _process_message(irc_ison, irc, 1, str);
+    assert_generated(1);
+    assert_numeric_reply_text(msgnum(0), RPL_ISON, NULL, "Patata PepePaco");
+
+    irc_testend;
+}
+int t_irc_ison__bad_params() {
+    struct irc_globdata * irc = irc_init();
+    list * output;
+    _irc_register_withnick(irc, 1, "PacoPepe");
+    _irc_register_withnick(irc, 2, "Pepe");
+    _irc_register_withnick(irc, 3, "Paco");
+
+    output = _process_message(irc_ison, irc, 1, "ISON ");
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_NEEDMOREPARAMS, NULL);
+    irc_testend;
+
+}
 int t_irc_names__user_in_channel__list_users_inside() {
     struct irc_globdata *irc = irc_init();
     struct ircuser* user = _irc_register_withnick(irc, 1, "pepe");
@@ -1007,6 +1036,8 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_ison__ok);
+	mu_run_test(t_irc_ison__bad_params);
 	mu_run_test(t_irc_names__private_channel__not_listed);
 	mu_run_test(t_irc_names__multiple_channels_created__list_provided_only);
 	mu_run_test(t_irc_names__no_argument__provided__lists_all_channels);

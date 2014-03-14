@@ -24,5 +24,6 @@ int irc_version(void* data);
 int irc_kill(void* data);
 int irc_away(void* data);
 int irc_who(void* data);
+int irc_ison(void* data);
 #endif
 

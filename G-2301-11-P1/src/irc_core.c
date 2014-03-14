@@ -149,6 +149,10 @@ void irc_destroy(struct irc_globdata *data)
     if (data->fd_user_map)
         dic_destroy(data->fd_user_map, _user_destructor);
 
+    if (data->oper_passwords)
+        dic_destroy(data->oper_passwords, NULL);
+    
+
     free(data);
 }
 

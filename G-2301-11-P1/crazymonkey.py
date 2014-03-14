@@ -15,12 +15,12 @@ port = 6667
 
 profiles = {
 	'longrun': {
-		'cmdsend_delay': 0.1,
+		'cmdsend_delay': 0.6,
 		'client_spawndelay': 0.08,
-		'client_batch': 15,
+		'client_batch': 40,
 		'client_max': 500 ,
-		'batch_time_sec': 20,
-		'ping_interval': 1,
+		'batch_time_sec': 10,
+		'ping_interval': 0.5,
 		'threshold_manual_control': -1,
 		'enable_sending': True
 		},

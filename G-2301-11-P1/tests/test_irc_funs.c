@@ -847,7 +847,9 @@ int t_irc_user()
 
     mu_assert_streq(a->name, "comida de gato", "Name not set");
 
-    assert_generated(0);
+    assert_generated(1);
+
+    assert_numeric_reply_text(msgnum(0), RPL_MOTD, NULL, "Bienvenido a redes-ircd! Eres el 1 usuario");
 
     irc_testend;
 }

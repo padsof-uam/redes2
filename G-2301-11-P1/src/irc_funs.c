@@ -147,6 +147,7 @@ int irc_user(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     char *params[4];
+    char msg[MAX_IRC_MSG];
     struct ircuser *user;
 
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
@@ -156,6 +157,11 @@ int irc_user(void *data)
     }
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+
+
+    sprintf(msg,"Bienvenido a %s! Eres el %d usuario",ircdata->globdata->servername,ircdata->msgdata->fd);
+    irc_send_numericreply_withtext(ircdata, RPL_MOTD, NULL,msg);
+
 
     if (user)
     {

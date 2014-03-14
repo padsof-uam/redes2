@@ -76,7 +76,10 @@ int irc_load_config(struct irc_globdata *irc, const char *file)
         return ERR_MEM;
 
     if (fread(conf_contents, conf_len, 1, f_conf) != 1)
+    {
+        free(conf_contents);
         return ERR_IO;
+    }
 
     fclose(f_conf);
 
@@ -93,6 +96,7 @@ int irc_load_config(struct irc_globdata *irc, const char *file)
             _parse_opers(irc, conf_contents, &(tokens[i + 1]));
     }
 
+    free(conf_contents);
     return OK;
 }
 

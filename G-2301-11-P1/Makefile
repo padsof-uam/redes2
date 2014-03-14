@@ -57,9 +57,6 @@ final: all docs pack
 debug: CFLAGS += $(DEBUG_CFLAGS)
 debug: $(TARGET)
 
-release: CFLAGS += -02
-release: $(TARGET)
-
 no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 

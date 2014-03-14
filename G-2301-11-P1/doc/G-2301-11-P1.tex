@@ -15,7 +15,7 @@
 Nuestro servidor funciona con 4 hilos, que a grandes rasgos se distribuyen así:
 \begin{itemize}
 \item  Un hilo a la escucha de nuevas conexiones. (\emph{listener})
-\item Un hilo que recibe los datos de esas conexiones (\emph{receiver}) y encola los mensajes mediante una cola de sistema con la que se comunica con el principal.
+\item Un hilo que recibe los datos de esas conexiones (\emph{receiver}) y encola los mensajes mediante una cola de sistema con la que se comunica con el principal. Este hilo se comunica con el \emph{listener} mediante sockets locales.
 \item El hilo principal, que gestiona las estructuras de datos y realiza los cambios necesarios a partir de los comandos. Es el encargado de parsear los mensajes también y de encolarlos (con otra cola de sistema) para el hilo encargado de eso.
 \item El hilo que envía los mensajes (\emph{sender}). Recibe los mensajes encolados para enviarlos.
 \end{itemize}

@@ -3,7 +3,7 @@
 #include "irc_processor.h"
 #include "types.h"
 #include "irc_core.h"
-#include "string.h"
+#include "strings.h"
 
 #include <stdarg.h>
 #include <stdio.h>

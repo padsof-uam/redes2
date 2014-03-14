@@ -1,0 +1,31 @@
+#!/bin/bash
+
+prefix=G-2301-11-P1
+
+function replace_infile() {
+	sed -i .sed -e "s/$prefix-//g" $1
+	rm $1.sed
+}
+
+function process_dir() {
+	for f in $(ls $1); do
+		replace_infile $1/$f
+		mv $1/$f  $1/${f#$prefix-}
+	done	
+}
+
+
+process_dir src
+process_dir includes
+process_dir tests
+
+for d in $(ls srclib); do
+	if [ -d srclib/$d ]; then
+		process_dir srclib/$d
+	fi
+done
+
+mv $prefix-makefile Makefile
+sed -i .sed 's/\/$(P_NAME)-test/\/test/g' Makefile
+sed -i .sed 's/$(P_NAME)-main/main/g' Makefile
+rm Makefile.sed

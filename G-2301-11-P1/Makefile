@@ -13,6 +13,11 @@ LIBDIR = lib
 LIBSRCDIR = srclib
 TESTDIR = tests
 
+P_GROUP = 2301
+P_NUM = 1
+P_PAR = 11
+P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
+
 TARGET = main
 INCLUDES = -I./includes/
 
@@ -40,14 +45,6 @@ DOXY_OUTPUTS := $(filter-out $(DOCDIR)/, $(dir $(wildcard $(DOCDIR)/*/)))
 FMT_BOLD := $(shell tput bold)
 FMT_NORM := $(shell tput sgr0)
 
-P_GROUP = 2301
-P_NUM = 1
-P_PAR = 11
-P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
-
-TAR_EXCLUDES= bin Makefile obj doc .tar.gz .git
-TAR_EXCLUDES_ARG = $(addprefix --exclude , $(TAR_EXCLUDES))
-
 .PRECIOUS: %.o %.d
 .PHONY: debug clean pack doxydoc docclean
  
@@ -63,7 +60,7 @@ debug: $(TARGET)
 release: CFLAGS += -02
 release: $(TARGET)
 
-no-daemon: CFLAGS += -DDEBUG -DNODAEMON
+no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
 scan: clean
@@ -171,8 +168,8 @@ docclean:
 	
 ### Packing
 
-pack: $(DOC_PDFS)
-	@cp Makefile $(P_NAME)-makefile
-	@cd ..; tar $(TAR_EXCLUDES_ARG) -czf $(P_NAME).tar.gz $(P_NAME) 
+pack: docs
+	cp -r "$(shell pwd)" ../$(P_NAME)-backup
+	@./redes_rename
+	@cd ..; tar -X $(P_NAME)/.tarexcludes -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."
-	@rm $(P_NAME)-makefile

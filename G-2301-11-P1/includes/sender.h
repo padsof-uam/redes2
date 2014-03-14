@@ -1,7 +1,7 @@
 #ifndef SENDER_H
 #define SENDER_H 
 
-#include <errors.h>
+#include "errors.h"
 #include <pthread.h>
 
 /** Estructura que se pasará al hilo de envío como argumento */

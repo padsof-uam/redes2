@@ -152,12 +152,16 @@ int irc_user(void *data)
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
     {
         irc_send_numericreply(ircdata, ERR_NEEDMOREPARAMS, NULL);
-        return ERR;
+        return OK;
     }
+
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
 
     if (user)
+    {
         strncpy(user->name, params[3], MAX_NAME_LEN);
+        strncpy(user->username, params[0], MAX_NICK_LEN);
+    }
 
     return OK;
 }
@@ -809,10 +813,10 @@ static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan
 
         if(!(user->mode & user_invisible))
         {
-            snprintf(who_msg, 200, "%s ~%s %s %s %s H@", 
+            snprintf(who_msg, 200, "%s ~%s %s %s.local %s H@", 
                 chan->name, 
                 user->username, 
-                "unknown",
+                "0.0.0.0",
                 data->globdata->servername,
                 user->nick);
             snprintf(who_text, 200, "%d %s", 0, user->name);

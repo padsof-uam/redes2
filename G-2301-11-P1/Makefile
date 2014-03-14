@@ -167,6 +167,6 @@ docclean:
 
 pack: docs
 	cp -r "$(shell pwd)" ../$(P_NAME)-backup
-	@./redes_rename
+	@tools/redes_rename
 	@cd ..; tar -X $(P_NAME)/.tarexcludes -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."

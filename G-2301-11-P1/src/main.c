@@ -31,7 +31,7 @@
 #define MASTER_QKEY 3983
 #define PID_FILE "/tmp/redirc.pid"
 #define LOCK_FILE "/tmp/redirc.lock"
-#define DEFAULT_CONF_FILE "/tmp/redirc.conf"
+#define DEFAULT_CONF_FILE "redirc.conf"
 
 /**
  * Macro para cancelar un hilo si está funcionando.
@@ -80,7 +80,7 @@ int main(int argc, char const *argv[])
     int retval = EXIT_SUCCESS;
     int kill_retval;
     const char *conffile;
-    char conf_path[200];
+    char conf_path[300];
 
     if (argc > 1 && !strcmp(argv[1], "stop"))
     {
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[])
     if(realpath(conffile, conf_path) == NULL)
     {
         fprintf(stderr, "Archivo de configuración inexistente.\n");
-        strncpy(conf_path, conffile, 200);
+        strncpy(conf_path, conffile, 300);
     }
 
     comm_socks[0] = 0;

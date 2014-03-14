@@ -8,7 +8,7 @@
 #include "types.h"
 #include "irc_core.h"
 
-#define MAX_CONF_LEN 100
+#define MAX_CONF_LEN 300
 
 struct proc_thdata
 {

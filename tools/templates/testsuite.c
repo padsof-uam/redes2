@@ -3,13 +3,6 @@
 #include "commparser.h"
 #include <stdio.h>
 
-const char* _cmds[] = { "cmd1", "cmd2", "cmd3"};
-
-static int _test_func(void* data)
-{
-	return *(int*)data;
-}
-
 /* BEGIN TESTS */
 /* END TESTS */
 

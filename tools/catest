@@ -6,8 +6,6 @@ remove_between_tokens() {
 	token_begin="\/\* BEGIN $token \*\/"
 	token_end="\/\* END $token \*\/"
 
-	echo "replacing $token on $file"
-
 	sed -n -e "/$token_begin/{" -e 'p' -e ':a' -e 'N' -e "/$token_end/!ba" -e 's/.*\n//' -e '}' -e 'p' "$file" > "$file.sed"
 	mv "$file.sed" "$file"
 }
@@ -77,6 +75,17 @@ save_tests () {
 	remove_between_tokens "$base/templates/testsuite.c" "TESTS"
 }
 
+upgrade() {
+	templatedir="$( dirname "${BASH_SOURCE[0]}" )"/templates	
+	cp "$templatedir/test.c" "$templatedir/testmacros.h" tests
+
+	for test in $(ls tests/test_*.c); do 
+		name=$(basename $test | sed -e 's/test\_\([a-zA-Z]*\)\.c/\1/g' )
+		echo $name
+		python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addsuitetoglob tests/test.c $name
+	done
+}
+
 help() {
 	cat << EOF 
 Available commands:
@@ -84,6 +93,7 @@ Available commands:
 	- suite <suitename>: create a test suite with the given name.
 	- test <suite> <testname[]>: create various test for the given suite.
 	- save: save the changes made in test files in current directory in the template directory.
+	- upgrade: upgrade the current installation with changes in template directory.
 EOF
 }
 
@@ -95,6 +105,7 @@ case "$1" in
 			done
 			;;
 	"save") save_tests ;;
+	"upgrade") upgrade ;;
 	*) echo "Unrecognized command."
 		help ;;
 esac

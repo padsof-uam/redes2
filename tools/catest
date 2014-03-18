@@ -1,5 +1,15 @@
 #!/bin/bash
 
+remove_between_tokens() {
+	file=$1
+	token=$1
+	token_begin="/* BEGIN $token */"
+	token_end="/* END $token */"
+
+	sed -n '/$token_begin/{:a;n;/$token_end/b;p;ba}' $file > $file.0
+	mv $file.0 $file
+}
+
 append_file() {
 	echo $2 | cat - $1 > $1.temp && mv $1.temp $1
 }
@@ -42,12 +52,33 @@ create_test() {
 	python "$( dirname "${BASH_SOURCE[0]}" )"/ctest.py addtesttosuite tests/test_$suite.c $name
 }
 
+
+
+save_tests () {
+	base="$( dirname "${BASH_SOURCE[0]}" )"
+	cp tests/test.c "$base/templates"
+	remove_between_tokens "$base/templates/test.c" "TEST REGION"
+
+	cp tests/testmacros.h "$base/templates/"
+
+	test_file_sample=$(ls tests/test_*.c | head -n 1)
+	test_file_name=$(echo $test_file_sample | sed 's/\.c//' )
+
+	cp tests/$test_file_sample "$base/templates/_testsuite_.c"
+	sed -i sd "s/$test_file_name/_testsuite_/g" "$base/templates/_testsuite_.c"
+	rm "$base/templates/_testsuite_.c.sd"
+
+	remove_between_tokens "$base/templates/_testsuite_.c" "TEST EXEC"
+	remove_between_tokens "$base/templates/_testsuite_.c" "TESTS"
+}
+
 help() {
 	cat << EOF 
 Available commands:
 	- init: initialize folder and test structure.
 	- suite <suitename>: create a test suite with the given name.
 	- test <suite> <testname[]>: create various test for the given suite.
+	- save: save the changes made in test files in current directory in the template directory.
 EOF
 }
 
@@ -58,6 +89,7 @@ case "$1" in
 				create_test $2 $t
 			done
 			;;
+	"save") save_tests ;;
 	*) echo "Unrecognized command."
 		help ;;
 esac

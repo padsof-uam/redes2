@@ -1,12 +1,16 @@
 #include "_testsuite_.h"
 #include "testmacros.h"
-#include "termcolor.h"
+#include "commparser.h"
 #include <stdio.h>
 
+const char* _cmds[] = { "cmd1", "cmd2", "cmd3"};
 
+static int _test_func(void* data)
+{
+	return *(int*)data;
+}
 
 /* BEGIN TESTS */
-
 /* END TESTS */
 
 int _testsuite__suite(int* errors, int* success) {
@@ -15,7 +19,6 @@ int _testsuite__suite(int* errors, int* success) {
 
 	printf("Begin _testsuite_ suite.\n");
 /* BEGIN TEST EXEC */
-	
 /* END TEST EXEC */
 	if(tests_passed == tests_run)
 		printf("End _testsuite_ suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);

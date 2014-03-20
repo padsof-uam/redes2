@@ -1,0 +1,31 @@
+#!/bin/bash
+
+prefix=G-2301-11-P2
+
+function replace_infile() {
+	sed -i .sed -e "s/^#include \"\([a-z_]*\)\.h\"$/#include \"$prefix-\1.h\"/g" $1
+	rm $1.sed
+}
+
+function process_dir() {
+	for f in $(ls $1); do
+		replace_infile $1/$f
+		mv $1/$f $1/$prefix-$f
+	done	
+}
+
+
+process_dir src
+process_dir includes
+process_dir tests
+
+for d in $(ls srclib); do
+	if [ -d srclib/$d ]; then
+		process_dir srclib/$d
+	fi
+done
+
+sed -i .sed 's/main/$(P_NAME)-main/g' Makefile
+sed -i .sed 's/\/test/\/$(P_NAME)-test/g' Makefile
+rm Makefile.sed
+mv Makefile $prefix-makefile

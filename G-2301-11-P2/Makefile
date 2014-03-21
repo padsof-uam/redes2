@@ -1,4 +1,4 @@
-CC = cc
+CC = clang
 CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0)
 DEBUG_CFLAGS = -DDEBUG -ggdb 
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0)
@@ -118,7 +118,7 @@ $(LIBDIR):
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR) depend
 	@echo "$< -> $@"
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean: docclean
 	@echo Clearing build folders...
@@ -136,7 +136,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 
 ## Tests
 

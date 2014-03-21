@@ -48,10 +48,10 @@
 *                                                                                                  *
 ***************************************************************************************************/
 
-#include <gtk/gtk.h>
-#include <glib.h>
 #include <stdlib.h>
+#include <glib.h>
 #include "chat.h"
+#include <gtk/gtk.h>
 
 /* Variables globales */
 GtkWidget *window;

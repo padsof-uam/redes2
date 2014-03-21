@@ -1,0 +1,20 @@
+{
+	"folders":
+	[
+		{
+			"path": "/home/vicdejuan/Documents/Practicas/redes2/G-2301-11-P1"
+		},
+		{
+			"path": "/home/vicdejuan/Documents/Practicas/redes2/tools"
+		}
+	],
+	"settings":
+	{
+		"sublimeclang_options":
+		[
+			"-I${folder:${project_path:g-2301-11-P1.sublime-project}}/includes",
+			"-Wall",
+			"-Pedantic"
+		]
+	}
+}

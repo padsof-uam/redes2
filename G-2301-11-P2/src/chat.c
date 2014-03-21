@@ -382,7 +382,11 @@ int main(int argc, char**argv)
 {
   GtkWidget *hboxg, *vbox1,*vbox2;
 
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   g_type_init (); /* Necesario para tener funcionalidad de hilos */
+  #pragma GCC diagnostic pop
+
   gdk_threads_init ();
   gdk_threads_enter ();
   gtk_init(&argc, &argv); /* Inicia gnome */

@@ -9,6 +9,8 @@
 #ifndef _CHAT
 #define _CHAT
 
+#include <glib.h>
+
 #ifndef FALSE
 	#define FALSE	0
 #endif

@@ -52,6 +52,7 @@
 #include <glib.h>
 #include "chat.h"
 #include <gtk/gtk.h>
+#include <stdarg.h>
 
 /* Variables globales */
 GtkWidget *window;
@@ -61,6 +62,9 @@ GtkTextBuffer *buffer;
 GtkWidget *topicB, *externB, *secretB, *guestB, *privateB, *moderatedB;
 
 gboolean toggleButtonState(GtkToggleButton *togglebutton){return gtk_toggle_button_get_active(togglebutton);}
+
+int snd_qid;
+int rcv_sockcomm;
 
 /*******************************************************************************
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *
@@ -204,10 +208,15 @@ void privateText(char *user, char *text)
 *                                                                              *
 *******************************************************************************/
 
-void errorText(char *errormessage)
+void errorText(char *errormessage, ...)
 {
+    char fmt_message[500];
+    va_list ap;
+    va_start(ap, errormessage);
+    vsnprintf(fmt_message, 500, errormessage, ap);
+    va_end(ap);
     gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "Error: ", -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, errormessage, -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
     gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
 }
 
@@ -221,9 +230,15 @@ void errorText(char *errormessage)
 *                                                                              *
 *******************************************************************************/
 
-void messageText(char *message)
+void messageText(char *message, ...)
 {
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, message, -1, "magenta_fg", "italic", "bold", "lmarg",  NULL);
+    char fmt_message[500];
+    va_list ap;
+    va_start(ap, message);
+    vsnprintf(fmt_message, 500, message, ap);
+    va_end(ap);
+
+    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "italic", "bold", "lmarg",  NULL);
     gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
 }
 

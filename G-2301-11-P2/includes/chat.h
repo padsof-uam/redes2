@@ -24,8 +24,8 @@ void errorWindow(char *msg);
 /* Interfaz de impresión de textos */
 void publicText(char *username, char *text);
 void privateText(char *username, char *text);
-void errorText(char *errormessage);
-void messageText(char *message);
+void errorText(char *errormessage, ...);
+void messageText(char *message, ...);
 
 /* Funciones de conexión y desconexión */
 void connectClient(void);
@@ -49,5 +49,11 @@ void setModerated(gboolean state);
 
 /* Función llamada cuando se introduce una entrada */
 void newText (const char *msg);
+
+char * getApodo();
+char * getNombre();
+char * getNombreReal();
+char * getServidor();
+int    getPuerto();
 
 #endif

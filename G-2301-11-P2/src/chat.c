@@ -74,7 +74,7 @@ char * getApodo()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eApodo));}
 char * getNombre()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eNombre));}
 char * getNombreReal()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eNombreR));}
 char * getServidor()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eServidor));}
-int    getPuerto()	{return atoi(gtk_entry_get_text(GTK_ENTRY(ePuerto)));}
+char * getPuerto()	{return (char *) gtk_entry_get_text(GTK_ENTRY(ePuerto));}
 
 /*******************************************************************************
 *  Presenta una ventana con un mensaje de error                                *

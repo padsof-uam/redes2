@@ -21,13 +21,10 @@ void connectClient(void)
 {
     int sock;
     char *server = getServidor();
-    int port = getPuerto();
-    char port_str[10];
+    char* port = getPuerto();
     const char *err;
     char addr_str[100];
     int retval;
-
-    snprintf(port_str, 10, "%d", port);
 
     if (!server || strlen(server) == 0)
     {
@@ -35,7 +32,7 @@ void connectClient(void)
         return;
     }
 
-    if (port <= 0)
+    if (!port || strlen(port) == 0)
     {
         errorText("Error: puerto inválido.");
         return;
@@ -43,16 +40,16 @@ void connectClient(void)
 
     messageText("Conectando con %s...", server);
 
- 	retval = client_connect_to(server, port_str, addr_str, 100);
+ 	retval = client_connect_to(server, port, addr_str, 100);
 
     if (retval == ERR_SYS)
         err = strerror(errno);
     else if (retval == ERR_AIR)
-        err = gai_strerror(retval);
+        err = "no se ha podido resolver la dirección";
     else if (retval == ERR_NOTFOUND)
-    	err = "No se ha podido resolver la dirección.";
+    	err = "no se ha podido conectar.";
     else
-    	err = "Error desconocido.";
+    	err = "error desconocido.";
 
     if (retval <= 0)
     {
@@ -69,7 +66,7 @@ void connectClient(void)
         return;
     }
 
-    messageText("Conectado a %s:%d", addr_str, port);
+    messageText("Conectado a %s", addr_str);
 }
 
 void disconnectClient(void)

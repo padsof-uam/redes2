@@ -127,11 +127,12 @@ int server_close_communication(int handler)
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len)
 {
     int sock;
-    struct addrinfo *info;
+    struct addrinfo *info, *info_orig;
     struct addrinfo hints;
     int retval;
     short connected = 0;
-    char addr_buffer[INET6_ADDRSTRLEN];
+    int port_num;
+    char addr_buffer[INET6_ADDRSTRLEN+10];
 
     bzero(&hints, sizeof(struct addrinfo));
 
@@ -146,6 +147,8 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
         return ERR_SYS;
     else if (retval != 0)
         return ERR_AIR;
+
+    info_orig = info;
 
     while (info != NULL && !connected)
     {
@@ -162,14 +165,23 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
         }
     }
 
+    if(resolved_addr && info != NULL)
+    {
+        if(info->ai_family == PF_INET)
+            port_num = ntohs(((struct sockaddr_in*)info->ai_addr)->sin_port);
+        else if (info->ai_family == PF_INET6)
+            port_num = ntohs(((struct sockaddr_in6*)info->ai_addr)->sin6_port);
+        else
+            port_num = -1;
+
+        inet_ntop(info->ai_family, &(((struct sockaddr_in*)info->ai_addr)->sin_addr), addr_buffer, info->ai_addrlen);
+        snprintf(resolved_addr, resadr_len, "%s:%d", addr_buffer, port_num);
+    }
+    
+    freeaddrinfo(info_orig);
+
     if (!connected)
         return ERR_NOTFOUND;
 
-    if(resolved_addr)
-    {
-        inet_ntop(info->ai_family, info->ai_addr, addr_buffer, info->ai_addrlen);
-        strncpy(resolved_addr, addr_buffer, resadr_len);
-    }
-    
     return sock;
 }

@@ -54,6 +54,6 @@ char * getApodo();
 char * getNombre();
 char * getNombreReal();
 char * getServidor();
-int    getPuerto();
+char * getPuerto();
 
 #endif

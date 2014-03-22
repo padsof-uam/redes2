@@ -61,7 +61,7 @@ debug: $(TARGET)
 no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
-chat: CFLAGS += 
+chat: CFLAGS += $(DEBUG_CFLAGS)
 chat: LDFLAGS += 
 chat: $(BINDIR)/chat
 

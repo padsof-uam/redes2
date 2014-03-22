@@ -1,13 +1,15 @@
-#include "listener.h"
-#include "test_listener.h"
+#include "test_sockutils.h"
 #include "testmacros.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include "errors.h"
+#include "sockutils.h"
 
 /* BEGIN TESTS */
 int t_Server_close_communication__close_noconnected_socket() {
-	int sock = socket(AF_INET, SOCK_STREAM, TCP);
+	int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	int res = server_close_communication(sock);
 
 	if(res != OK)
@@ -47,11 +49,11 @@ int t_server_open_socket__opensocket() {
 
 /* END TESTS */
 
-int test_listener_suite(int* errors, int* success) {
+int test_sockutils_suite(int* errors, int* success) {
 	int tests_run = 0;
 	int tests_passed = 0;
 
-	printf("Begin test_listener suite.\n");
+	printf("Begin test_sockutils suite.\n");
 /* BEGIN TEST EXEC */
 	mu_run_test(t_Server_close_communication__close_noconnected_socket);
 	mu_run_test(t_Server_close_communication__close_connected_socket);
@@ -59,9 +61,9 @@ int test_listener_suite(int* errors, int* success) {
 	
 /* END TEST EXEC */
 	if(tests_passed == tests_run)
-		printf("End test_listener suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
+		printf("End test_sockutils suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
 	else
-		printf("End test_listener suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
+		printf("End test_sockutils suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);
 
 	*errors += (tests_run - tests_passed);
 	*success += tests_passed;

@@ -5,6 +5,6 @@
 #define DEFAULT_MAX_QUEUE 150
 
 
-int test_listener_suite(int*, int*);
+int test_sockutils_suite(int*, int*);
 
 #endif

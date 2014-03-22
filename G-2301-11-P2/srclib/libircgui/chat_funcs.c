@@ -12,6 +12,8 @@
 
 #include "chat.h"
 #include "messager.h"
+#include "sockutils.h"
+#include "errors.h"
 
 extern int rcv_sockcomm;
 
@@ -21,11 +23,9 @@ void connectClient(void)
     char *server = getServidor();
     int port = getPuerto();
     char port_str[10];
-    struct addrinfo *info;
     const char *err;
     char addr_str[100];
     int retval;
-    short connected = 0;
 
     snprintf(port_str, 10, "%d", port);
 
@@ -41,54 +41,35 @@ void connectClient(void)
         return;
     }
 
-
     messageText("Conectando con %s...", server);
 
-    retval = getaddrinfo(server, port_str, NULL, &info);
+ 	retval = client_connect_to(server, port_str, addr_str, 100);
 
-    if (retval == EAI_SYSTEM)
+    if (retval == ERR_SYS)
         err = strerror(errno);
-    else if (retval != 0)
+    else if (retval == ERR_AIR)
         err = gai_strerror(retval);
+    else if (retval == ERR_NOTFOUND)
+    	err = "No se ha podido resolver la dirección.";
+    else
+    	err = "Error desconocido.";
 
-    if (retval != 0)
+    if (retval <= 0)
     {
-        errorText("Error resolviendo la dirección %s: %s", server, err);
+        errorText("Error resolviendo %s: %s", server, err);
         return;
     }
 
-    while (info != NULL && !connected)
-    {
-        inet_ntop(info->ai_family, info->ai_addr, addr_str, info->ai_addrlen);
-        sock = socket(info->ai_family, info->ai_socktype, 17);
-
-        messageText("Resolviendo %s: tratando de conectar con %s...", server, addr_str);
-
-        if (sock == -1 || connect(sock, info->ai_addr, info->ai_addrlen) == -1)
-        {
-            errorText("Error conectando a %s: %s", server, strerror(errno));
-            close(sock);
-            info = info->ai_next;
-        }
-        else
-        {
-            connected = 1;
-        }
-    }
-
-    if (!connected)
-    {
-        errorText("No se ha podido connectar con el servidor %s", server);
-        return;
-    }
+    sock = retval;
 
     if (send_message(rcv_sockcomm, &sock, sizeof(int)) == -1)
     {
         errorText("Error al configurar la nueva conexión: %s", strerror(errno));
+        close(sock);
         return;
     }
 
-    messageText("Conectado a %s:%d", server, port);
+    messageText("Conectado a %s:%d", addr_str, port);
 }
 
 void disconnectClient(void)

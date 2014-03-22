@@ -5,9 +5,7 @@
 #include "test_dictionary.h"
 #include "test_list.h"
 #include "test_poller.h"
-#include "test_listener.h"
-#include "test_listener.h"
-#include "test_messager.h"
+#include "test_sockutils.h"
 #include "test_messager.h"
 #include "test_commparser.h"
 #include "test_daemonize.h"
@@ -99,7 +97,7 @@ int main(int argc, const char **argv)
 	if(include_test("poller", argc, argv))
 		run += test_poller_suite(&error, &success);
 	if(include_test("listener", argc, argv))
-		run += test_listener_suite(&error, &success);
+		run += test_sockutils_suite(&error, &success);
 	if(include_test("messager", argc, argv))
 		run += test_messager_suite(&error, &success);
     if(include_test("commparser", argc, argv))

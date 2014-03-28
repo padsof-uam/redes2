@@ -9,6 +9,7 @@
 #include "irc_processor.h"
 #include "sysutils.h"
 #include "log.h"
+#include "gui_client.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -74,70 +75,18 @@ static void capture_signal(int sig)
 int main(int argc, char const *argv[])
 {
     int comm_socks[2];
-    pthread_t listener_th = 0, receiver_th = 0, proc_th = 0, sender_th = 0;
-    short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0;
+    pthread_t listener_th = 0, receiver_th = 0, proc_th = 0, sender_th = 0, gui_th = 0;
+    short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0, gui_running = 0;
     int rcv_qid = 0, snd_qid = 0, master_qid = 0;
     int retval = EXIT_SUCCESS;
-    int kill_retval;
-    const char *conffile;
     char conf_path[300];
-
-    if (argc > 1 && !strcmp(argv[1], "stop"))
-    {
-        printf("Parando...\n");
-        kill_retval = read_pid_and_kill(PID_FILE);
-
-        if (kill_retval == 0)
-            printf("Daemon parado.\n");
-        else if (kill_retval == 1)
-            printf("El daemon no responde. Salida forzada.\n");
-        else
-            fprintf(stderr, "No se ha podido parar el daemon: %s\n", strerror(errno));
-
-        exit(EXIT_SUCCESS);
-    }
-
-    if (argc > 1)
-        conffile = argv[1];
-    else
-        conffile = DEFAULT_CONF_FILE;
-
-    if(realpath(conffile, conf_path) == NULL)
-    {
-        fprintf(stderr, "Archivo de configuración inexistente.\n");
-        strncpy(conf_path, conffile, 300);
-    }
-
-    comm_socks[0] = 0;
-    comm_socks[1] = 0;
-
-#ifndef NODAEMON
-    if (daemonize(LOG_ID) != OK)
-    {
-        slog(LOG_CRIT, "No se ha podido daemonizar.");
-        irc_exit(EXIT_FAILURE)
-    }
-#endif
-
-    if (!try_getlock(LOCK_FILE))
-    {
-        slog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
-        irc_exit(EXIT_FAILURE);
-    }
-
-    slog(LOG_NOTICE, "Daemon empezando.");
-
-    if (write_pid(PID_FILE) < 0)
-    {
-        slog(LOG_ERR, "Error escribiendo en pid_file. Sólo se podrá parar el daemon con kill.");
-    }
 
     if (signal(SIGTERM, capture_signal) == SIG_ERR)
     {
         slog(LOG_CRIT, "Error capturando señales.");
         irc_exit(EXIT_FAILURE);
     }
-
+    
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, comm_socks) < 0)
     {
         slog(LOG_CRIT, "No se han podido crear los sockets de comunicación con listener: %s", strerror(errno));
@@ -196,6 +145,15 @@ int main(int argc, char const *argv[])
     }
     sender_running = 1;
 
+    if (spawn_thread_gui(&gui_th,argc, argv) < 0)
+    {
+        slog(LOG_CRIT, "No se ha podido crear el hilo de interfaz: %s", strerror(errno));
+        irc_exit(EXIT_FAILURE);
+    }
+    gui_running = 1;
+
+
+
     slog(LOG_NOTICE, "Todas las estructuras creadas. Daemon iniciado.");
 
     /* Nos dedicamos a esperar hasta que nos digan que paramos */
@@ -213,6 +171,7 @@ cleanup:
     irc_pth_exit(receiver);
     irc_pth_exit(proc);
     irc_pth_exit(sender);
+    irc_pth_exit(gui);
 
     if (rcv_qid > 0)
         msgctl(rcv_qid, IPC_RMID, NULL);

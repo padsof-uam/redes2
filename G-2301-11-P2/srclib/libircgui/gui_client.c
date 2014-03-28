@@ -48,11 +48,18 @@
 *                                                                                                  *
 ***************************************************************************************************/
 
+#include "gui_client.h"
+#include "types.h"
+#include "log.h"
+
 #include <stdlib.h>
 #include <glib.h>
-#include "chat.h"
 #include <gtk/gtk.h>
 #include <stdarg.h>
+#include <string.h>
+#include <errno.h>
+
+
 
 /* Variables globales */
 GtkWidget *window;
@@ -65,6 +72,7 @@ gboolean toggleButtonState(GtkToggleButton *togglebutton){return gtk_toggle_butt
 
 int snd_qid;
 int rcv_sockcomm;
+struct irc_globdata * ircdata;
 
 /*******************************************************************************
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *
@@ -393,8 +401,29 @@ void ChatArea(GtkWidget *vbox)
   g_signal_connect(G_OBJECT(scroll), "size-allocate", G_CALLBACK(scrolling), NULL);
 }
 
-int main(int argc, char**argv)
+
+int spawn_thread_gui(pthread_t *gui_thread,int argc, const char**argv){
+
+  struct gui_data * thdata = malloc(sizeof(struct gui_thdata));
+
+  if (pthread_create(gui_thread, NULL, thread_gui, thdata))
+  {
+    slog(LOG_CRIT, "Error creando el hilo de la interfaz: %s", strerror(errno));
+    return ERR;
+  }
+  else
+  {
+    slog(LOG_INFO, "Hilo de interfaz creado");
+  }
+
+  return OK;
+}
+
+void * thread_gui(void * data)
 {
+
+  struct gui_thdata * thdata = (struct gui_thdata *)data;
+
   GtkWidget *hboxg, *vbox1,*vbox2;
 
   #pragma GCC diagnostic push
@@ -404,7 +433,7 @@ int main(int argc, char**argv)
 
   gdk_threads_init ();
   gdk_threads_enter ();
-  gtk_init(&argc, &argv); /* Inicia gnome */
+  gtk_init(&(thdata->argc), NULL); /* Inicia gnome */
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL); /* Ventana principal */
  

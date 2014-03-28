@@ -85,6 +85,8 @@ int main(int argc, char const *argv[])
     int retval = EXIT_SUCCESS;
     char conf_path[300];
 
+    install_stop_handlers();
+
     slog_set_output(stderr);
     #ifdef DEBUG
     slog_set_level(LOG_DEBUG);
@@ -127,13 +129,6 @@ int main(int argc, char const *argv[])
         slog(LOG_CRIT, "No se ha podido crear la cola de mensajes maestra: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
-
-    if (spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
-    {
-        slog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));
-        irc_exit(EXIT_FAILURE);
-    }
-    listener_running = 1;
 
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {

@@ -85,6 +85,13 @@ int main(int argc, char const *argv[])
     int retval = EXIT_SUCCESS;
     char conf_path[300];
 
+    slog_set_output(stderr);
+    #ifdef DEBUG
+    slog_set_level(LOG_DEBUG);
+    #else 
+    slog_set_level(LOG_WARNING);
+    #endif
+
     if (signal(SIGTERM, capture_signal) == SIG_ERR)
     {
         slog(LOG_CRIT, "Error capturando señales.");

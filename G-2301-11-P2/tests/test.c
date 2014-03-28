@@ -19,8 +19,6 @@
 #include <execinfo.h>
 #include <unistd.h>
 
-extern char _as[];
-
 #define BT_DEPTH 100
 
 static void _critical_stop_handler(int signum)
@@ -40,7 +38,6 @@ static void _critical_stop_handler(int signum)
     for (i = 0; i < frames; ++i)
         fprintf(stderr, "%s\n", strs[i]);
 
-    fprintf(stderr, "%s", _as);
     free(strs);
 
     abort();
@@ -107,9 +104,6 @@ int main(int argc, const char **argv)
 	    run += test_commparser_suite(&error, &success);
     if(include_test("daemonize", argc, argv))
     	run += test_daemonize_suite(&error, &success);
-
-    int *p = NULL;
-    *p = 2;
 
     /* END TEST REGION */
     time(&t);

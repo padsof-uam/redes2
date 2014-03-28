@@ -62,6 +62,9 @@
 
 
 /* Variables globales */
+pthread_mutex_t win_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
 GtkWidget *window;
 GtkWidget *eApodo, *eNombre, *eNombreR, *eServidor, *ePuerto;
 GtkTextIter iter;
@@ -181,10 +184,14 @@ void setModerated	(gboolean state){gtk_toggle_button_set_active(GTK_TOGGLE_BUTTO
 
 void publicText(char *user, char *text)
 {
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "italic",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "italic",  NULL);
+  pthread_mutex_lock(&win_mutex);
+    {
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "italic",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "italic",  NULL);
+    }
+    pthread_mutex_unlock(&win_mutex);
 }
 
 /*******************************************************************************
@@ -200,10 +207,14 @@ void publicText(char *user, char *text)
 
 void privateText(char *user, char *text)
 {
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "green_fg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "green_fg",  NULL);
+  pthread_mutex_lock(&win_mutex);
+    {
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "green_fg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "green_fg",  NULL);
+    }
+    pthread_mutex_unlock(&win_mutex);
 }
 
 /*******************************************************************************
@@ -218,14 +229,18 @@ void privateText(char *user, char *text)
 
 void errorText(char *errormessage, ...)
 {
-    char fmt_message[500];
-    va_list ap;
-    va_start(ap, errormessage);
-    vsnprintf(fmt_message, 500, errormessage, ap);
-    va_end(ap);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "Error: ", -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
+    pthread_mutex_lock(&win_mutex);
+    {
+      char fmt_message[500];
+      va_list ap;
+      va_start(ap, errormessage);
+      vsnprintf(fmt_message, 500, errormessage, ap);
+      va_end(ap);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "Error: ", -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "black_bg","italic", "bold", "lmarg",  NULL);
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
+    }
+    pthread_mutex_unlock(&win_mutex);
 }
 
 /*******************************************************************************
@@ -240,6 +255,9 @@ void errorText(char *errormessage, ...)
 
 void messageText(char *message, ...)
 {
+  pthread_mutex_lock(&win_mutex);
+    {
+    
     char fmt_message[500];
     va_list ap;
     va_start(ap, message);
@@ -248,6 +266,9 @@ void messageText(char *message, ...)
 
     gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "italic", "bold", "lmarg",  NULL);
     gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
+    }
+    pthread_mutex_unlock(&win_mutex);
+
 }
 
 /*******************************************************************************
@@ -258,16 +279,21 @@ void messageText(char *message, ...)
 *******************************************************************************/
 
 void scrolling(GtkWidget *widget, gpointer data)
-{ 
-  GtkAdjustment *adjustment;
+{
+  pthread_mutex_lock(&win_mutex); 
+  {
+    GtkAdjustment *adjustment;
 
-  adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
-  adjustment->value = adjustment->upper;
-  gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(widget),adjustment);
+    adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
+    adjustment->value = adjustment->upper;
+    gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(widget),adjustment);
+  }
+  pthread_mutex_unlock(&win_mutex);
 }
 
 void ConnectArea(GtkWidget *vbox)
 {
+    
   GtkWidget *table;
   GtkWidget *hb1, *hb2, *hb3, *hb4, *hb5, *hb6;
   GtkWidget *l1, *l2, *l3, *l4, *l5;

@@ -49,22 +49,22 @@ FMT_NORM := $(shell tput sgr0)
 .PRECIOUS: %.o %.d
 .PHONY: debug clean pack doxydoc docclean
  
-all: debug test
+all: test $(TARGETS)
+
+debug: CFLAGS += $(DEBUG_CFLAGS)
+debug: test $(TARGETS)
 
 final: all docs pack
 
 ### Compilation
 
-debug: CFLAGS += $(DEBUG_CFLAGS)
-debug: $(TARGET)
-
 no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
 chat: CFLAGS += $(DEBUG_CFLAGS)
-chat: LDFLAGS += 
 chat: $(BINDIR)/chat
 
+prsound: CFLAGS += $(DEBUG_CFLAGS)
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
 

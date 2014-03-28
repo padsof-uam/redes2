@@ -49,7 +49,7 @@ FMT_NORM := $(shell tput sgr0)
 .PRECIOUS: %.o %.d
 .PHONY: debug clean pack doxydoc docclean
  
-all: debug test
+all: debug test chat prsound
 
 final: all docs pack
 
@@ -65,6 +65,7 @@ chat: CFLAGS += $(DEBUG_CFLAGS)
 chat: LDFLAGS += 
 chat: $(BINDIR)/chat
 
+prsound: CFLAGS += $(DEBUG_CFLAGS)
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
 

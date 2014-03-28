@@ -1,8 +1,6 @@
 #include "daemonize.h"
 #include "errors.h"
 #include "log.h"
-#include "as_subsystem.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -56,7 +54,6 @@ void critical_stop_handler(int signum)
     for (i = 0; i < frames; ++i)
         slog(LOG_CRIT, strs[i]);
 
-    slog(LOG_ALERT, _as);
     free(strs);
 
     /* Y ahora, por si cuela, tratamos de salir ordenadamente y con tranquilidad */

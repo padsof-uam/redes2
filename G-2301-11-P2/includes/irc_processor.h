@@ -14,13 +14,33 @@ struct ircflag
 
 #define IRCFLAGS_END { -1, -1 }
 #define IS_IRCFLAGS_END(flag) ((flag).code == -1 && (flag).value == -1)
+
 /**
- * Procesa un mensaje IRC.
- * @param snd_qid ID de la cola donde enviar los mensajes generados.
- * @param data    Estructura con los datos del mensaje.
- * @param gdata   Estructura con los datos de IRC.
+ * Función de procesado de mensajes en el lado del servidor.
+ * @param snd_qid Cola de mensajes donde encolar las respuestas.
+ * @param data    Datos del mensaje para procesar.
+ * @param gdata   Estructura de los datos de irc.
  */
-void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
+void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
+
+/**
+ * Función de procesado de mensajes en el lado del cliente.
+ * @param snd_qid Cola de mensajes donde encolar las respuestas.
+ * @param data    Datos del mensaje para procesar.
+ * @param gdata   Estructura de los datos de irc.
+ */
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
+
+/**
+ * @internal
+ * @param snd_qid Cola de mensajes que serán enviados.
+ * @param data    Datos del mensaje para procesar.
+ * @param gdata   La estructura global de irc
+ * @param cmds    Array de comandos soportados.
+ * @param actions Array de cmd_actions soportadas
+ * @param len     Longitud de los arrays.
+ */
+void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata,const char ** cmds, cmd_action * actions, int len);
 
 /**
  * Separa los mensajes por CRLF, modificando y sustituyendo por \0.

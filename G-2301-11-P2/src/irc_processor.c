@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-const char *_irc_cmds[] =
+const char *_irc_server_cmds[] =
 {
     "PRIVMSG",
     "PING",
@@ -43,7 +43,7 @@ const char *_irc_cmds[] =
     "ISON"
 };
 
-cmd_action _irc_actions[] =
+cmd_action _irc_server_actions[] =
 {
     irc_privmsg,
     irc_ping,
@@ -70,7 +70,28 @@ cmd_action _irc_actions[] =
     irc_ison
 };
 
-void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
+const char * _irc_client_cmds[] = 
+{
+
+};
+
+cmd_action _irc_client_actions[] =
+{
+
+};
+
+void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
+{
+    _irc_msgprocess(snd_qid, data, gdata, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions)/sizeof(cmd_action)));
+}
+
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
+{
+    _irc_msgprocess(snd_qid, data, gdata,_irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions)/sizeof(cmd_action)));
+}
+
+
+void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, const char ** cmds, cmd_action * actions,int len)
 {
     struct irc_msgdata ircdata;
     char *msg;
@@ -105,7 +126,7 @@ void irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata
     {
         ircdata.msg = msg;
 
-        if (parse_exec_command(msg, _irc_cmds, _irc_actions, (sizeof(_irc_actions) / sizeof(cmd_action)), &ircdata) == -1)
+        if (parse_exec_command(msg, cmds, actions, len, &ircdata) == -1)
         {
             slog(LOG_WARNING, "Error parsing command %s", msg);
             irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);

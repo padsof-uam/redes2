@@ -30,7 +30,6 @@
 #define MAX_ERR_THRESHOLD 5
 #define RCV_QKEY 3991
 #define SND_QKEY 3992
-#define MASTER_QKEY 3993
 #define PID_FILE "/tmp/redirc.pid"
 #define LOCK_FILE "/tmp/redirc.lock"
 #define DEFAULT_CONF_FILE "redirc.conf"
@@ -82,7 +81,7 @@ int main(int argc, char const *argv[])
     int comm_socks[2];
     pthread_t listener_th = 0, receiver_th = 0, proc_th = 0, sender_th = 0, gui_th = 0;
     short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0, gui_running = 0;
-    int rcv_qid = 0, snd_qid = 0, master_qid = 0;
+    int rcv_qid = 0, snd_qid = 0;
     int retval = EXIT_SUCCESS;
     char conf_path[300];
 
@@ -114,14 +113,6 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
-    master_qid = msgget(MASTER_QKEY, 0666 | IPC_PRIVATE | IPC_CREAT);
-
-    if (master_qid == -1)
-    {
-        slog(LOG_CRIT, "No se ha podido crear la cola de mensajes maestra: %s", strerror(errno));
-        irc_exit(EXIT_FAILURE);
-    }
-
 
     ircdata = irc_init();
 
@@ -140,7 +131,7 @@ int main(int argc, char const *argv[])
     receiver_running = 1;
     rcv_sockcomm = comm_socks[1];
 
-    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess, conf_path) < 0)
+    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_client_msgprocess, conf_path) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
@@ -187,9 +178,6 @@ cleanup:
 
     if (snd_qid > 0)
         msgctl(snd_qid, IPC_RMID, NULL);
-
-    if (master_qid > 0)
-        msgctl(master_qid, IPC_RMID, NULL);
 
     if (comm_socks[0] != 0)
         close(comm_socks[0]);

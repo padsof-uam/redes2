@@ -1,4 +1,4 @@
 - El project falla algo.
 
-- MASTER_QID??
-
+- Sincronización de newText con el receiver.
+- liberar el mutex al acabar el programa.

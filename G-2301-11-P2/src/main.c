@@ -182,7 +182,7 @@ int main(int argc, char const *argv[])
     }
     receiver_running = 1;
 
-    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess, conf_path) < 0)
+    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_server_msgprocess, conf_path) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);

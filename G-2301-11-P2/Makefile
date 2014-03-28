@@ -18,8 +18,8 @@ P_NUM = 2
 P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 
-TARGET = main
-TARGETS := main chat prsound
+TARGET = server
+TARGETS := server chat prsound
 INCLUDES = -I./includes/
 
 INCS := $(wildcard $(INCDIR)/*.h)

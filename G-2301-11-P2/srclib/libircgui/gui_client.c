@@ -70,9 +70,6 @@ GtkWidget *topicB, *externB, *secretB, *guestB, *privateB, *moderatedB;
 
 gboolean toggleButtonState(GtkToggleButton *togglebutton){return gtk_toggle_button_get_active(togglebutton);}
 
-int snd_qid;
-int rcv_sockcomm;
-struct irc_globdata * ircdata;
 
 /*******************************************************************************
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *

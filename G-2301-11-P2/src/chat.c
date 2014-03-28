@@ -25,11 +25,11 @@
 #include <time.h>
 
 #define IRC_PORT 6667
-#define LOG_ID "redirc"
+#define LOG_ID "client"
 #define MAX_ERR_THRESHOLD 5
-#define RCV_QKEY 3981
-#define SND_QKEY 3982
-#define MASTER_QKEY 3983
+#define RCV_QKEY 3991
+#define SND_QKEY 3992
+#define MASTER_QKEY 3993
 #define PID_FILE "/tmp/redirc.pid"
 #define LOCK_FILE "/tmp/redirc.lock"
 #define DEFAULT_CONF_FILE "redirc.conf"
@@ -46,6 +46,10 @@
 pthread_mutex_t stop_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
 sig_atomic_t stop = 0;
+
+int snd_qid;
+int rcv_sockcomm;
+struct irc_globdata * ircdata;
 
 static void pthread_cancel_join(pthread_t th)
 {
@@ -130,6 +134,7 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
     receiver_running = 1;
+    rcv_sockcomm = comm_socks[1];
 
     if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_msgprocess, conf_path) < 0)
     {

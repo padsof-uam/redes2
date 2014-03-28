@@ -224,5 +224,17 @@ int irc_send_response(struct irc_msgdata *irc, const char *msg_format, ...);
  */
 int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b);
 
+/**
+ * Envía un mensaje formateado.
+ * @param  snd_qid Cola de envío.
+ * @param  fd      Socket.
+ * @param  format  Cadena a formatear.
+ * @param  ...     Argumentos estilo printf.
+ * @see printf
+ * @return         OK/ERR.
+ */
+int irc_send_message(int snd_qid, int fd, const char* format, ...);
+
+
 #endif
 

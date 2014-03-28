@@ -190,6 +190,23 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
     return param_count;
 }
 
+int irc_send_message(int snd_qid, int fd, const char* format, ...)
+{
+    struct sockcomm_data* msg;
+    int retval;
+    va_list ap;
+    va_start(ap, format);
+
+    msg = irc_response_vcreate(fd, format, ap);
+
+    if(msg == NULL)
+        return ERR;
+
+    retval =  irc_enqueue_msg(msg, snd_qid);
+    free(msg);
+    return retval;
+}
+
 int irc_enqueue_msg(struct sockcomm_data *msg, int snd_qid)
 {
     struct msg_sockcommdata qdata;

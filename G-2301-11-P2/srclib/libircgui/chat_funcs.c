@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 
-#include "chat.h"
+#include "gui_client.h"
 #include "messager.h"
 #include "sockutils.h"
 #include "errors.h"
@@ -59,7 +59,7 @@ void connectClient(void)
 
     sock = retval;
 
-    if (send_message(rcv_sockcomm, &sock, sizeof(int)) == -1)
+    if (send_message(rcv_sockcomm, &sock, sizeof(int)) == ERR_SOCK)
     {
         errorText("Error al configurar la nueva conexión: %s", strerror(errno));
         close(sock);

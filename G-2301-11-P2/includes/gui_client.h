@@ -6,8 +6,8 @@
 *                                                                                                  *
 ***************************************************************************************************/
 
-#ifndef _CHAT
-#define _CHAT
+#ifndef GUI_CLIENT_H
+#define GUI_CLIENT_H
 
 #include <glib.h>
 
@@ -55,5 +55,18 @@ char * getNombre();
 char * getNombreReal();
 char * getServidor();
 char * getPuerto();
+
+int spawn_thread_gui(pthread_t *recv_thread,int argc, const char**argv);
+
+void * thread_gui(void * data);
+
+struct gui_thdata
+{
+	int queue;
+	int argc;
+	char ** argv;
+};
+
+
 
 #endif

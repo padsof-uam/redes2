@@ -38,5 +38,11 @@ int try_getlock(const char* file);
  * @return          Límite.
  */
 rlim_t get_soft_limit(int resource);
+
+/**
+ * Instala el gestor de backtrace.
+ * @return OK/ERR.
+ */
+int install_stop_handlers();
 #endif
 

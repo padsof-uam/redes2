@@ -14,18 +14,23 @@
 #include "messager.h"
 #include "sockutils.h"
 #include "errors.h"
+#include "irc_processor.h"
 
 extern int rcv_sockcomm;
 extern struct irc_globdata * ircdata;
+extern int snd_qid;
 
 void connectClient(void)
 {
     int sock;
-    char *server = getServidor();
-    char* port = getPuerto();
     const char *err;
     char addr_str[100];
     int retval;
+    char *server = getServidor();
+    char *port = getPuerto();
+    char *nick = getApodo();
+    char *user = getNombre();
+    char *name = getNombreReal();
 
     if (!server || strlen(server) == 0)
     {
@@ -36,6 +41,12 @@ void connectClient(void)
     if (!port || strlen(port) == 0)
     {
         errorText("Error: puerto inválido.");
+        return;
+    }
+
+    if(!nick || !user || !name || strlen(nick) == 0 || strlen(user) == 0 || strlen(name) == 0)
+    {
+        errorWindow("Rellene los datos de nombre/usuario/apodo");
         return;
     }
 
@@ -66,6 +77,9 @@ void connectClient(void)
         close(sock);
         return;
     }
+
+    irc_send_message(snd_qid, sock, "NICK %s", getApodo());
+    irc_send_message(snd_qid, sock, "USER %s %s %s :%s", getNombre(), "0", "*", getNombreReal());
 
     messageText("Conectado a %s", addr_str);
 }
@@ -116,5 +130,6 @@ void newText (const char *msg)
 {
     errorText("Función no implementada");
 }
+
 
 

@@ -10,6 +10,7 @@
 #include "sysutils.h"
 #include "log.h"
 #include "gui_client.h"
+#include "irc_core.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -120,6 +121,9 @@ int main(int argc, char const *argv[])
         slog(LOG_CRIT, "No se ha podido crear la cola de mensajes maestra: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
+
+
+    ircdata = irc_init();
 
     if (spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
     {

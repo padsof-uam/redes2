@@ -16,6 +16,7 @@
 #include "errors.h"
 
 extern int rcv_sockcomm;
+extern struct irc_globdata * ircdata;
 
 void connectClient(void)
 {

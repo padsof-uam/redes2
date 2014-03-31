@@ -2,7 +2,7 @@
 #include "commparser.h"
 #include "irc_core.h"
 #include "irc_codes.h"
-#include "irc_funs.h"
+#include "irc_funs_server.h"
 #include "strings.h"
 #include "log.h"
 

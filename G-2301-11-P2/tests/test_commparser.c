@@ -51,6 +51,16 @@ int t_parse_exec_command__nullstr__noexec() {
 	mu_assert_eq(result, -1, "");
 	mu_end;	
 }
+
+int t_parse_command__nomatch_wildcard__returns_wildcard_index() {
+	const char* cmds[] = { "cmd1", "cmd2", "cmd3", "*"};
+	int result = parse_command("notacmd", cmds, 4);
+
+	mu_assert_eq(result, 3, "cmd not correct");
+
+	mu_end;
+}
+
 int t_parse_command__nullstr_returnsM1() {
 	char *cmd = NULL;
 	int result;
@@ -87,6 +97,7 @@ int test_commparser_suite(int* errors, int* success) {
 
 	printf("Begin test_commparser suite.\n");
 /* BEGIN TEST EXEC */
+	mu_run_test(t_parse_command__nomatch_wildcard__returns_wildcard_index);
 	mu_run_test(t_parse_exec_command__findsmatch_nofunc__noexec);
 	mu_run_test(t_parse_exec_command__findsmatch__returns_func_retval);
 	mu_run_test(t_parse_exec_command__nonexisting__noexec);

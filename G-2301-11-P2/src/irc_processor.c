@@ -3,6 +3,7 @@
 #include "irc_core.h"
 #include "irc_codes.h"
 #include "irc_funs_server.h"
+#include "irc_funs_client.h"
 #include "strings.h"
 #include "log.h"
 
@@ -72,12 +73,12 @@ cmd_action _irc_server_actions[] =
 
 const char * _irc_client_cmds[] = 
 {
-
+    "*"
 };
 
 cmd_action _irc_client_actions[] =
 {
-
+    irc_c_all
 };
 
 void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)

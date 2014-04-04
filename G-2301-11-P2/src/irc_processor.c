@@ -2,7 +2,8 @@
 #include "commparser.h"
 #include "irc_core.h"
 #include "irc_codes.h"
-#include "irc_funs.h"
+#include "irc_funs_server.h"
+#include "irc_funs_client.h"
 #include "strings.h"
 #include "log.h"
 #include "irc_client_funs.h"
@@ -79,6 +80,7 @@ const char * _irc_client_cmds[] =
 
 cmd_action _irc_client_actions[] =
 {
+    irc_c_all,
     irc_default
 };
 

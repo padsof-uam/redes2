@@ -1,6 +1,6 @@
 #include "test_irc_funs.h"
 #include "testmacros.h"
-#include "irc_funs.h"
+#include "irc_funs_server.h"
 #include "irc_core.h"
 #include "irc_processor.h"
 #include "types.h"
@@ -1015,6 +1015,7 @@ int t_irc_quit__message_provided__message_transmitted()
     assert_msgstr_eq(msgnum(0), ":pepe QUIT :Bye");
     irc_testend;
 }
+
 int t_irc_quit__no_message_provided__msg_is_nick()
 {
     struct irc_globdata *irc = irc_init();

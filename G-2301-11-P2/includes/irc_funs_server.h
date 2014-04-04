@@ -1,6 +1,5 @@
-#ifndef IRC_FUNS_H
-#define IRC_FUNS_H
-#include "types.h"
+#ifndef IRC_FUNS_SERVER_H
+#define IRC_FUNS_SERVER_H
 
 int irc_privmsg(void* data);
 int irc_ping(void* data);

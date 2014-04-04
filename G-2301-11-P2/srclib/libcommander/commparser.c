@@ -1,6 +1,11 @@
 #include "commparser.h"
 #include <string.h>
 
+static int _is_wildcard(const char* str)
+{
+	return str != NULL && strlen(str) == 1 && str[0] == '*';
+}
+
 int parse_command(const char* str, const char** commands, int len)
 {
 	int i;
@@ -9,7 +14,7 @@ int parse_command(const char* str, const char** commands, int len)
 		return -1;
 
 	for(i = 0; i < len; i++)
-		if(!strncasecmp(str, commands[i], strlen(commands[i])))
+		if(_is_wildcard(commands[i]) || !strncasecmp(str, commands[i], strlen(commands[i])))
 			return i;
 
 	if (!strcmp(commands[len-1],"*"))

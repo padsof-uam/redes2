@@ -85,7 +85,6 @@ void connectClient(void)
     irc_send_message(snd_qid, sock, "USER %s %s %s :%s", getNombre(), "0", "*", getNombreReal());
 
     ircdata->connected = 1;
-
     serv_sock = sock;
 
     messageText("Conectado a %s", addr_str);
@@ -93,14 +92,23 @@ void connectClient(void)
 
 void disconnectClient(void)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    irc_send_message(snd_qid, serv_sock, "QUIT :Bye!");
+    shutdown(serv_sock, 2);
+    messageText("Desconexión del servidor.");
+}
+
+void _send_flag(const char *flag)
+{
+    struct ircchan *chan = list_at(ircdata->chan_list, 0);
+    irc_send_message(snd_qid, serv_sock, "MODE %s %s", chan->name, flag);
 }
 
 void topicProtect(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    if (state)
+        _send_flag("+t");
+    else
+        _send_flag("-t");
 }
 
 void externMsg(gboolean state)
@@ -111,26 +119,34 @@ void externMsg(gboolean state)
 
 void secret(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    if (state)
+        _send_flag("+s");
+    else
+        _send_flag("-s");
 }
 
 void guests(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    if (state)
+        _send_flag("+i");
+    else
+        _send_flag("-i");
 }
 
 void privated(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    if (state)
+        _send_flag("+p");
+    else
+        _send_flag("-p");
 }
 
 void moderated(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    if (state)
+        _send_flag("+m");
+    else
+        _send_flag("-m");
 }
 
 void newText (const char *msg)

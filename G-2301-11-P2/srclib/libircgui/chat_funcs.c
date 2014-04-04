@@ -94,18 +94,22 @@ void disconnectClient(void)
     messageText("Desconexión del servidor.");
 }
 
-void _send_flag(const char *flag)
+void _send_flag(char flag, gboolean state)
 {
     struct ircchan *chan = list_at(ircdata->chan_list, 0);
-    irc_send_message(snd_qid, serv_sock, "MODE %s %s", chan->name, flag);
+    char mod;
+
+    if(state)
+        mod = '+';
+    else
+        mod = '-';
+
+    irc_send_message(snd_qid, serv_sock, "MODE %s %c%c", chan->name, mod, flag);
 }
 
 void topicProtect(gboolean state)
 {
-    if (state)
-        _send_flag("+t");
-    else
-        _send_flag("-t");
+    _send_flag('t', state);
 }
 
 void externMsg(gboolean state)
@@ -116,34 +120,22 @@ void externMsg(gboolean state)
 
 void secret(gboolean state)
 {
-    if (state)
-        _send_flag("+s");
-    else
-        _send_flag("-s");
+    _send_flag('s', state);
 }
 
 void guests(gboolean state)
 {
-    if (state)
-        _send_flag("+i");
-    else
-        _send_flag("-i");
+    _send_flag('i', state);
 }
 
 void privated(gboolean state)
 {
-    if (state)
-        _send_flag("+p");
-    else
-        _send_flag("-p");
+    _send_flag('p', state);
 }
 
 void moderated(gboolean state)
 {
-    if (state)
-        _send_flag("+m");
-    else
-        _send_flag("-m");
+    _send_flag('m', state);
 }
 
 void newText (const char *msg)

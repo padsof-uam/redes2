@@ -47,9 +47,10 @@ pthread_mutex_t stop_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
 sig_atomic_t stop = 0;
 
-int snd_qid;
-int rcv_sockcomm;
-struct irc_globdata * ircdata;
+extern int snd_qid;
+extern int rcv_sockcomm;
+extern struct irc_globdata * ircdata;
+extern int serv_sock;
 
 static void pthread_cancel_join(pthread_t th)
 {

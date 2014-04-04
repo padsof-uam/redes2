@@ -11,14 +11,17 @@
 #include <stdio.h>
 
 #include "gui_client.h"
+#include "log.h"
 #include "messager.h"
 #include "sockutils.h"
 #include "errors.h"
 #include "irc_processor.h"
+#include "list.h"
 
-extern int rcv_sockcomm;
-extern struct irc_globdata * ircdata;
-extern int snd_qid;
+int rcv_sockcomm;
+struct irc_globdata *ircdata;
+int snd_qid;
+int serv_sock;
 
 void connectClient(void)
 {
@@ -44,7 +47,7 @@ void connectClient(void)
         return;
     }
 
-    if(!nick || !user || !name || strlen(nick) == 0 || strlen(user) == 0 || strlen(name) == 0)
+    if (!nick || !user || !name || strlen(nick) == 0 || strlen(user) == 0 || strlen(name) == 0)
     {
         errorWindow("Rellene los datos de nombre/usuario/apodo");
         return;
@@ -52,16 +55,16 @@ void connectClient(void)
 
     messageText("Conectando con %s...", server);
 
- 	retval = client_connect_to(server, port, addr_str, 100);
+    retval = client_connect_to(server, port, addr_str, 100);
 
     if (retval == ERR_SYS)
         err = strerror(errno);
     else if (retval == ERR_AIR)
         err = "no se ha podido resolver la dirección";
     else if (retval == ERR_NOTFOUND)
-    	err = "no se ha podido conectar.";
+        err = "no se ha podido conectar.";
     else
-    	err = "error desconocido.";
+        err = "error desconocido.";
 
     if (retval <= 0)
     {
@@ -80,6 +83,10 @@ void connectClient(void)
 
     irc_send_message(snd_qid, sock, "NICK %s", getApodo());
     irc_send_message(snd_qid, sock, "USER %s %s %s :%s", getNombre(), "0", "*", getNombreReal());
+
+    ircdata->connected = 1;
+
+    serv_sock = sock;
 
     messageText("Conectado a %s", addr_str);
 }
@@ -128,7 +135,34 @@ void moderated(gboolean state)
 
 void newText (const char *msg)
 {
-    errorText("Función no implementada");
+
+    if (!msg)
+    {
+        slog(LOG_ERR, "Se ha colado un mensaje NULL desde la interfaz");
+        return;
+    }
+
+    if (*msg != '/')
+    {
+        if (!ircdata->connected)
+        {
+            errorText("No estás conectado a ningún servidor");
+        }
+        else if (list_count(ircdata->chan_list) == 0)
+        {
+            errorText("No perteneces a ningún canal al que enviar el mensaje");
+        }
+        else
+        {
+            /* Mandamos al servidor el mensaje para los usuarios del canal. */
+            irc_send_message(snd_qid, serv_sock, "PRIVMSG #%s %s", (char *) list_at(ircdata->chan_list, 0), msg);
+            messageText((char *) msg);
+        }
+    }
+    else
+    {
+        irc_send_message(snd_qid, serv_sock, msg + 1);
+    }
 }
 
 

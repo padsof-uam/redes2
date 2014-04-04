@@ -11,6 +11,10 @@ int parse_command(const char* str, const char** commands, int len)
 	for(i = 0; i < len; i++)
 		if(!strncasecmp(str, commands[i], strlen(commands[i])))
 			return i;
+
+	if (!strcmp(commands[len-1],"*"))
+		return len-1;
+	
 	return -1;
 }
 

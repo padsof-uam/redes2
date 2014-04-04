@@ -83,6 +83,7 @@ struct irc_globdata {
 	list* chan_list; /**< Lista de los canales >*/
 	dictionary* oper_passwords; /**< Diccionario usuario -> contraseña operador */
 	char servername[MAX_SERVER_NAME];
+	int connected;
 };
 
 struct irc_msgdata {

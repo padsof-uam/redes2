@@ -5,6 +5,7 @@
 #include "irc_funs.h"
 #include "strings.h"
 #include "log.h"
+#include "irc_client_funs.h"
 
 #include <string.h>
 #include <string.h>
@@ -72,12 +73,13 @@ cmd_action _irc_server_actions[] =
 
 const char * _irc_client_cmds[] = 
 {
-
+ /* estos rellenos son los que escriben en la interfaz*/
+    "*"
 };
 
 cmd_action _irc_client_actions[] =
 {
-
+    irc_default
 };
 
 void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)

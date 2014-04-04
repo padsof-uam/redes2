@@ -19,6 +19,7 @@
 extern int rcv_sockcomm;
 extern struct irc_globdata * ircdata;
 extern int snd_qid;
+extern int serv_sock;
 
 void connectClient(void)
 {
@@ -80,6 +81,8 @@ void connectClient(void)
 
     irc_send_message(snd_qid, sock, "NICK %s", getApodo());
     irc_send_message(snd_qid, sock, "USER %s %s %s :%s", getNombre(), "0", "*", getNombreReal());
+
+    serv_sock = sock;
 
     messageText("Conectado a %s", addr_str);
 }

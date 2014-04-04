@@ -76,6 +76,7 @@ gboolean toggleButtonState(GtkToggleButton *togglebutton){return gtk_toggle_butt
 int snd_qid;
 int rcv_sockcomm;
 struct irc_globdata * ircdata;
+int serv_sock;
 
 /*******************************************************************************
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *

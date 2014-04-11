@@ -82,7 +82,7 @@ int main(int argc, char const *argv[])
     int comm_socks[2];
     pthread_t listener_th = 0, receiver_th = 0, proc_th = 0, sender_th = 0, gui_th = 0;
     short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0, gui_running = 0;
-    int rcv_qid = 0, snd_qid = 0;
+    int rcv_qid = 0;
     int retval = EXIT_SUCCESS;
     char conf_path[300];
 
@@ -146,6 +146,7 @@ int main(int argc, char const *argv[])
         slog(LOG_CRIT, "No se ha podido crear el hilo de envío: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
     }
+    
     sender_running = 1;
 
     if (spawn_thread_gui(&gui_th,argc, argv) < 0)
@@ -157,7 +158,7 @@ int main(int argc, char const *argv[])
 
 
 
-    slog(LOG_NOTICE, "Todas las estructuras creadas. Daemon iniciado.");
+    slog(LOG_NOTICE, "Todas las estructuras creadas.");
 
     /* Nos dedicamos a esperar hasta que nos digan que paramos */
     pthread_mutex_lock(&stop_mutex);

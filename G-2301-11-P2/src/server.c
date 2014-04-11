@@ -111,6 +111,9 @@ int main(int argc, char const *argv[])
     comm_socks[0] = 0;
     comm_socks[1] = 0;
 
+    slog_set_level(LOG_DEBUG);
+    slog_debug("asdjhka");
+
 #ifndef NODAEMON
     if (daemonize(LOG_ID) != OK)
     {

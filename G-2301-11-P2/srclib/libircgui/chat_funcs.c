@@ -150,6 +150,8 @@ void newText (const char *msg)
         return;
     }
 
+    slog(LOG_INFO, "Se ha recibido el mensaje: \n%s\n para ser procesado",(char *) msg);
+
     if (*msg != '/')
     {
         if (!ircdata->connected)

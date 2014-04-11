@@ -80,7 +80,6 @@ const char * _irc_client_cmds[] =
 
 cmd_action _irc_client_actions[] =
 {
-    irc_c_all,
     irc_default
 };
 
@@ -129,6 +128,8 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
     while ((msg_end = irc_msgsep(msg, MAX_IRC_MSG)) != NULL)
     {
         ircdata.msg = msg;
+
+        slog_debug("Recibido mensaje \"%s\" en %d", msg, data->fd);
 
         if (parse_exec_command(msg, cmds, actions, len, &ircdata) == -1)
         {

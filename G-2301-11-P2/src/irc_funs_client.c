@@ -92,3 +92,24 @@ int irc_recv_privmsg(void* data)
 	return OK;	
 }
 
+int irc_needmoreparams(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char* params[2];
+	
+	if(irc_parse_paramlist(msgdata->msg, params, 2) < 2)
+	{
+		slog(LOG_ERR, "Respuesta ERR_NEEDMOREPARAMS mal formada: %s", msgdata->msg);
+		return OK;
+	}
+
+	errorText("Se necesitan más parámetros para el comando %s", params[0]);
+
+	return OK;
+}
+
+int irc_nickcollision(void* data)
+{
+	errorText("El nick que has escogido (%s) está en uso. Elige otro con el comando \"/nick tunuevonick\"", client->nick);
+}
+	

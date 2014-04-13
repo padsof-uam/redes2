@@ -74,6 +74,9 @@ cmd_action _irc_server_actions[] =
 const char * _irc_client_cmds[] = 
 {
     "332", /* RPL_TOPIC */
+    "433", /* ERR_NICKNAMEINUSE */
+    "436", /* ERR_NICKCOLLISION */
+    "461", /* ERR_NEEDMOREPARAMS */
     "JOIN",
     "PART",
     "PRIVMSG",
@@ -83,6 +86,9 @@ const char * _irc_client_cmds[] =
 cmd_action _irc_client_actions[] =
 {
     irc_recv_topic,
+    irc_nickcollision,
+    irc_nickcollision,
+    irc_needmoreparams,
     irc_recv_join,
     irc_recv_part,
     irc_recv_privmsg,

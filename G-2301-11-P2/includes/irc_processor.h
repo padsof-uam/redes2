@@ -62,6 +62,15 @@ char *irc_msgsep(char *str, int len);
 char *irc_remove_prefix(char *msg);
 
 /**
+ * Obtiene el prefijo de un mensaje IRC.
+ * @param  msg            Mensaje.
+ * @param  prefix_buf     Buffer donde almacenar el prefijo.
+ * @param  max_prefix_len Longitud del buffer.
+ * @return                OK/ERR.
+ */
+int irc_get_prefix(const char* msg, char* prefix_buf, size_t max_prefix_len);
+
+/**
  * Analiza una cadena y extrae los argumentos al mensaje IRC, ignorando tanto
  *  el prefijo como el nombre de mensaje. Si se la llama con mensaje
  *      :pref PRIVMSG a,b,c,d Hola : Nuevo mensaje

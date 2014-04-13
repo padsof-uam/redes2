@@ -171,6 +171,30 @@ char *irc_msgsep(char *str, int len)
     return msgend;
 }
 
+int irc_get_prefix(const char* msg, char* prefix_buf, size_t max_prefix_len)
+{
+    char* space_pos;
+    int prefix_len;
+
+    if(msg[0] != ':')
+        return ERR_PARSE;
+    msg++;
+    space_pos = strchr(msg, ' ');
+
+    if(!space_pos)
+        return ERR_PARSE;
+
+    prefix_len = space_pos - msg;
+
+    if(prefix_len + 1 > max_prefix_len)
+        prefix_len = max_prefix_len - 1;
+
+    strncpy(prefix_buf, msg, prefix_len);
+    prefix_buf[prefix_len] = '\0';
+
+    return OK;
+}
+
 int irc_parse_paramlist(char *msg, char **params, size_t max_params)
 {
     char *colon;

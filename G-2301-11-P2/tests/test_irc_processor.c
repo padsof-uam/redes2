@@ -18,6 +18,88 @@ struct ircflag fldic[] =
 };
 
 /* BEGIN TESTS */
+int t_irc_get_prefix__small_buffer__not_overflowed() {
+    const char* msg = ":123456 one two three";
+    char prefix[10];
+    int prefix_len = 3;
+    int i;
+    int retval;
+
+    for(i = 0; i < 10; i++)
+        prefix[i] = 1; /* Marcamos la cadena para comprobar que no se sobreescribe */
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, OK, "retval is not ok");
+    mu_assert_streq(prefix, "12", "prefix was not retrieved correctly");
+
+    for(i = 3; i< 10; i++)
+        mu_assert_eq(prefix[i], 1, "buffer overrun");
+
+    mu_end;
+}
+int t_irc_get_prefix__multiple_spaces_in_msg__returns_prefix() {
+    const char* msg = ":aprefix one two three";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, OK, "retval is not ok");
+    mu_assert_streq(prefix, "aprefix", "prefix was not retrieved correctly");
+
+    mu_end;
+}
+int t_irc_get_prefix__one_space__returns_prefix() {
+    const char* msg = ":aprefix one";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, OK, "retval is not ok");
+    mu_assert_streq(prefix, "aprefix", "prefix was not retrieved correctly");
+
+    mu_end;
+}
+int t_irc_get_prefix__no_colon__returns_err() {
+    const char* msg = "aprefix one";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, ERR_PARSE, "retval is not ERR_PARSE");
+
+    mu_end;
+}
+int t_irc_get_prefix__no_spaces__returns_err() {
+    const char* msg = ":aprefix";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, ERR_PARSE, "retval is not ERR_PARSE");
+
+    mu_end;
+}
+int t_irc_get_prefix__empty_string__returns_err() {
+    const char* msg = "";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, ERR_PARSE, "retval is not ERR_PARSE");
+
+    mu_end;
+}
 int t_irc_strflag__parse_flag__str_correct() {
 	int flags = flg1 | flg2;
 	char str[10];
@@ -231,6 +313,12 @@ int test_irc_processor_suite(int *errors, int *success)
 
     printf("Begin test_irc_processor suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_get_prefix__small_buffer__not_overflowed);
+	mu_run_test(t_irc_get_prefix__multiple_spaces_in_msg__returns_prefix);
+	mu_run_test(t_irc_get_prefix__one_space__returns_prefix);
+	mu_run_test(t_irc_get_prefix__no_colon__returns_err);
+	mu_run_test(t_irc_get_prefix__no_spaces__returns_err);
+	mu_run_test(t_irc_get_prefix__empty_string__returns_err);
 	mu_run_test(t_irc_strflag__parse_flag__str_correct);
     mu_run_test(t_irc_flagparse__multiple_flags_minus__flags_removed);
     mu_run_test(t_irc_flagparse__multiple_flags_add__flags_added);

@@ -74,12 +74,14 @@ cmd_action _irc_server_actions[] =
 const char * _irc_client_cmds[] = 
 {
     "332", /* RPL_TOPIC */
+    "JOIN",
     "*"
 };
 
 cmd_action _irc_client_actions[] =
 {
     irc_recv_topic,
+    irc_recv_join,
     irc_default
 };
 
@@ -102,7 +104,6 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
     int i;
     struct ircuser *user;
 
-
     ircdata.globdata = gdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
@@ -123,7 +124,6 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
 
     msg = data->data;
     msg[MAX_IRC_MSG] = '\0';
-    msg = irc_remove_prefix(msg);
 
     while ((msg_end = irc_msgsep(msg, MAX_IRC_MSG)) != NULL)
     {
@@ -131,7 +131,7 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
 
         slog_debug("Recibido mensaje \"%s\" en %d", msg, data->fd);
 
-        if (parse_exec_command(msg, cmds, actions, len, &ircdata) == -1)
+        if (parse_exec_command(irc_remove_prefix(msg), cmds, actions, len, &ircdata) == -1)
         {
             slog(LOG_WARNING, "Error parsing command %s", msg);
             irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);

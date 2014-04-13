@@ -71,6 +71,13 @@ struct ircuser {
 	list* channels; /**<Lista de punteros a estructuras de los canales a los que pertenece.>*/
 };
 
+struct irc_clientdata {
+	short connected;
+	char chan[MAX_CHAN_LEN];
+	char nick[MAX_NICK_LEN];
+	short in_channel;
+};
+
 /**
  * Estructura global de los datos del servidor IRC.
  * Se utilizan 2 diccionarios de usuarios que apuntan a las mismas estructuras de usuario, uno con los nicks y otro con los descriptores de socket.
@@ -85,12 +92,6 @@ struct irc_globdata {
 	char servername[MAX_SERVER_NAME];
 };
 
-struct irc_clientdata {
-	short connected;
-	char chan[MAX_CHAN_LEN];
-	char nick[MAX_NICK_LEN];
-	short in_channel;
-};
 
 struct irc_msgdata {
 	struct sockcomm_data* msgdata;

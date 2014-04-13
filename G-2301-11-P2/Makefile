@@ -4,6 +4,8 @@ DEBUG_CFLAGS = -DDEBUG -ggdb
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0)
 E_LIBS = -lpthread
 
+CFLAGS += $(DEBUG_CFLAGS)
+
 OBJDIR = obj
 SRCDIR = src
 INCDIR = includes
@@ -58,13 +60,10 @@ final: all docs pack
 
 ### Compilation
 
-no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
-chat: CFLAGS += $(DEBUG_CFLAGS)
 chat: $(BINDIR)/chat
 
-prsound: CFLAGS += $(DEBUG_CFLAGS)
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
 

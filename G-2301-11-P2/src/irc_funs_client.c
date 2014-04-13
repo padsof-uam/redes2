@@ -32,10 +32,10 @@ int irc_recv_topic(void* data)
 int irc_recv_join(void* data)
 {
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
-	char user[MAX_NICK_LEN];
+	char user[MAX_NICK_LEN + 1];
 	char* params[1];
 
-	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN) != OK || irc_parse_paramlist(msgdata->msg, params, 1) != 1)
+	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN + 1) != OK || irc_parse_paramlist(msgdata->msg, params, 1) != 1)
 	{
 		slog(LOG_ERR, "Mensaje JOIN mal formado: %s", msgdata->msg);
 		return OK;
@@ -51,3 +51,44 @@ int irc_recv_join(void* data)
 
 	return OK;
 }
+
+int irc_recv_part(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char user[MAX_NICK_LEN + 1];
+	char* params[1];
+
+	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN + 1) != OK || irc_parse_paramlist(msgdata->msg, params, 1) != 1)
+	{
+		slog(LOG_ERR, "Mensaje PART mal formado: %s", msgdata->msg);
+		return OK;
+	}	
+
+	if(!strncmp(user, client->nick, MAX_NICK_LEN))
+	{
+		client->in_channel = 0;
+	}
+
+	messageText("%s ha salido del canal \"%s\"", user, params[0]);
+
+	return OK;
+}
+
+int irc_recv_privmsg(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char user[MAX_NICK_LEN];
+	char* params[2];
+
+	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN) != OK || 
+		irc_parse_paramlist(msgdata->msg, params, 2) != 2)
+	{
+		slog(LOG_ERR, "Mensaje PRIVMSG mal formado: %s", msgdata->msg);
+		return OK;
+	}	
+
+	publicText(user, params[1]);
+
+	return OK;	
+}
+

@@ -166,7 +166,7 @@ void newText (const char *msg)
         else
         {
             /* Mandamos al servidor el mensaje para los usuarios del canal. */
-            irc_send_message(snd_qid, serv_sock, "PRIVMSG #%s %s", client->chan, msg);
+            irc_send_message(snd_qid, serv_sock, "PRIVMSG %s %s", client->chan, msg);
             privateText(client->nick, msg);
         }
     }

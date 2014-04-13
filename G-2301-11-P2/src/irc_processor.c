@@ -75,6 +75,8 @@ const char * _irc_client_cmds[] =
 {
     "332", /* RPL_TOPIC */
     "JOIN",
+    "PART",
+    "PRIVMSG",
     "*"
 };
 
@@ -82,6 +84,8 @@ cmd_action _irc_client_actions[] =
 {
     irc_recv_topic,
     irc_recv_join,
+    irc_recv_part,
+    irc_recv_privmsg,
     irc_default
 };
 

@@ -22,10 +22,10 @@
 void errorWindow(char *msg);
 
 /* Interfaz de impresión de textos */
-void publicText(char *username, char *text);
-void privateText(char *username, char *text);
-void errorText(char *errormessage, ...);
-void messageText(char *message, ...);
+void publicText(const char *username, const char *text);
+void privateText(const char *username, const char *text);
+void errorText(const char *errormessage, ...);
+void messageText(const char *message, ...);
 
 /* Funciones de conexión y desconexión */
 void connectClient(void);

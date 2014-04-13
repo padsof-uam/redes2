@@ -1,8 +1,9 @@
-#ifndef IRC_FUNS_CLIENT_H
-#define IRC_FUNS_CLIENT_H
+#ifndef IRC_CLIENT_FUNS_H
+#define IRC_CLIENT_FUNS_H
 
-int irc_c_all(void* data);
+#include "types.h"
 
-
+int irc_default(void * data);
+int irc_recv_topic(void* data);
 
 #endif

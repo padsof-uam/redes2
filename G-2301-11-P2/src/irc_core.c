@@ -31,8 +31,6 @@ struct irc_globdata *irc_init()
         return NULL;
     }
 
-    gdata->connected = 0;
-
     return gdata;
 }
 

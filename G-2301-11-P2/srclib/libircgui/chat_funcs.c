@@ -22,6 +22,7 @@ int rcv_sockcomm;
 struct irc_globdata *ircdata;
 int snd_qid;
 int serv_sock;
+struct irc_clientdata* client;
 
 void connectClient(void)
 {
@@ -84,7 +85,8 @@ void connectClient(void)
     irc_send_message(snd_qid, sock, "NICK %s", getApodo());
     irc_send_message(snd_qid, sock, "USER %s %s %s :%s", getNombre(), "0", "*", getNombreReal());
 
-    ircdata->connected = 1;
+    client->connected = 1;
+    strncpy(client->nick, nick, MAX_NICK_LEN);
     serv_sock = sock;
 
     messageText("Conectado a %s", addr_str);
@@ -143,30 +145,29 @@ void moderated(gboolean state)
 
 void newText (const char *msg)
 {
-
     if (!msg)
     {
         slog(LOG_ERR, "Se ha colado un mensaje NULL desde la interfaz");
         return;
     }
 
-    slog(LOG_INFO, "Se ha recibido el mensaje: \n%s\n para ser procesado",(char *) msg);
+    slog(LOG_DEBUG, "Recibido el mensaje \"%s\" desde interfaz para ser procesado", msg);
 
     if (*msg != '/')
     {
-        if (!ircdata->connected)
+        if (!client->connected)
         {
             errorText("No estás conectado a ningún servidor");
         }
-        else if (list_count(ircdata->chan_list) == 0)
+        else if (!client->in_channel)
         {
             errorText("No perteneces a ningún canal al que enviar el mensaje");
         }
         else
         {
             /* Mandamos al servidor el mensaje para los usuarios del canal. */
-            irc_send_message(snd_qid, serv_sock, "PRIVMSG #%s %s", (char *) list_at(ircdata->chan_list, 0), msg);
-            messageText((char *) msg);
+            irc_send_message(snd_qid, serv_sock, "PRIVMSG #%s %s", client->chan, msg);
+            privateText(client->nick, msg);
         }
     }
     else

@@ -2,7 +2,8 @@
 	"folders":
 	[
 		{
-			"path": "./"
+			"path": "./",
+			"folder_exclude_patterns": [ "bin", "obj", "doc/latex", "doc/html", "doc/man"]
 		},
 		{
 			"path": "../tools"

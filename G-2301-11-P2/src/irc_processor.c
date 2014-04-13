@@ -6,7 +6,6 @@
 #include "irc_funs_client.h"
 #include "strings.h"
 #include "log.h"
-#include "irc_client_funs.h"
 
 #include <string.h>
 #include <string.h>
@@ -74,12 +73,13 @@ cmd_action _irc_server_actions[] =
 
 const char * _irc_client_cmds[] = 
 {
- /* estos rellenos son los que escriben en la interfaz*/
+    "332", /* RPL_TOPIC */
     "*"
 };
 
 cmd_action _irc_client_actions[] =
 {
+    irc_recv_topic,
     irc_default
 };
 

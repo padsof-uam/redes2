@@ -80,11 +80,13 @@ extern struct irc_clientdata* client;
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *
 *******************************************************************************/
 
-char * getApodo()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eApodo));}
-char * getNombre()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eNombre));}
-char * getNombreReal()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eNombreR));}
-char * getServidor()	{return (char *) gtk_entry_get_text(GTK_ENTRY(eServidor));}
-char * getPuerto()	{return (char *) gtk_entry_get_text(GTK_ENTRY(ePuerto));}
+char * getApodo() {return (char *) gtk_entry_get_text(GTK_ENTRY(eApodo));}
+char * getNombre()  {return (char *) gtk_entry_get_text(GTK_ENTRY(eNombre));}
+char * getNombreReal()  {return (char *) gtk_entry_get_text(GTK_ENTRY(eNombreR));}
+char * getServidor()  {return (char *) gtk_entry_get_text(GTK_ENTRY(eServidor));}
+char * getPuerto()  {return (char *) gtk_entry_get_text(GTK_ENTRY(ePuerto));}
+
+void setApodo(const char* text)	{ gtk_entry_set_text(GTK_ENTRY(eApodo), text);}
 
 /*******************************************************************************
 *  Presenta una ventana con un mensaje de error                                *

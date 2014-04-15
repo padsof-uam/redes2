@@ -114,4 +114,29 @@ int irc_nickcollision(void* data)
 	client->connected = 0;
 	return OK;
 }
+
+int irc_recv_nick(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char prefix[MAX_NICK_LEN + 1];
+	char* params[1];
+
+	irc_get_prefix(msgdata->msg, prefix, MAX_NICK_LEN + 1);
+
+	if(irc_parse_paramlist(msgdata->msg, params, 1) != 1)
+	{
+		slog(LOG_ERR, "Mensaje NICK mal formado: %s", msgdata->msg);
+		return OK;
+	}
+
+	messageText("%s cambió su apodo a %s", prefix, params[0]);
+
+	if(!strncmp(prefix, client->nick, MAX_NICK_LEN))
+	{
+		client->connected = 1;
+		setApodo(prefix);
+	}
+
+	return OK;
+}
 	

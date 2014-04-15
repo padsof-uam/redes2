@@ -18,6 +18,19 @@ struct ircflag fldic[] =
 };
 
 /* BEGIN TESTS */
+int t_irc_get_prefix__full_prefix__ignores_host_part() {
+	const char* msg = ":nuts!~nuts@60.247.46.112 one two three";
+    char prefix[10];
+    int prefix_len = 10;
+    int retval;
+
+    retval = irc_get_prefix(msg, prefix, prefix_len);
+
+    mu_assert_eq(retval, OK, "retval is not ok");
+    mu_assert_streq(prefix, "nuts", "prefix was not retrieved correctly");
+
+    mu_end;
+}
 int t_irc_get_prefix__small_buffer__not_overflowed() {
     const char* msg = ":123456 one two three";
     char prefix[10];
@@ -313,6 +326,7 @@ int test_irc_processor_suite(int *errors, int *success)
 
     printf("Begin test_irc_processor suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_get_prefix__full_prefix__ignores_host_part);
 	mu_run_test(t_irc_get_prefix__small_buffer__not_overflowed);
 	mu_run_test(t_irc_get_prefix__multiple_spaces_in_msg__returns_prefix);
 	mu_run_test(t_irc_get_prefix__one_space__returns_prefix);

@@ -10,5 +10,6 @@ int irc_recv_part(void* data);
 int irc_recv_privmsg(void* data);
 int irc_needmoreparams(void* data);
 int irc_nickcollision(void* data);
+int irc_recv_nick(void* data);
 
 #endif

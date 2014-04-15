@@ -80,6 +80,7 @@ const char * _irc_client_cmds[] =
     "JOIN",
     "PART",
     "PRIVMSG",
+    "NICK",
     "*"
 };
 
@@ -92,6 +93,7 @@ cmd_action _irc_client_actions[] =
     irc_recv_join,
     irc_recv_part,
     irc_recv_privmsg,
+    irc_recv_nick,
     irc_default
 };
 
@@ -184,18 +186,23 @@ char *irc_msgsep(char *str, int len)
 int irc_get_prefix(const char* msg, char* prefix_buf, size_t max_prefix_len)
 {
     char* space_pos;
+    char* excl_pos;
     int prefix_len;
 
     if(msg[0] != ':')
         return ERR_PARSE;
     msg++;
     space_pos = strchr(msg, ' ');
+    excl_pos = strchr(msg, '!');
 
     if(!space_pos)
         return ERR_PARSE;
 
-    prefix_len = space_pos - msg;
-
+    if(excl_pos != NULL && excl_pos < space_pos)
+        prefix_len = excl_pos - msg;
+    else
+        prefix_len = space_pos - msg;
+    
     if(prefix_len + 1 > max_prefix_len)
         prefix_len = max_prefix_len - 1;
 

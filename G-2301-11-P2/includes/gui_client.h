@@ -50,6 +50,8 @@ void setModerated(gboolean state);
 /* Función llamada cuando se introduce una entrada */
 void newText (const char *msg);
 
+void setApodo(const char* text);
+
 char * getApodo();
 char * getNombre();
 char * getNombreReal();

@@ -50,6 +50,7 @@ sig_atomic_t stop = 0;
 extern int snd_qid;
 extern int rcv_sockcomm;
 extern struct irc_globdata * ircdata;
+extern struct irc_clientdata * client;
 extern int serv_sock;
 
 static void pthread_cancel_join(pthread_t th)
@@ -84,7 +85,6 @@ int main(int argc, char const *argv[])
     short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0, gui_running = 0;
     int rcv_qid = 0;
     int retval = EXIT_SUCCESS;
-    char conf_path[300];
 
     install_stop_handlers();
 
@@ -123,8 +123,10 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
+    client = malloc(sizeof(struct irc_clientdata));
 
-    ircdata = irc_init();
+    client->in_channel = 0;
+    client->connected = 0;
 
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {
@@ -134,7 +136,7 @@ int main(int argc, char const *argv[])
     receiver_running = 1;
     rcv_sockcomm = comm_socks[1];
 
-    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_client_msgprocess, conf_path) < 0)
+    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, (msg_process) irc_client_msgprocess, client) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);

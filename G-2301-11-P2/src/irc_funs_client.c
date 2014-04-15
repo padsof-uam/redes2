@@ -5,7 +5,6 @@
 
 #include <string.h>
 
-extern struct irc_clientdata* client;
 
 int irc_default(void * data){
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
@@ -41,10 +40,10 @@ int irc_recv_join(void* data)
 		return OK;
 	}	
 
-	if(!strncmp(user, client->nick, MAX_NICK_LEN))
+	if(!strncmp(user, msgdata->clientdata->nick, MAX_NICK_LEN))
 	{
-		client->in_channel = 1;
-		strncpy(client->chan, params[0], MAX_CHAN_LEN);
+		msgdata->clientdata->in_channel = 1;
+		strncpy(msgdata->clientdata->chan, params[0], MAX_CHAN_LEN);
 	}
 
 	messageText("%s ha entrado en el canal \"%s\"", user, params[0]);
@@ -64,9 +63,9 @@ int irc_recv_part(void* data)
 		return OK;
 	}	
 
-	if(!strncmp(user, client->nick, MAX_NICK_LEN))
+	if(!strncmp(user, msgdata->clientdata->nick, MAX_NICK_LEN))
 	{
-		client->in_channel = 0;
+		msgdata->clientdata->in_channel = 0;
 	}
 
 	messageText("%s ha salido del canal \"%s\"", user, params[0]);
@@ -110,8 +109,10 @@ int irc_needmoreparams(void* data)
 
 int irc_nickcollision(void* data)
 {
-	errorText("El nick que has escogido (%s) está en uso. Elige otro con el comando \"/nick tunuevonick\"", client->nick);
-	client->connected = 0;
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	
+	errorText("El nick que has escogido (%s) está en uso. Elige otro con el comando \"/nick tunuevonick\"", msgdata->clientdata->nick);
+	msgdata->clientdata->connected = 0;
 	return OK;
 }
 
@@ -131,9 +132,9 @@ int irc_recv_nick(void* data)
 
 	messageText("%s cambió su apodo a %s", prefix, params[0]);
 
-	if(!strncmp(prefix, client->nick, MAX_NICK_LEN))
+	if(!strncmp(prefix, msgdata->clientdata->nick, MAX_NICK_LEN))
 	{
-		client->connected = 1;
+		msgdata->clientdata->connected = 1;
 		setApodo(prefix);
 	}
 
@@ -156,11 +157,8 @@ int irc_recv_quit(void* data)
 
 	messageText("%s ha salido del canal: %s", prefix, params[0]);
 
-	if(!strncmp(prefix, client->nick, MAX_NICK_LEN))
-	{
-		client->connected = 1;
-		setApodo(prefix);
-	}
+	if(!strncmp(prefix, msgdata->clientdata->nick, MAX_NICK_LEN))
+		msgdata->clientdata->connected = 0;
 
 	return OK;
 }

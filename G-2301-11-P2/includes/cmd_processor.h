@@ -5,9 +5,9 @@
 #include "types.h"
 
 
-typedef void (*msg_process)(int snd_qid, struct sockcomm_data* data, struct irc_globdata* arg);
+typedef void (*msg_process)(int snd_qid, struct sockcomm_data* data, void* pass_through);
 
-int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun, const char* conf_file);
+int spawn_proc_thread(pthread_t *pth, int rcv_qid, int snd_qid, msg_process pfun, void* pass_through);
 void* proc_thread_entrypoint(void* data);
 #endif
 

@@ -27,20 +27,21 @@ void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_g
  * Función de procesado de mensajes en el lado del cliente.
  * @param snd_qid Cola de mensajes donde encolar las respuestas.
  * @param data    Datos del mensaje para procesar.
- * @param gdata   Estructura de los datos de irc.
+ * @param cdata   Estructura de los datos del cliente irc.
  */
-void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata);
 
 /**
  * @internal
  * @param snd_qid Cola de mensajes que serán enviados.
  * @param data    Datos del mensaje para procesar.
  * @param gdata   La estructura global de irc
+ * @param cdata   La estructura cliente de irc
  * @param cmds    Array de comandos soportados.
  * @param actions Array de cmd_actions soportadas
  * @param len     Longitud de los arrays.
  */
-void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata,const char ** cmds, cmd_action * actions, int len);
+void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, struct irc_clientdata* cdata, const char ** cmds, cmd_action * actions, int len);
 
 /**
  * Separa los mensajes por CRLF, modificando y sustituyendo por \0.

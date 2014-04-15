@@ -511,11 +511,7 @@ int spawn_thread_gui(pthread_t *gui_thread, int argc, const char **argv)
 void *thread_gui(void *data)
 {
     struct gui_thdata *thdata = (struct gui_thdata *)data;
-    client = malloc(sizeof(struct irc_clientdata));
-
-    client->in_channel = 0;
-    client->connected = 0;
-
+   
     GtkWidget *hboxg, *vbox1, *vbox2;
 
 #pragma GCC diagnostic push

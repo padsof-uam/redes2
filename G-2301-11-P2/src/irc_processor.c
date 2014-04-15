@@ -103,16 +103,16 @@ cmd_action _irc_client_actions[] =
 
 void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
 {
-    _irc_msgprocess(snd_qid, data, gdata, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions)/sizeof(cmd_action)));
+    _irc_msgprocess(snd_qid, data, gdata, NULL, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions)/sizeof(cmd_action)));
 }
 
-void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata)
 {
-    _irc_msgprocess(snd_qid, data, gdata,_irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions)/sizeof(cmd_action)));
+    _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions)/sizeof(cmd_action)));
 }
 
 
-void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, const char ** cmds, cmd_action * actions,int len)
+void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, struct irc_clientdata* cdata, const char ** cmds, cmd_action * actions,int len)
 {
     struct irc_msgdata ircdata;
     char *msg;
@@ -121,11 +121,12 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
     struct ircuser *user;
 
     ircdata.globdata = gdata;
+    ircdata.clientdata = cdata;
     ircdata.msgdata = data;
     ircdata.msg_tosend = list_new();
     ircdata.connection_to_terminate = 0;
 
-    if (data->fd < 0) /* Usuario eliminado */
+    if (data->fd < 0 && gdata != NULL) /* Usuario eliminado */
     {
         user = irc_user_byid(gdata, - data->fd);
 
@@ -135,7 +136,7 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
         return;
     }
 
-    if (irc_user_byid(gdata, data->fd) == NULL)
+    if (gdata != NULL && irc_user_byid(gdata, data->fd) == NULL)
         irc_register_user(gdata, data->fd);
 
     msg = data->data;

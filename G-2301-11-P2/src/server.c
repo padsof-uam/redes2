@@ -9,6 +9,7 @@
 #include "irc_processor.h"
 #include "sysutils.h"
 #include "log.h"
+#include "irc_core.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -81,6 +82,8 @@ int main(int argc, char const *argv[])
     int kill_retval;
     const char *conffile;
     char conf_path[300];
+    struct irc_globdata* gdata = NULL;
+    int conf_retval;
 
     if (argc > 1 && !strcmp(argv[1], "stop"))
     {
@@ -178,6 +181,21 @@ int main(int argc, char const *argv[])
     }
     listener_running = 1;
 
+    gdata = irc_init();
+
+    if(!gdata)
+    {
+        slog(LOG_CRIT, "No se han podido crear las estructuras del servidor IRC: %s", strerror(errno));
+        irc_exit(EXIT_FAILURE);
+    }
+
+    conf_retval = irc_load_config(gdata, conf_path);
+
+    if(conf_retval != OK)
+        slog(LOG_WARNING, "No se ha podido cargar correctamente la configuración: %d. %s", conf_retval, strerror(errno));
+    else
+        slog(LOG_NOTICE, "Cargada configuración.");
+
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de recepción de datos: %s", strerror(errno));
@@ -185,7 +203,7 @@ int main(int argc, char const *argv[])
     }
     receiver_running = 1;
 
-    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, irc_server_msgprocess, conf_path) < 0)
+    if (spawn_proc_thread(&proc_th, rcv_qid, snd_qid, (msg_process) irc_server_msgprocess, gdata) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de procesado: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
@@ -216,6 +234,9 @@ cleanup:
     irc_pth_exit(receiver);
     irc_pth_exit(proc);
     irc_pth_exit(sender);
+
+    if(gdata)
+        irc_destroy(gdata);
 
     if (rcv_qid > 0)
         msgctl(rcv_qid, IPC_RMID, NULL);

@@ -96,6 +96,7 @@ struct irc_globdata {
 struct irc_msgdata {
 	struct sockcomm_data* msgdata;
 	struct irc_globdata* globdata;
+	struct irc_clientdata* clientdata;
 	char* msg;
 	list* msg_tosend;
 	int connection_to_terminate;

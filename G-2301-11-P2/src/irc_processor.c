@@ -81,6 +81,8 @@ const char * _irc_client_cmds[] =
     "PART",
     "PRIVMSG",
     "NICK",
+    "QUIT",
+    "NOTICE",
     "*"
 };
 
@@ -94,6 +96,8 @@ cmd_action _irc_client_actions[] =
     irc_recv_part,
     irc_recv_privmsg,
     irc_recv_nick,
+    irc_recv_quit,
+    irc_recv_notice,
     irc_default
 };
 
@@ -202,7 +206,7 @@ int irc_get_prefix(const char* msg, char* prefix_buf, size_t max_prefix_len)
         prefix_len = excl_pos - msg;
     else
         prefix_len = space_pos - msg;
-    
+
     if(prefix_len + 1 > max_prefix_len)
         prefix_len = max_prefix_len - 1;
 

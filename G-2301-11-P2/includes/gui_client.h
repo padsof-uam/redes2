@@ -26,6 +26,7 @@ void publicText(const char *username, const char *text);
 void privateText(const char *username, const char *text);
 void errorText(const char *errormessage, ...);
 void messageText(const char *message, ...);
+void noticeText(const char* message, ...);
 
 /* Funciones de conexión y desconexión */
 void connectClient(void);

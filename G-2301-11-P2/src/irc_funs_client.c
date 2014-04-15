@@ -9,22 +9,22 @@ extern struct irc_clientdata* client;
 
 int irc_default(void * data){
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
-	messageText("server: %s", msgdata->msg);
+	noticeText("server: %s", msgdata->msg);
 	return OK;
 }
 
 int irc_recv_topic(void* data)
 {
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
-	char* params[2];
+	char* params[3];
 	
-	if(irc_parse_paramlist(msgdata->msg, params, 2) < 2)
+	if(irc_parse_paramlist(msgdata->msg, params, 3) < 3)
 	{
 		slog(LOG_ERR, "Respuesta RPL_TOPIC mal formada: %s", msgdata->msg);
 		return OK;
 	}
 
-	messageText("El tema del canal \"%s\" es : %s", params[0], params[1]);
+	messageText("El tema del canal \"%s\" es : %s", params[1], params[2]);
 
 	return OK;
 }
@@ -77,7 +77,7 @@ int irc_recv_part(void* data)
 int irc_recv_privmsg(void* data)
 {
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
-	char user[MAX_NICK_LEN];
+	char user[MAX_NICK_LEN + 1];
 	char* params[2];
 
 	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN) != OK || 
@@ -140,3 +140,43 @@ int irc_recv_nick(void* data)
 	return OK;
 }
 	
+int irc_recv_quit(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char prefix[MAX_NICK_LEN + 1];
+	char* params[1];
+
+	irc_get_prefix(msgdata->msg, prefix, MAX_NICK_LEN + 1);
+
+	if(irc_parse_paramlist(msgdata->msg, params, 1) != 1)
+	{
+		slog(LOG_ERR, "Mensaje QUIT mal formado: %s", msgdata->msg);
+		return OK;
+	}
+
+	messageText("%s ha salido del canal: %s", prefix, params[0]);
+
+	if(!strncmp(prefix, client->nick, MAX_NICK_LEN))
+	{
+		client->connected = 1;
+		setApodo(prefix);
+	}
+
+	return OK;
+}
+
+int irc_recv_notice(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char* params[2];
+
+	if(irc_parse_paramlist(msgdata->msg, params, 2) != 2)
+	{
+		slog(LOG_ERR, "Mensaje NOTICE mal formado: %s", msgdata->msg);
+		return OK;
+	}	
+
+	noticeText("server: %s", params[1]);
+
+	return OK;	
+}

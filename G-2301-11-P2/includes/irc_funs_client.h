@@ -11,5 +11,7 @@ int irc_recv_privmsg(void* data);
 int irc_needmoreparams(void* data);
 int irc_nickcollision(void* data);
 int irc_recv_nick(void* data);
+int irc_recv_quit(void* data);
+int irc_recv_notice(void* data);
 
 #endif

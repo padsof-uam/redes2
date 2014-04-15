@@ -153,7 +153,7 @@ void newText (const char *msg)
 
     slog(LOG_DEBUG, "Recibido el mensaje \"%s\" desde interfaz para ser procesado", msg);
 
-    if (*msg != '/')
+    if (*msg != '/' || !strncmp("/msg ", msg, 5))
     {
         if (!client->connected)
         {

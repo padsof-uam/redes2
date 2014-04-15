@@ -111,5 +111,7 @@ int irc_needmoreparams(void* data)
 int irc_nickcollision(void* data)
 {
 	errorText("El nick que has escogido (%s) está en uso. Elige otro con el comando \"/nick tunuevonick\"", client->nick);
+	client->connected = 0;
+	return OK;
 }
 	

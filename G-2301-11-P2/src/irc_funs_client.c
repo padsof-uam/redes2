@@ -135,7 +135,8 @@ int irc_recv_nick(void* data)
 	if(!strncmp(prefix, msgdata->clientdata->nick, MAX_NICK_LEN))
 	{
 		msgdata->clientdata->connected = 1;
-		setApodo(prefix);
+		strncpy(msgdata->clientdata->nick, params[0], MAX_NICK_LEN);
+		setApodo(params[0]);
 	}
 
 	return OK;

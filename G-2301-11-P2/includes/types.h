@@ -76,6 +76,7 @@ struct irc_clientdata {
 	char chan[MAX_CHAN_LEN];
 	char nick[MAX_NICK_LEN];
 	short in_channel;
+	int serv_sock;
 };
 
 /**

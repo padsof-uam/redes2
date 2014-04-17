@@ -111,7 +111,6 @@ void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_c
     _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions)/sizeof(cmd_action)));
 }
 
-
 void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, struct irc_clientdata* cdata, const char ** cmds, cmd_action * actions,int len)
 {
     struct irc_msgdata ircdata;
@@ -128,7 +127,7 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
 
     if (data->fd < 0 && gdata != NULL) /* Usuario eliminado */
     {
-        user = irc_user_byid(gdata, - data->fd);
+        user = irc_user_byid(gdata, data->fd);
 
         if (user)
             irc_delete_user(gdata, user);
@@ -538,6 +537,21 @@ int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b)
     }
 
     return 0;
+}
+
+char* irc_next_param(const char* msg)
+{
+    char* space;
+
+    if(!msg)
+        return NULL;
+
+    space = strchr(msg, ' ');
+
+    if(!space)
+        return NULL;   
+    else
+        return space + 1;
 }
 
 char *irc_errstr(int errcode)

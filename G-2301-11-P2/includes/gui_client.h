@@ -27,10 +27,14 @@ void privateText(const char *username, const char *text);
 void errorText(const char *errormessage, ...);
 void messageText(const char *message, ...);
 void noticeText(const char* message, ...);
+void actionText(const char* username, const char *message, ...);
 
 /* Funciones de conexión y desconexión */
 void connectClient(void);
 void disconnectClient(void);
+
+void connectToServer(const char *server, const char* port);
+void connectToFavServ(int favserv);
 
 /* Funciones llamadas cuando se produce un cambio de estado */
 void topicProtect(gboolean state);

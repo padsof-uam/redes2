@@ -6,7 +6,7 @@ man
 latex
 html
 *.dat
-
+.redirc*
 # LaTeX
 *.acn
 *.acr

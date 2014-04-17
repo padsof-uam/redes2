@@ -344,19 +344,34 @@ void noticeText(const char *message, ...)
 	pthread_mutex_unlock(&win_mutex);
 }
 
+void actionText(const char* username, const char *message, ...)
+{
+	pthread_mutex_lock(&win_mutex);
+	{
+		char fmt_message[500];
+		va_list ap;
+		va_start(ap, message);
+		vsnprintf(fmt_message, 500, message, ap);
+		va_end(ap);
+
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, username, -1, "green", "bold", "lmarg",  NULL);
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "green", "lmarg",  NULL);
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "green",  NULL);
+	}
+	pthread_mutex_unlock(&win_mutex);
+}
+
 void setUserConnectionState(const gboolean isConnected)
 {
     if(isConnected)
     {
         gtkDisable(btnConnect);
         gtkEnable(btnDisconnect);
-        gtkEnable(tbInput);
     }
     else
     {
         gtkEnable(btnConnect);
         gtkDisable(btnDisconnect);
-        gtkDisable(tbInput);
     }
 }
 

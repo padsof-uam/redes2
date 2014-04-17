@@ -265,6 +265,14 @@ int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b);
  */
 int irc_send_message(int snd_qid, int fd, const char* format, ...);
 
-
+/**
+ * Devuelve un puntero al siguiente parámetro de un mensaje IRC (separados
+ * 	por espacios) o NULL si no hay más parámetros.
+ *
+ * No modifica la cadena pasada como argumento.
+ * @param  msg Mensaje.
+ * @return     Siguiente parámetro o NULL si no hay más.
+ */
+char* irc_next_param(const char* msg);
 #endif
 

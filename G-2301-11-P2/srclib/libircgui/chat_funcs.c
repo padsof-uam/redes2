@@ -17,24 +17,45 @@
 #include "errors.h"
 #include "irc_processor.h"
 #include "list.h"
+#include "irc_funs_userinput.h"
+#include "server_history.h"
 
 int rcv_sockcomm;
 struct irc_globdata *ircdata;
 int snd_qid;
-int serv_sock;
-struct irc_clientdata* client;
+struct irc_clientdata *client;
 
 void connectClient(void)
 {
+    char *server = getServidor();
+    char *port = getPuerto();
+
+    connectToServer(server, port);
+}
+
+void connectToFavServ(int favserv)
+{
+    struct serv_info serv;
+
+    if(serv_get_number(favserv, &serv) != OK)
+    {
+        errorText("No hemos podido recuperar el servidor número %d", favserv);
+        return;
+    }
+
+    connectToServer(serv.servname, serv.port);
+}
+
+void connectToServer(const char *server, const char* port)
+{
+    char *nick = getApodo();
+    char *user = getNombre();
+    char *name = getNombreReal();
     int sock;
     const char *err;
     char addr_str[100];
     int retval;
-    char *server = getServidor();
-    char *port = getPuerto();
-    char *nick = getApodo();
-    char *user = getNombre();
-    char *name = getNombreReal();
+    struct serv_info serv;
 
     if (!server || strlen(server) == 0)
     {
@@ -52,7 +73,10 @@ void connectClient(void)
     {
         errorWindow("Rellene los datos de nombre/usuario/apodo");
         return;
-    }
+    }   
+
+    if(client->connected)
+        disconnectClient();
 
     messageText("Conectando con %s...", server);
 
@@ -87,17 +111,21 @@ void connectClient(void)
 
     client->connected = 1;
     strncpy(client->nick, nick, MAX_NICK_LEN);
-    serv_sock = sock;
+    client->serv_sock = sock;
 
     setUserConnectionState(TRUE);
+
+    strncpy(serv.servname, server, SERV_NAMELEN);
+    strncpy(serv.port, port, MAX_PORT_LEN);
+    serv_save_connection(&serv);
 
     messageText("Conectado a %s", addr_str);
 }
 
 void disconnectClient(void)
 {
-    irc_send_message(snd_qid, serv_sock, "QUIT :Bye!");
-    shutdown(serv_sock, 2);
+    irc_send_message(snd_qid,  client->serv_sock, "QUIT :Bye!");
+    shutdown(client->serv_sock, 2);
     messageText("Desconexión del servidor.");
     setUserConnectionState(FALSE);
 }
@@ -107,12 +135,12 @@ void _send_flag(char flag, gboolean state)
     struct ircchan *chan = list_at(ircdata->chan_list, 0);
     char mod;
 
-    if(state)
+    if (state)
         mod = '+';
     else
         mod = '-';
 
-    irc_send_message(snd_qid, serv_sock, "MODE %s %c%c", chan->name, mod, flag);
+    irc_send_message(snd_qid, client->serv_sock, "MODE %s %c%c", chan->name, mod, flag);
 }
 
 void topicProtect(gboolean state)
@@ -146,8 +174,15 @@ void moderated(gboolean state)
     _send_flag('m', state);
 }
 
+static short _is_server_message(const char* msg)
+{
+    return strncmp("/server", msg, strlen("/server")) == 0;
+}
+
 void newText (const char *msg)
 {
+    char irc_msg[MAX_IRC_MSG];
+
     if (!msg)
     {
         slog(LOG_ERR, "Se ha colado un mensaje NULL desde la interfaz");
@@ -156,7 +191,13 @@ void newText (const char *msg)
 
     slog(LOG_DEBUG, "Recibido el mensaje \"%s\" desde interfaz para ser procesado", msg);
 
-    if (*msg != '/' || !strncmp("/msg ", msg, 5))
+    if(!client->connected && !_is_server_message(msg))
+    {
+        errorText("No estás conectado a ningún servidor.");
+        return;
+    }
+
+    if (*msg != '/')
     {
         if (!client->in_channel)
         {
@@ -165,13 +206,14 @@ void newText (const char *msg)
         else
         {
             /* Mandamos al servidor el mensaje para los usuarios del canal. */
-            irc_send_message(snd_qid, serv_sock, "PRIVMSG %s :%s", client->chan, msg);
+            irc_send_message(snd_qid, client->serv_sock, "PRIVMSG %s :%s", client->chan, msg);
             privateText(client->nick, msg);
         }
     }
     else
     {
-        irc_send_message(snd_qid, serv_sock, msg + 1);
+        snprintf(irc_msg, MAX_IRC_MSG, "%s\r\n", msg + 1);
+        irc_user_msgprocess(irc_msg, client);
     }
 }
 

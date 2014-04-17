@@ -59,6 +59,8 @@ char * getNombreReal();
 char * getServidor();
 char * getPuerto();
 
+void setUserConnectionState(const gboolean isConnected);
+
 int spawn_thread_gui(pthread_t *recv_thread,int argc, const char**argv);
 
 void * thread_gui(void * data);

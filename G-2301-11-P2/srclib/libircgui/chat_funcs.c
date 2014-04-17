@@ -89,6 +89,8 @@ void connectClient(void)
     strncpy(client->nick, nick, MAX_NICK_LEN);
     serv_sock = sock;
 
+    setUserConnectionState(TRUE);
+
     messageText("Conectado a %s", addr_str);
 }
 
@@ -97,6 +99,7 @@ void disconnectClient(void)
     irc_send_message(snd_qid, serv_sock, "QUIT :Bye!");
     shutdown(serv_sock, 2);
     messageText("Desconexión del servidor.");
+    setUserConnectionState(FALSE);
 }
 
 void _send_flag(char flag, gboolean state)
@@ -155,18 +158,14 @@ void newText (const char *msg)
 
     if (*msg != '/' || !strncmp("/msg ", msg, 5))
     {
-        if (!client->connected)
-        {
-            errorText("No estás conectado a ningún servidor");
-        }
-        else if (!client->in_channel)
+        if (!client->in_channel)
         {
             errorText("No perteneces a ningún canal al que enviar el mensaje");
         }
         else
         {
             /* Mandamos al servidor el mensaje para los usuarios del canal. */
-            irc_send_message(snd_qid, serv_sock, "PRIVMSG %s %s", client->chan, msg);
+            irc_send_message(snd_qid, serv_sock, "PRIVMSG %s :%s", client->chan, msg);
             privateText(client->nick, msg);
         }
     }

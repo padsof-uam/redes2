@@ -42,6 +42,9 @@ int irc_recv_join(void* data)
 
 	if(!strncmp(user, msgdata->clientdata->nick, MAX_NICK_LEN))
 	{
+		if(msgdata->clientdata->in_channel)
+			irc_send_response(msgdata, "PART %s", msgdata->clientdata->chan);
+		
 		msgdata->clientdata->in_channel = 1;
 		strncpy(msgdata->clientdata->chan, params[0], MAX_CHAN_LEN);
 	}

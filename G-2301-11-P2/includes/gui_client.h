@@ -47,12 +47,12 @@ void privated(gboolean state);
 void moderated(gboolean state);
 
 /* Funciones para cambiar el estado */
-void setTopicProtect(gboolean state);
-void setExternMsg(gboolean state);
-void setSecret(gboolean state);
-void setGuests(gboolean state);
-void setPrivated(gboolean state);
-void setModerated(gboolean state);
+void setTopicProtect(gboolean state, gboolean enabled);
+void setExternMsg(gboolean state, gboolean enabled);
+void setSecret(gboolean state, gboolean enabled);
+void setGuests(gboolean state, gboolean enabled);
+void setPrivate(gboolean state, gboolean enabled);
+void setModerated(gboolean state, gboolean enabled);
 
 /* Función llamada cuando se introduce una entrada */
 void newText (const char *msg);

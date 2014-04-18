@@ -124,10 +124,8 @@ int main(int argc, char const *argv[])
     }
 
     client = malloc(sizeof(struct irc_clientdata));
-
-    client->in_channel = 0;
-    client->connected = 0;
-
+    bzero(client, sizeof(struct irc_clientdata));
+    
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de recepción de datos: %s", strerror(errno));

@@ -71,7 +71,7 @@ cmd_action _irc_server_actions[] =
     irc_ison
 };
 
-const char * _irc_client_cmds[] = 
+const char *_irc_client_cmds[] =
 {
     "332", /* RPL_TOPIC */
     "433", /* ERR_NICKNAMEINUSE */
@@ -83,6 +83,7 @@ const char * _irc_client_cmds[] =
     "NICK",
     "QUIT",
     "NOTICE",
+    "MODE",
     "*"
 };
 
@@ -98,20 +99,21 @@ cmd_action _irc_client_actions[] =
     irc_recv_nick,
     irc_recv_quit,
     irc_recv_notice,
+    irc_recv_mode,
     irc_default
 };
 
 void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
 {
-    _irc_msgprocess(snd_qid, data, gdata, NULL, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions)/sizeof(cmd_action)));
+    _irc_msgprocess(snd_qid, data, gdata, NULL, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions) / sizeof(cmd_action)));
 }
 
 void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata)
 {
-    _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions)/sizeof(cmd_action)));
+    _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions) / sizeof(cmd_action)));
 }
 
-void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, struct irc_clientdata* cdata, const char ** cmds, cmd_action * actions,int len)
+void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata, struct irc_clientdata *cdata, const char **cmds, cmd_action *actions, int len)
 {
     struct irc_msgdata ircdata;
     char *msg;
@@ -150,7 +152,9 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
         if (parse_exec_command(irc_remove_prefix(msg), cmds, actions, len, &ircdata) == -1)
         {
             slog(LOG_WARNING, "Error parsing command %s", msg);
-            irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);
+
+            if (gdata != NULL)
+                irc_send_numericreply(&ircdata, ERR_UNKNOWNCOMMAND, msg);
         }
 
         msg = msg_end;
@@ -187,27 +191,27 @@ char *irc_msgsep(char *str, int len)
     return msgend;
 }
 
-int irc_get_prefix(const char* msg, char* prefix_buf, size_t max_prefix_len)
+int irc_get_prefix(const char *msg, char *prefix_buf, size_t max_prefix_len)
 {
-    char* space_pos;
-    char* excl_pos;
+    char *space_pos;
+    char *excl_pos;
     int prefix_len;
 
-    if(msg[0] != ':')
+    if (msg[0] != ':')
         return ERR_PARSE;
     msg++;
     space_pos = strchr(msg, ' ');
     excl_pos = strchr(msg, '!');
 
-    if(!space_pos)
+    if (!space_pos)
         return ERR_PARSE;
 
-    if(excl_pos != NULL && excl_pos < space_pos)
+    if (excl_pos != NULL && excl_pos < space_pos)
         prefix_len = excl_pos - msg;
     else
         prefix_len = space_pos - msg;
 
-    if(prefix_len + 1 > max_prefix_len)
+    if (prefix_len + 1 > max_prefix_len)
         prefix_len = max_prefix_len - 1;
 
     strncpy(prefix_buf, msg, prefix_len);
@@ -229,7 +233,7 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
         return 0; /* No hay un espacio detrás del comando -> no hay argumentos. */
 
     msg++; /* Marcamos al inicio de la lista de parámetros */
-    if (*msg=='\0')
+    if (*msg == '\0')
     {
         return 0; /* Hay un espacion detrás del comando pero no hay argumentos. */
     }
@@ -261,16 +265,16 @@ int irc_parse_paramlist(char *msg, char **params, size_t max_params)
     return param_count;
 }
 
-int irc_send_message(int snd_qid, int fd, const char* format, ...)
+int irc_send_message(int snd_qid, int fd, const char *format, ...)
 {
-    struct sockcomm_data* msg;
+    struct sockcomm_data *msg;
     int retval;
     va_list ap;
     va_start(ap, format);
 
     msg = irc_response_vcreate(fd, format, ap);
 
-    if(msg == NULL)
+    if (msg == NULL)
         return ERR;
 
     retval =  irc_enqueue_msg(msg, snd_qid);
@@ -510,46 +514,46 @@ int irc_send_names_messages(struct ircchan *channel, struct irc_msgdata *ircdata
 }
 
 
-int irc_send_response(struct irc_msgdata* irc, const char* msg_format,...)
+int irc_send_response(struct irc_msgdata *irc, const char *msg_format, ...)
 {
-    struct sockcomm_data* msg;
+    struct sockcomm_data *msg;
     va_list ap;
     va_start(ap, msg_format);
     msg = irc_response_vcreate(irc->msgdata->fd, msg_format, ap);
     va_end(ap);
 
-    if(!msg)
+    if (!msg)
         return ERR;
 
     return list_add(irc->msg_tosend, msg);
 }
 
-int irc_users_have_common_chans(struct ircuser* a, struct ircuser* b)
+int irc_users_have_common_chans(struct ircuser *a, struct ircuser *b)
 {
     int i;
-    struct ircchan* chan;
+    struct ircchan *chan;
 
-    for(i = 0; i < list_count(a->channels); i++)
+    for (i = 0; i < list_count(a->channels); i++)
     {
         chan = list_at(a->channels, i);
-        if(irc_user_inchannel(chan, b) == OK)
+        if (irc_user_inchannel(chan, b) == OK)
             return 1;
     }
 
     return 0;
 }
 
-char* irc_next_param(const char* msg)
+char *irc_next_param(const char *msg)
 {
-    char* space;
+    char *space;
 
-    if(!msg)
+    if (!msg)
         return NULL;
 
     space = strchr(msg, ' ');
 
-    if(!space)
-        return NULL;   
+    if (!space)
+        return NULL;
     else
         return space + 1;
 }

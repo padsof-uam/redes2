@@ -13,7 +13,8 @@ const char* _ui_commands[] =
 	"msg",
 	"nick",
 	"me",
-	"server"
+	"server",
+	"*"
 };
 
 cmd_action _ui_actions[] = 
@@ -21,7 +22,8 @@ cmd_action _ui_actions[] =
 	irc_msg,
 	irc_server_forward,
 	irc_me,
-	irc_server
+	irc_server,
+	irc_server_forward
 };
 
 static void irc_send_to_server(struct irc_msgdata* msgdata, const char* fmt_string, ...)

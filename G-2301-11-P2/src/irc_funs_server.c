@@ -600,7 +600,7 @@ int irc_mode(void *data)
         }
         else
         {
-            irc_flagparse(mode, (int *) & (chan->mode), chan_flags);
+            irc_flagparse(mode, (int *) &(chan->mode), chan_flags);
 
             if (strchr(mode, 'l'))
             {

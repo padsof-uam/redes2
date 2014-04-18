@@ -13,5 +13,6 @@ int irc_nickcollision(void* data);
 int irc_recv_nick(void* data);
 int irc_recv_quit(void* data);
 int irc_recv_notice(void* data);
+int irc_recv_mode(void* data);
 
 #endif

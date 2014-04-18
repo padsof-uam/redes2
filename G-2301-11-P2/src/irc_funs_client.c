@@ -2,9 +2,9 @@
 #include "gui_client.h"
 #include "irc_processor.h"
 #include "log.h"
+#include "gui_client.h"
 
 #include <string.h>
-
 
 int irc_default(void * data){
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
@@ -180,4 +180,55 @@ int irc_recv_notice(void* data)
 	noticeText("server: %s", params[1]);
 
 	return OK;	
+}
+
+int irc_recv_mode(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char *params[3];
+    int pnum;
+    char *target, *mode_str, *param;
+    int mode = msgdata->clientdata->chanmode;
+
+    params[2] = NULL;
+
+	struct ircflag chan_flags[] =
+    {
+        {'p', chan_priv},
+        {'s', chan_secret},
+        {'i', chan_invite},
+        {'t', chan_topiclock},
+        {'n', chan_nooutside},
+        {'m', chan_moderated},
+        IRCFLAGS_END
+    };
+
+    pnum = irc_parse_paramlist(msgdata->msg, params, 3);
+
+    target = params[0];
+    mode_str = params[1];
+    param = params[2] ? params[2] : "";
+
+    if (pnum >= 2 && (target[0] == '#' || target[0] == '&') && 
+    	strncmp(target, msgdata->clientdata->chan, MAX_CHAN_LEN) == 0)
+    {
+    	irc_flagparse(mode_str, &mode, chan_flags);
+
+    	setTopicProtect(mode & chan_topiclock, TRUE);
+		setExternMsg(mode & chan_nooutside, TRUE);
+		setSecret(mode & chan_secret, TRUE);
+		setGuests(mode & chan_invite, TRUE);
+		setPrivate(mode & chan_priv, TRUE);
+		setModerated(mode & chan_moderated, TRUE);
+
+		messageText("Channel mode modified: %s %s", mode_str, param);
+
+		msgdata->clientdata->chanmode = mode;
+    }
+    else
+    {
+    	messageText("User %s modified its mode: %s %s", target, mode_str, param);
+    }
+
+    return OK;
 }

@@ -7,9 +7,9 @@
 #include <pulse/error.h>
 
 pa_sample_spec ss = {
-.format = PA_SAMPLE_S16BE,
-.rate = 44100,
-.channels = 2
+  .format = PA_SAMPLE_S16BE,
+  .rate = 44100,
+  .channels = 2
 };
 
 pa_simple *sr = NULL, *sp = NULL;

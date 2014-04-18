@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include "sound.h"
 
-main()
+int main()
 {
 	char buf[256];
 	register int i;

@@ -29,5 +29,8 @@ int send_message(int socket, const void* msg, ssize_t len);
  * @return        Bytes recibidos.
  */
 ssize_t rcv_message(int socket, void** buffer);
+
+
+ssize_t rcv_message_staticbuf(int socket, void *buffer, ssize_t buflen);
 #endif
 

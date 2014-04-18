@@ -19,7 +19,7 @@ int sock_data_available(int socket)
     FD_SET(socket, &set);
 
     timeout.tv_sec = 0;
-    timeout.tv_usec = 1000; 
+    timeout.tv_usec = 1000;
     /* Esperamos 1 ms para permitir al otro lado de la conexión
         enviar datos si tenía su buffer lleno. Importante para tests. */
 
@@ -30,7 +30,7 @@ int send_message(int socket, const void *msg, ssize_t len)
 {
     int sent = 0;
     int batch_sent;
-    const char* buf = (const char*) msg;
+    const char *buf = (const char *) msg;
 
     while (sent < len)
     {
@@ -46,15 +46,18 @@ int send_message(int socket, const void *msg, ssize_t len)
 }
 
 /* Posible bug: ¿y si no dejamos de recibir mensajes? */
-ssize_t rcv_message(int socket, void **buffer)
+static ssize_t _rcv_message(int socket, void **buffer, int static_buf, ssize_t buflen)
 {
     char *internal_buf = NULL;
-    char* realloc_retval;
-    size_t buf_size = INITIAL_RECEIVE_BUFFER;
+    char *realloc_retval;
+    size_t buf_size = static_buf ? buflen : INITIAL_RECEIVE_BUFFER;
     ssize_t read_bytes = 0;
     ssize_t batch_bytes = 0;
 
-    internal_buf = (char *) calloc(buf_size, sizeof(char));
+    if (static_buf)
+        internal_buf = *buffer;
+    else
+        internal_buf = (char *) calloc(buf_size, sizeof(char));
 
     if (!internal_buf)
         return ERR_MEM;
@@ -63,22 +66,30 @@ ssize_t rcv_message(int socket, void **buffer)
     {
         batch_bytes = recv(socket, internal_buf + read_bytes, buf_size - read_bytes, 0);
 
-        if (batch_bytes == buf_size - read_bytes) /* Hemos leído todo lo que podemos leer, reservamos más */
+        if (batch_bytes == buf_size - read_bytes) /* Hemos leído todo lo que podemos leer. */
         {
-            buf_size *= 2;
-            realloc_retval = realloc(internal_buf, buf_size * sizeof(char)); /* Liberamos memoria en caso de error con reallocf */
-
-            if (!realloc_retval)
+            if (static_buf)
             {
-                free(internal_buf);
-                return ERR_MEM;
+                return buflen; /* Si el buffer es estático, paramos. */
             }
             else
             {
-                internal_buf = realloc_retval;
+                /* Si no, reservamos más memoria */
+                buf_size *= 2;
+                realloc_retval = realloc(internal_buf, buf_size * sizeof(char)); /* Liberamos memoria en caso de error con reallocf */
+
+                if (!realloc_retval)
+                {
+                    free(internal_buf);
+                    return ERR_MEM;
+                }
+                else
+                {
+                    internal_buf = realloc_retval;
+                }
             }
         }
-        else if(batch_bytes <= 0)
+        else if (batch_bytes <= 0)
         {
             return -1;
         }
@@ -86,7 +97,18 @@ ssize_t rcv_message(int socket, void **buffer)
         read_bytes += batch_bytes;
     }
 
-    *buffer = internal_buf;
+    if(!static_buf) 
+        *buffer = internal_buf;
 
     return read_bytes;
+}
+
+ssize_t rcv_message(int socket, void** buffer)
+{
+    return _rcv_message(socket, buffer, 0, 0);
+}
+
+ssize_t rcv_message_staticbuf(int socket, void *buffer, ssize_t buflen)
+{
+    return _rcv_message(socket, &buffer, 1, buflen);
 }

@@ -677,5 +677,7 @@ void *thread_gui(void *data)
     gdk_threads_leave (); /* Salida de hilos */
     gtk_main(); /* Administración de la interacción */
 
+    raise(SIGTERM); /* Cuando acaba la interfaz, salimos del programa */
+
     return 0;
 }

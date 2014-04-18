@@ -71,7 +71,7 @@ static void pthread_cancel_join(pthread_t th)
 
 static void capture_signal(int sig)
 {
-    if (sig == SIGTERM)
+    if (sig == SIGTERM || sig == SIGINT)
     {
         stop = 1;
         pthread_cond_signal(&stop_cond);
@@ -101,6 +101,12 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
     
+    if (signal(SIGINT, capture_signal) == SIG_ERR)
+    {
+        slog(LOG_CRIT, "Error capturando señales.");
+        irc_exit(EXIT_FAILURE);
+    }
+    
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, comm_socks) < 0)
     {
         slog(LOG_CRIT, "No se han podido crear los sockets de comunicación con listener: %s", strerror(errno));
@@ -125,7 +131,7 @@ int main(int argc, char const *argv[])
 
     client = malloc(sizeof(struct irc_clientdata));
     bzero(client, sizeof(struct irc_clientdata));
-    
+
     if (spawn_receiver_thread(&receiver_th, comm_socks[0], rcv_qid) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de recepción de datos: %s", strerror(errno));

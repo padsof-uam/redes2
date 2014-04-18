@@ -51,6 +51,7 @@
 #include "gui_client.h"
 #include "types.h"
 #include "log.h"
+#include "strings.h"
 
 #include <stdlib.h>
 #include <glib.h>
@@ -108,6 +109,16 @@ char *getPuerto()
 void setApodo(const char *text)
 {
 	gtk_entry_set_text(GTK_ENTRY(eApodo), text);
+}
+
+void setNombre(const char *text)
+{
+	gtk_entry_set_text(GTK_ENTRY(eNombre), text);
+}
+
+void setNombreReal(const char *text)
+{
+	gtk_entry_set_text(GTK_ENTRY(eNombreR), text);
 }
 
 /*******************************************************************************
@@ -533,7 +544,6 @@ void ChatArea(GtkWidget *vbox)
 
 int spawn_thread_gui(pthread_t *gui_thread, int argc, const char **argv)
 {
-
 	struct gui_data *thdata = malloc(sizeof(struct gui_thdata));
 
 	if (pthread_create(gui_thread, NULL, thread_gui, thdata))
@@ -547,6 +557,41 @@ int spawn_thread_gui(pthread_t *gui_thread, int argc, const char **argv)
 	}
 
 	return OK;
+}
+
+int saveUserSettings(const char* nick, const char* name, const char* realname)
+{
+	FILE* f = fopen(USERSETTINGS_FILE, "w");
+	
+	if(!f)
+		return ERR_SYS;
+
+	fprintf(f, "%s\n%s\n%s\n", nick, name, realname);
+
+	fclose(f);
+
+	return OK;
+}
+
+void tryReadUserSettings()
+{
+	FILE* f = fopen(USERSETTINGS_FILE, "r");
+	char nick[100], name[100], realname[100];
+
+	if(!f)
+		return;
+
+	if(fgets(nick, 100, f) && fgets(name, 100, f) && fgets(realname, 100, f))
+	{
+		strip_end(nick);
+		strip_end(name);
+		strip_end(realname);
+		setApodo(nick);
+		setNombre(name);
+		setNombreReal(realname);
+	}
+
+	fclose(f);
 }
 
 void *thread_gui(void *data)
@@ -582,6 +627,7 @@ void *thread_gui(void *data)
 	ChatArea(vbox2);
 
     setUserConnectionState(FALSE);
+    tryReadUserSettings();
 
 	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 

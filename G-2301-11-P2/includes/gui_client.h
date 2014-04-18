@@ -18,6 +18,8 @@
 	#define TRUE	1
 #endif
 
+#define USERSETTINGS_FILE ".redirc_user"
+
 /* Función de ventana de error */
 void errorWindow(char *msg);
 
@@ -56,13 +58,17 @@ void setModerated(gboolean state);
 void newText (const char *msg);
 
 void setApodo(const char* text);
+void setNombre(const char* text);
+void setNombreReal(const char* text);
 
 char * getApodo();
-char * getNombre();
 char * getNombreReal();
+char * getNombre();
 char * getServidor();
 char * getPuerto();
 
+int saveUserSettings(const char* nick, const char* name, const char* realname);
+void tryReadUserSettings();
 void setUserConnectionState(const gboolean isConnected);
 
 int spawn_thread_gui(pthread_t *recv_thread,int argc, const char**argv);

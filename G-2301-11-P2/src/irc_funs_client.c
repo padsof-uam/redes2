@@ -137,7 +137,9 @@ int irc_recv_nick(void* data)
 		msgdata->clientdata->connected = 1;
 		strncpy(msgdata->clientdata->nick, params[0], MAX_NICK_LEN);
 		setApodo(params[0]);
+		saveUserSettings(params[0], getNombre(), getNombreReal());
 	}
+
 
 	return OK;
 }

@@ -120,6 +120,7 @@ void connectToServer(const char *server, const char* port)
     serv_save_connection(&serv);
 
     messageText("Conectado a %s", addr_str);
+    saveUserSettings(nick, user, name);
 }
 
 void disconnectClient(void)

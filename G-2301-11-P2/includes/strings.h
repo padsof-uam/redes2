@@ -12,6 +12,20 @@
  */
 void strip(char** str);
 
+
+/**
+ * Elimina caracteres de espacio del final de la cadena.
+ * Además de espacios, se eliminan tabuladores y demás caracteres que no
+ * 	representan caracteres visibles.
+ *
+ * El propósito es el mismo que strip, la diferencia es que strip_end es más útil
+ * 	cuando tenemos cadenas guardadas como arrays y no como punteros.
+ * @see strip
+ * @see isspace(3)
+ * @param str Cadena.
+ */
+void strip_end(const char* str);
+
 /**
  * Encuentra la primera ocurrencia de la cadena _find_ en _s_.
  * @param  s    Cadena donde buscar.

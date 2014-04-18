@@ -60,6 +60,8 @@ void newText (const char *msg);
 void setApodo(const char* text);
 void setNombre(const char* text);
 void setNombreReal(const char* text);
+void setServidor(const char* text);
+void setPuerto(const char* text);
 
 char * getApodo();
 char * getNombreReal();

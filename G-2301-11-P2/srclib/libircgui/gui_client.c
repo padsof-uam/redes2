@@ -123,6 +123,16 @@ void setNombreReal(const char *text)
 	gtk_entry_set_text(GTK_ENTRY(eNombreR), text);
 }
 
+void setServidor(const char* text)
+{
+	gtk_entry_set_text(GTK_ENTRY(eServidor), text);
+}
+
+void setPuerto(const char* text)
+{
+	gtk_entry_set_text(GTK_ENTRY(ePuerto), text);
+}
+
 /*******************************************************************************
 *  Presenta una ventana con un mensaje de error                                *
 *                                                                              *

@@ -43,6 +43,9 @@ void connectToFavServ(int favserv)
         return;
     }
 
+    setServidor(serv.servname);
+    setPuerto(serv.port);
+
     connectToServer(serv.servname, serv.port);
 }
 

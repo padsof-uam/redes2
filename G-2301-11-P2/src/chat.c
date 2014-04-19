@@ -11,6 +11,7 @@
 #include "log.h"
 #include "gui_client.h"
 #include "irc_core.h"
+#include "voicecall.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -178,6 +179,9 @@ int main(int argc, char const *argv[])
     slog(LOG_NOTICE, "Daemon saliendo...");
 
 cleanup:
+    if(client->call_status != call_none)
+        call_stop(&(client->call_info));
+
     irc_pth_exit(listener);
     irc_pth_exit(receiver);
     irc_pth_exit(proc);

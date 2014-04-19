@@ -89,7 +89,11 @@ static ssize_t _rcv_message(int socket, void **buffer, int static_buf, ssize_t b
                 }
             }
         }
-        else if (batch_bytes <= 0)
+        else if (batch_bytes == 0)
+        {
+            return 0;
+        }
+        else if (batch_bytes < 0)
         {
             return -1;
         }

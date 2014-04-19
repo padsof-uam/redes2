@@ -123,6 +123,32 @@ int server_close_communication(int handler)
     return _server_close_socket(handler);
 }
 
+int resolve_ip4(const char* host, uint32_t* ip)
+{
+    struct addrinfo *info;
+    struct addrinfo hints;
+    int retval;
+
+    bzero(&hints, sizeof(struct addrinfo));
+
+    hints.ai_flags = AI_ALL;
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = 0;
+    hints.ai_protocol = 0;
+
+    retval = getaddrinfo(host, NULL, &hints, &info);
+
+    if (retval == EAI_SYSTEM)
+        return ERR_SYS;
+    else if (retval != 0)
+        return ERR_AIR;
+
+    *ip = ((struct sockaddr_in*)info->ai_addr)->sin_addr.s_addr; 
+    
+    freeaddrinfo(info);
+
+    return OK;
+}
 
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len)
 {

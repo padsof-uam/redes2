@@ -3,6 +3,7 @@
 #include "irc_processor.h"
 #include "log.h"
 #include "gui_client.h"
+#include "sockutils.h"
 
 #include <string.h>
 #include <arpa/inet.h>
@@ -345,6 +346,42 @@ int irc_recv_ping(void* data)
 		payload = "";
 
 	irc_send_response(msgdata, "PONG %s", payload);
+
+	return OK;
+}
+
+int irc_recv_who(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char* msg = msgdata->msg;
+	char* host;
+	char* params[8];
+	int pnum;
+	uint32_t ip;
+
+	pnum = irc_parse_paramlist(msg, params, 8);
+
+	if(pnum != 8)
+	{
+		slog(LOG_WARNING, "Mensaje RPL_WHO inválido: %s", msg);
+		return OK;
+	}	
+
+	messageText("WHO %s (%s/%s): conectado desde %s a %s", params[5], params[2], params[7], params[3], params[4]);
+
+	if(!strncmp(msgdata->clientdata->nick, params[5], MAX_NICK_LEN)) /* Nuestro usuario */
+	{
+		host = params[3];
+		if(resolve_ip4(host, &ip) != OK)
+		{
+			slog(LOG_WARNING, "No se ha podido resolver %s", host);
+		}
+		else
+		{
+			msgdata->clientdata->client_ip = ip;
+			slog(LOG_INFO, "Guardada IP del cliente: %s", host);
+		}
+	}
 
 	return OK;
 }

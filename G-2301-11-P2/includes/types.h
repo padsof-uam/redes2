@@ -89,6 +89,7 @@ struct irc_clientdata {
 	call_status call_status;
 	struct cm_info call_info;
 	char call_user[MAX_NICK_LEN + 1];
+	uint32_t client_ip;
 };
 
 /**

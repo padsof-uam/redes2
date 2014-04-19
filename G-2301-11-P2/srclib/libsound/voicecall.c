@@ -4,6 +4,7 @@
 #include "sound.h"
 #include "messager.h"
 #include "lfringbuf.h"
+#include "sysutils.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -13,6 +14,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/time.h>
 
 struct cm_thdata {
 	uint32_t dst_ip;
@@ -210,4 +212,22 @@ void* sound_receiver_entrypoint(void* data)
 	}
 
 	return NULL;
+}
+
+uint32_t get_timestamp()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+
+	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+
+int call_stop(struct cm_info* cm)
+{
+	pthread_cancel_join(cm->player_pth);
+	pthread_cancel_join(cm->receiver_pth);
+	pthread_cancel_join(cm->sender_pth);
+
+	return OK;
 }

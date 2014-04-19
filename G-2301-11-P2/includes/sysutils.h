@@ -2,6 +2,7 @@
 #define SYSUTILS_H
 
 #include <sys/resource.h>
+#include <pthread.h>
 
 #define MAX_KILL_WAIT_MS 5000
 
@@ -44,5 +45,7 @@ rlim_t get_soft_limit(int resource);
  * @return OK/ERR.
  */
 int install_stop_handlers();
+
+int pthread_cancel_join(pthread_t th);
 #endif
 

@@ -42,5 +42,5 @@ void* sound_receiver_entrypoint(void* data);
 void* sound_player_entrypoint(void* data);
 int call_stop(struct cm_info* cm);
 uint32_t generate_ssrc();
-
+uint32_t get_timestamp();
 #endif

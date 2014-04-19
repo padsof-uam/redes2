@@ -178,7 +178,6 @@ int irc_pcall(void* data)
 {
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
 	char* user;
-	char ip[50];
 	int port;
 	int socket;
 	
@@ -197,8 +196,8 @@ int irc_pcall(void* data)
 		return OK;
 	}
 
-	get_socket_params(socket, ip, 50, &port);
-	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", user, ip, port);
+	get_socket_port(socket, &port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", user, msgdata->clientdata->client_ip, port);
 	messageText("Esperando respuesta de %s...", user);
 
 	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
@@ -213,8 +212,28 @@ int irc_pcall(void* data)
 int irc_paccept(void* data)
 {
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
-	
-	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, 0);
+	int socket;
+	int port;
+
+	if(msgdata->clientdata->call_status != call_incoming)
+	{
+		errorText("No tienes ninguna llamada pendiente.");
+		return OK;
+	}
+
+	socket = open_listen_socket();
+
+	if(socket <= 0)
+	{
+		errorText("No se pudo crear el socket de escucha.", strerror(errno));
+		slog(LOG_ERR, "No se pudo crear el socket de escucha, retorno %d. %s", socket, strerror(errno));
+		return OK;
+	}
+
+	get_socket_port(socket, &port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PACCEPT %s %d", msgdata->clientdata->call_user, msgdata->clientdata->client_ip, port);
+
+	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket);
 	messageText("Aceptando llamada...");
 	return OK;
 } 

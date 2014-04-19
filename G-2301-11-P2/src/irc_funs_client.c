@@ -254,8 +254,8 @@ int irc_recv_mode(void* data)
 void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
 {
     char *params[2];
-    struct in_addr addr;
-    int port;
+    int port; 
+    uint32_t ip;
 
     if (irc_parse_paramlist(text, params, 2) != 2)
     {
@@ -263,9 +263,11 @@ void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
         return;
     }
 
-    if (inet_pton(PF_INET, params[0], &addr) != 1)
+    ip = strtol(params[0], NULL, 10);
+
+    if (ip == 0)
     {
-        slog(LOG_ERR, "Error obteniendo IP a partir de cadena %s", params[0]);
+        slog(LOG_ERR, "IP inválido: %s", params[0]);
         return;
     }
 
@@ -279,7 +281,7 @@ void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
 
     if (cdata->call_status == call_none)
     {
-        cdata->call_ip = addr.s_addr;
+        cdata->call_ip = ip;
         cdata->call_port = port;
         cdata->call_status = call_incoming;
         strncpy(cdata->call_user, source, MAX_NICK_LEN);
@@ -295,8 +297,8 @@ void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
 void parse_paccept(struct irc_clientdata *cdata, char *text, char *source)
 {
 	char *params[2];
-    struct in_addr addr;
     int port;
+    uint32_t ip;
 
 	if(cdata->call_status != call_outgoing)
 	{
@@ -310,11 +312,14 @@ void parse_paccept(struct irc_clientdata *cdata, char *text, char *source)
         return;
     }
 
-    if (inet_pton(PF_INET, params[0], &addr) != 1)
+	ip = strtol(params[0], NULL, 10);
+
+    if (ip == 0)
     {
-        slog(LOG_ERR, "Error obteniendo IP a partir de cadena %s", params[0]);
+        slog(LOG_ERR, "IP inválido: %s", params[0]);
         return;
     }
+
 
     port = strtol(params[1], NULL, 10);
 
@@ -326,7 +331,7 @@ void parse_paccept(struct irc_clientdata *cdata, char *text, char *source)
 
 	signal(SIGALRM, SIG_IGN);
 
-	spawn_call_manager_thread(&(cdata->call_info), addr.s_addr, port, cdata->call_socket);
+	spawn_call_manager_thread(&(cdata->call_info), ip, port, cdata->call_socket);
 	cdata->call_status = call_running;
 	messageText("Llamada aceptada.");
 }

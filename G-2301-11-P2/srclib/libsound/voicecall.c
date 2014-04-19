@@ -56,15 +56,12 @@ int open_listen_socket()
     return sock;
 }
 
-int get_socket_params(int sock, char *ip_str, size_t ip_str_len, int *port)
+int get_socket_port(int sock, int *port)
 {
     struct sockaddr_in addr;
     socklen_t sa_size = sizeof(struct sockaddr_in);
 
     if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
-        return ERR_SOCK;
-
-    if (inet_ntop(PF_INET, &(addr.sin_addr), ip_str, ip_str_len) == NULL)
         return ERR_SOCK;
 
     *port = ntohs(addr.sin_port);

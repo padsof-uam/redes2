@@ -44,5 +44,6 @@ void* sound_player_entrypoint(void* data);
 int call_stop(struct cm_info* cm);
 uint32_t generate_ssrc();
 uint32_t get_timestamp();
-int get_socket_params(int sock, char* ip_str, size_t ip_str_len, int* port);
+int get_socket_port(int sock, int *port);
+
 #endif

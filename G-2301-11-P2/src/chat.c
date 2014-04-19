@@ -31,7 +31,6 @@
 #define RCV_QKEY 3991
 #define SND_QKEY 3992
 #define PID_FILE "/tmp/redirc.pid"
-#define LOCK_FILE "/tmp/redirc_ui.lock"
 #define DEFAULT_CONF_FILE "redirc.conf"
 
 /**
@@ -46,11 +45,12 @@
             slog(LOG_ERR, "Error saliendo del hilo " #th_name ": %s", strerror(errno)); \
     } \
 } while(0)
+
 #define irc_exit(code) do { retval = code; goto cleanup; } while (0);
 
 pthread_mutex_t stop_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
-sig_atomic_t stop = 0;
+volatile sig_atomic_t stop = 0;
 
 extern int snd_qid;
 extern int rcv_sockcomm;
@@ -74,6 +74,9 @@ int main(int argc, char const *argv[])
     short listener_running = 0, receiver_running = 0, proc_running = 0, sender_running = 0, gui_running = 0;
     int rcv_qid = 0;
     int retval = EXIT_SUCCESS;
+    int snd_qkey, rcv_qkey;
+    int instances_running = -1;
+    char lock_file[100];
 
     install_stop_handlers();
 
@@ -84,11 +87,14 @@ int main(int argc, char const *argv[])
     slog_set_level(LOG_WARNING);
     #endif
 
-    if (!try_getlock(LOCK_FILE))
+    do
     {
-        slog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
-        irc_exit(EXIT_FAILURE);
-    }
+        instances_running++;
+        snprintf(lock_file, 100, "/tmp/redirc_ui.lock%d", instances_running);
+    } while(!try_getlock(lock_file));
+
+    rcv_qkey = RCV_QKEY + 2 * instances_running;
+    snd_qkey = SND_QKEY + 2 * instances_running;
 
     if (signal(SIGTERM, capture_signal) == SIG_ERR)
     {
@@ -108,7 +114,7 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
-    rcv_qid = msgget(RCV_QKEY, 0666 | IPC_PRIVATE | IPC_CREAT);
+    rcv_qid = msgget(rcv_qkey, 0666 | IPC_PRIVATE | IPC_CREAT);
 
     if (rcv_qid == -1)
     {
@@ -116,7 +122,7 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
-    snd_qid = msgget(SND_QKEY, 0666 | IPC_PRIVATE | IPC_CREAT);
+    snd_qid = msgget(snd_qkey, 0666 | IPC_PRIVATE | IPC_CREAT);
 
     if (snd_qid == -1)
     {

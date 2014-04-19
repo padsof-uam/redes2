@@ -31,7 +31,7 @@ void *thread_receive(void *st)
     int sock_lim_sc = -1, sock_lim_rlimit = -1, sock_lim = -1;
     struct receiver_thdata *recv_data = (struct receiver_thdata *) st;
 
-    sock_lim_sc = sysconf(_SC_OPEN_MAX);   
+    sock_lim_sc = sysconf(_SC_OPEN_MAX);
     sock_lim_rlimit = get_soft_limit(RLIMIT_NOFILE);
     sock_lim = sock_lim_sc < sock_lim_rlimit ? sock_lim_sc : sock_lim_rlimit;
 
@@ -121,6 +121,7 @@ void *thread_receive(void *st)
                 else
                 {
                     slog(LOG_WARNING, "Error en recepción de datos en socket %d: %s", pfds->fds[i].fd, strerror(errno));
+                    send_to_main(recv_data->queue, -(pfds->fds[i].fd), NULL, 0);
                     remove_connection(pfds, pfds->fds[i].fd); /* Cerramos conexión */
                     i--; /* Reexploramos este elemento */
                     fds_len--;
@@ -177,9 +178,9 @@ int send_to_main(int queue, int fd, char *message, int msglen)
 
     data_to_send.msgtype = 1;
 
-    if(message != NULL)
+    if (message != NULL)
         strncpy(data_to_send.scdata.data, message, MAX_IRC_MSG);
-    
+
     data_to_send.scdata.fd = fd;
     data_to_send.scdata.len = msglen;
 

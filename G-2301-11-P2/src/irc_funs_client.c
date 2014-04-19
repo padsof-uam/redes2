@@ -335,3 +335,16 @@ void parse_pclose(struct irc_clientdata *cdata, char *text, char *source)
 	messageText("El usuario remoto ha terminado la llamada.");
 	call_stop(&(cdata->call_info));
 }
+
+int irc_recv_ping(void* data)
+{
+	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
+	char* payload = irc_next_param(msgdata->msg);
+
+	if(!payload)
+		payload = "";
+
+	irc_send_response(msgdata, "PONG %s", payload);
+
+	return OK;
+}

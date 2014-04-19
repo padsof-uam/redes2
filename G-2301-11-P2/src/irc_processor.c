@@ -77,6 +77,7 @@ const char *_irc_client_cmds[] =
     "433", /* ERR_NICKNAMEINUSE */
     "436", /* ERR_NICKCOLLISION */
     "461", /* ERR_NEEDMOREPARAMS */
+    "352", /* RPL_WHO */
     "JOIN",
     "PART",
     "PRIVMSG",
@@ -84,6 +85,7 @@ const char *_irc_client_cmds[] =
     "QUIT",
     "NOTICE",
     "MODE",
+    "PING",
     "*"
 };
 
@@ -93,6 +95,7 @@ cmd_action _irc_client_actions[] =
     irc_nickcollision,
     irc_nickcollision,
     irc_needmoreparams,
+    irc_recv_who,
     irc_recv_join,
     irc_recv_part,
     irc_recv_privmsg,
@@ -100,6 +103,7 @@ cmd_action _irc_client_actions[] =
     irc_recv_quit,
     irc_recv_notice,
     irc_recv_mode,
+    irc_recv_ping,
     irc_default
 };
 

@@ -197,7 +197,7 @@ int irc_pcall(void* data)
 	}
 
 	get_socket_port(socket, &port);
-	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", user, msgdata->clientdata->client_ip, port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %d %d", user, msgdata->clientdata->client_ip, port);
 	messageText("Esperando respuesta de %s...", user);
 
 	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
@@ -231,7 +231,7 @@ int irc_paccept(void* data)
 	}
 
 	get_socket_port(socket, &port);
-	irc_send_to_server(msgdata, "PRIVMSG %s :$PACCEPT %s %d", msgdata->clientdata->call_user, msgdata->clientdata->client_ip, port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PACCEPT %d %d", msgdata->clientdata->call_user, msgdata->clientdata->client_ip, port);
 
 	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket);
 	messageText("Aceptando llamada...");

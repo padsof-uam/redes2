@@ -124,6 +124,7 @@ void connectToServer(const char *server, const char* port)
 
     irc_send_message(snd_qid, sock, "WHO %s", getApodo());
 
+    client->connected = 1;
     messageText("Conectado a %s", addr_str);
     saveUserSettings(nick, user, name);
 }

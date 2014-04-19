@@ -198,7 +198,7 @@ int irc_pcall(void* data)
 	}
 
 	get_socket_params(socket, ip, 50, &port);
-	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", ip, port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", user, ip, port);
 	messageText("Esperando respuesta de %s...", user);
 
 	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);

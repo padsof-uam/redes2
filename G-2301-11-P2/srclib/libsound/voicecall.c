@@ -64,7 +64,7 @@ int get_socket_params(int sock, char *ip_str, size_t ip_str_len, int *port)
     if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
         return ERR_SOCK;
 
-    if (inet_ntop(PF_INET, &(addr.sin_addr), ip_str, ip_str_len) != 0)
+    if (inet_ntop(PF_INET, &(addr.sin_addr), ip_str, ip_str_len) == NULL)
         return ERR_SOCK;
 
     *port = ntohs(addr.sin_port);

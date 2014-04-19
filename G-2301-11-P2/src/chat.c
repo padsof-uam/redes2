@@ -40,7 +40,12 @@
  *     y otra th_name_th con el identificador del hilo (tipo pthread_t).
  * @param th_name Nombre del hilo.
  */
-#define irc_pth_exit(th_name) do { if(th_name##_running) pthread_cancel_join(th_name##_th); } while(0)
+#define irc_pth_exit(th_name) do { \
+    if(th_name##_running) { \
+        if(pthread_cancel_join(th_name##_th) != OK) \
+            slog(LOG_ERR, "Error saliendo del hilo " #th_name ": %s", strerror(errno)); \
+    } \
+} while(0)
 #define irc_exit(code) do { retval = code; goto cleanup; } while (0);
 
 pthread_mutex_t stop_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -52,22 +57,6 @@ extern int rcv_sockcomm;
 extern struct irc_globdata * ircdata;
 extern struct irc_clientdata * client;
 extern int serv_sock;
-
-static void pthread_cancel_join(pthread_t th)
-{
-    int err;
-    if ((err = pthread_cancel(th)) < 0)
-    {
-        slog(LOG_ERR, "error cerrando hilo: %d", err);
-        return;
-    }
-
-    if ((err = pthread_join(th, NULL)) < 0)
-    {
-        slog(LOG_ERR, "error saliendo del hilo: %d", err);
-        return;
-    }
-}
 
 static void capture_signal(int sig)
 {

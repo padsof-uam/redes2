@@ -1,12 +1,19 @@
 #include "irc_funs_userinput.h"
 #include "irc_processor.h"
 #include "gui_client.h"
+#include "voicecall.h"
+#include "log.h"
 
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
 
-extern int snd_qid;
+#define CALL_TIMEOUT_SEC 10
+
+extern int snd_qid; 
 
 const char* _ui_commands[] = 
 {
@@ -14,6 +21,9 @@ const char* _ui_commands[] =
 	"nick",
 	"me",
 	"server",
+	"pcall",
+	"paccept",
+	"pclose",
 	"*"
 };
 
@@ -23,6 +33,9 @@ cmd_action _ui_actions[] =
 	irc_server_forward,
 	irc_me,
 	irc_server,
+	irc_pcall,
+	irc_paccept,
+	irc_pclose,
 	irc_server_forward
 };
 
@@ -148,3 +161,67 @@ int irc_server(void* data)
 
 	return OK;
 }
+
+int *call_socket;
+
+static void _call_timeout(int sig)
+{
+	if(sig == SIGALRM)
+	{
+		close(*call_socket);
+		*call_socket = -1;
+		errorText("Tiempo de espera superado, cancelando llamada.");
+	}
+}
+
+int irc_pcall(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	char* user;
+	char ip[50];
+	int port;
+	int socket;
+	
+	if(irc_parse_paramlist(msgdata->msg, &user, 1) != 1)
+	{
+		errorText("Error de sintaxis. Uso: /pcall <nick>");
+		return OK;
+	}
+
+	socket = open_listen_socket();
+
+	if(socket <= 0)
+	{
+		errorText("No se pudo crear el socket de escucha.", strerror(errno));
+		slog(LOG_ERR, "No se pudo crear el socket de escucha, retorno %d. %s", socket, strerror(errno));
+		return OK;
+	}
+
+	get_socket_params(socket, ip, 50, &port);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", ip, port);
+	messageText("Esperando respuesta de %s...", user);
+	msgdata->clientdata->call_socket = socket;
+	call_socket = &(msgdata->clientdata->call_socket);
+	signal(SIGALRM, _call_timeout);
+	alarm(CALL_TIMEOUT_SEC);
+
+	return OK;
+}
+
+int irc_paccept(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	
+	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, 0);
+	messageText("Aceptando llamada...");
+	return OK;
+} 
+
+int irc_pclose(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	call_stop(&(msgdata->clientdata->call_info));
+	messageText("Llamada terminada.");
+	return OK;
+} 
+

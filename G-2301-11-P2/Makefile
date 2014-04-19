@@ -1,7 +1,7 @@
 CC = clang
 CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0)
 DEBUG_CFLAGS = -DDEBUG -ggdb 
-LDFLAGS := $(shell pkg-config --libs gtk+-2.0)
+LDFLAGS := $(shell pkg-config --libs gtk+-2.0) $(shell pkg-config --libs libpulse-simple)
 E_LIBS = -lpthread
 
 CFLAGS += $(DEBUG_CFLAGS)
@@ -60,8 +60,10 @@ final: all docs pack
 
 ### Compilation
 
+no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
+chat: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 chat: $(BINDIR)/chat
 
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)

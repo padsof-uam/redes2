@@ -5,6 +5,7 @@
 #include "gui_client.h"
 
 #include <string.h>
+#include <arpa/inet.h>
 
 int irc_default(void * data){
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
@@ -81,6 +82,7 @@ int irc_recv_privmsg(void* data)
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
 	char user[MAX_NICK_LEN + 1];
 	char* params[2];
+	char* text;
 
 	if(irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN) != OK || 
 		irc_parse_paramlist(msgdata->msg, params, 2) != 2)
@@ -89,7 +91,16 @@ int irc_recv_privmsg(void* data)
 		return OK;
 	}	
 
-	publicText(user, params[1]);
+	text = params[1];
+
+	if(!strncmp("$PCALL ", text, strlen("$PCALL ")))
+		parse_pcall(msgdata->clientdata, text, user);
+	else if (!strncmp("$PACCEPT ", text, strlen("$PACCEPT ")))
+		parse_paccept(msgdata->clientdata, text, user);
+	else if (!strncmp("$PCLOSE ", text, strlen("$PACCEPT ")))
+		parse_pclose(msgdata->clientdata, text, user);
+	else
+		publicText(user, text);
 
 	return OK;	
 }
@@ -234,4 +245,90 @@ int irc_recv_mode(void* data)
     }
 
     return OK;
+}
+
+
+void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
+{
+    char *params[2];
+    struct in_addr addr;
+    int port;
+
+    if (irc_parse_paramlist(text, params, 2) != 2)
+    {
+        slog(LOG_ERR, "Mensaje PRIVMSG/PCALL mal formado: %s", text);
+        return;
+    }
+
+    if (inet_pton(PF_INET, params[0], &addr) != 1)
+    {
+        slog(LOG_ERR, "Error obteniendo IP a partir de cadena %s", params[0]);
+        return;
+    }
+
+    port = strtol(params[1], NULL, 10);
+
+    if (port == 0)
+    {
+        slog(LOG_ERR, "Puerto inválido: %s", params[1]);
+        return;
+    }
+
+    if (cdata->call_status == call_none)
+    {
+        cdata->call_ip = addr.s_addr;
+        cdata->call_port = port;
+        cdata->call_status = call_incoming;
+
+        messageText("Tienes una llamada de %s. Acéptala con /paccept.", source);
+    }
+    else
+    {
+        messageText("Has recibido una llamada de %s, pero sólo puedes tener una llamada a la vez.", source);
+    }
+}
+
+void parse_paccept(struct irc_clientdata *cdata, char *text, char *source)
+{
+	char *params[2];
+    struct in_addr addr;
+    int port;
+
+	if(cdata->call_status != call_outgoing)
+	{
+		slog(LOG_WARNING, "Hemos recibido un mensaje PACCEPT pero no hay llamadas pendientes.");
+		return;
+	}
+
+    if (irc_parse_paramlist(text, params, 2) != 2)
+    {
+        slog(LOG_ERR, "Mensaje PRIVMSG/PACCEPT mal formado: %s", text);
+        return;
+    }
+
+    if (inet_pton(PF_INET, params[0], &addr) != 1)
+    {
+        slog(LOG_ERR, "Error obteniendo IP a partir de cadena %s", params[0]);
+        return;
+    }
+
+    port = strtol(params[1], NULL, 10);
+
+    if (port == 0)
+    {
+        slog(LOG_ERR, "Puerto inválido: %s", params[1]);
+        return;
+    }
+
+	signal(SIGALRM, SIG_IGN);
+
+	spawn_call_manager_thread(&(cdata->call_info), addr.s_addr, port, cdata->call_socket);
+	cdata->call_status = call_running;
+	messageText("Llamada aceptada.");
+}
+
+void parse_pclose(struct irc_clientdata *cdata, char *text, char *source)
+{
+	messageText("El usuario remoto ha terminado la llamada.");
+	call_stop(&(cdata->call_info));
 }

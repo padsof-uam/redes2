@@ -3,6 +3,7 @@
 #include <sys/msg.h>
 #include "dictionary.h"
 #include "list.h"
+#include "voicecall.h"
 
 #ifndef COMMSTRUCTS_H
 #define COMMSTRUCTS_H
@@ -26,6 +27,10 @@
 #define MAX_ERR_THRESHOLD 5
 
 #define SERVER_VERSION 0
+
+typedef enum {
+	call_none, call_incoming, call_outgoing, call_running
+} call_status;
 
 /**
  * Modos de canal como banderas binarias.
@@ -78,6 +83,11 @@ struct irc_clientdata {
 	short in_channel;
 	int serv_sock;
 	int chanmode;
+	int call_socket;
+	uint32_t call_ip;
+	uint16_t call_port;
+	call_status call_status;
+	struct cm_info call_info;
 };
 
 /**

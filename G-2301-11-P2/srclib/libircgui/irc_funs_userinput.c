@@ -200,6 +200,8 @@ int irc_pcall(void* data)
 	get_socket_params(socket, ip, 50, &port);
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %s %d", ip, port);
 	messageText("Esperando respuesta de %s...", user);
+
+	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
 	msgdata->clientdata->call_socket = socket;
 	call_socket = &(msgdata->clientdata->call_socket);
 	signal(SIGALRM, _call_timeout);
@@ -220,8 +222,19 @@ int irc_paccept(void* data)
 int irc_pclose(void* data)
 {
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	irc_send_to_server(msgdata, "PRIVMSG %s :$PCLOSE ", msgdata->clientdata->call_user);
 	call_stop(&(msgdata->clientdata->call_info));
 	messageText("Llamada terminada.");
 	return OK;
 } 
+
+int irc_ui_quit(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	const char* msg = irc_next_param(msgdata->msg);
+
+	disconnectClient(msg);
+
+	return OK;
+}
 

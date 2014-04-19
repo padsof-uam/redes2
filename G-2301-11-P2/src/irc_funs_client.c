@@ -281,6 +281,7 @@ void parse_pcall(struct irc_clientdata *cdata, char *text, char *source)
         cdata->call_ip = addr.s_addr;
         cdata->call_port = port;
         cdata->call_status = call_incoming;
+        strncpy(cdata->call_user, source, MAX_NICK_LEN);
 
         messageText("Tienes una llamada de %s. Acéptala con /paccept.", source);
     }

@@ -150,7 +150,7 @@ void errorWindow(char *msg)
                                      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                      GTK_MESSAGE_ERROR,
                                      GTK_BUTTONS_CLOSE,
-                                     "Error:\n%s", msg);
+                                    "Error:\n%s", msg);
 
     gtk_dialog_run(GTK_DIALOG(pError));
     gtk_widget_destroy (pError);
@@ -166,7 +166,7 @@ void connectCB (GtkButton *button, gpointer user_data)
 }
 void disconnectCB (GtkButton *button, gpointer user_data)
 {
-    disconnectClient();
+    disconnectClient(NULL);
 }
 
 void topicProtectCB (GtkToggleButton *togglebutton, gpointer user_data)
@@ -670,7 +670,7 @@ void *thread_gui(void *data)
     setUserConnectionState(FALSE);
     tryReadUserSettings();
     disableChanMods();
-    
+
     g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_widget_show_all(window); /* Presentación de las ventanas */

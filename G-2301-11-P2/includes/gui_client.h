@@ -33,7 +33,7 @@ void actionText(const char* username, const char *message, ...);
 
 /* Funciones de conexión y desconexión */
 void connectClient(void);
-void disconnectClient(void);
+void disconnectClient(const char* bye_msg);
 
 void connectToServer(const char *server, const char* port);
 void connectToFavServ(int favserv);

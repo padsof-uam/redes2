@@ -78,8 +78,8 @@ struct ircuser {
 
 struct irc_clientdata {
 	short connected;
-	char chan[MAX_CHAN_LEN];
-	char nick[MAX_NICK_LEN];
+	char chan[MAX_CHAN_LEN + 1];
+	char nick[MAX_NICK_LEN + 1];
 	short in_channel;
 	int serv_sock;
 	int chanmode;
@@ -88,6 +88,7 @@ struct irc_clientdata {
 	uint16_t call_port;
 	call_status call_status;
 	struct cm_info call_info;
+	char call_user[MAX_NICK_LEN + 1];
 };
 
 /**

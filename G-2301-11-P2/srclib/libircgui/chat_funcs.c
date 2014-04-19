@@ -79,7 +79,7 @@ void connectToServer(const char *server, const char* port)
     }   
 
     if(client->connected)
-        disconnectClient();
+        disconnectClient(NULL);
 
     messageText("Conectando con %s...", server);
 
@@ -126,9 +126,12 @@ void connectToServer(const char *server, const char* port)
     saveUserSettings(nick, user, name);
 }
 
-void disconnectClient(void)
+void disconnectClient(const char* bye_msg)
 {
-    irc_send_message(snd_qid,  client->serv_sock, "QUIT :Bye!");
+    if(!bye_msg)
+        bye_msg = "Redirc - bye!";
+
+    irc_send_message(snd_qid, client->serv_sock, "QUIT :%s", bye_msg);
     shutdown(client->serv_sock, 2);
     messageText("Desconexión del servidor.");
     setUserConnectionState(FALSE);

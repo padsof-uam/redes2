@@ -31,7 +31,7 @@
 #define RCV_QKEY 3991
 #define SND_QKEY 3992
 #define PID_FILE "/tmp/redirc.pid"
-#define LOCK_FILE "/tmp/redirc.lock"
+#define LOCK_FILE "/tmp/redirc_ui.lock"
 #define DEFAULT_CONF_FILE "redirc.conf"
 
 /**
@@ -83,6 +83,12 @@ int main(int argc, char const *argv[])
     #else 
     slog_set_level(LOG_WARNING);
     #endif
+
+    if (!try_getlock(LOCK_FILE))
+    {
+        slog(LOG_CRIT, "Ya hay una instancia en ejecución. Saliendo.");
+        irc_exit(EXIT_FAILURE);
+    }
 
     if (signal(SIGTERM, capture_signal) == SIG_ERR)
     {

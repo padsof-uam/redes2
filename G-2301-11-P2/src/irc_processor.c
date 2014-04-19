@@ -133,10 +133,12 @@ void _irc_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdat
 
     if (data->fd < 0 && gdata != NULL) /* Usuario eliminado */
     {
-        user = irc_user_byid(gdata, data->fd);
+        user = irc_user_byid(gdata, -data->fd);
 
         if (user)
             irc_delete_user(gdata, user);
+
+        slog(LOG_INFO, "Usuario desconectado en socket %d", -data->fd);
 
         return;
     }

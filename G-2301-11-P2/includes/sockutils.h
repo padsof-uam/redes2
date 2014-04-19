@@ -2,6 +2,7 @@
 #define SOCKUTILS_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /**
 * Función encargada de abrir un socket en un puerto, 

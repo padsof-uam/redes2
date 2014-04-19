@@ -39,7 +39,6 @@ int open_listen_socket()
     bzero(&addr, sizeof(struct sockaddr_in));
 
     addr.sin_family = PF_INET;
-    addr.sin_len = sizeof(struct sockaddr_in);
     addr.sin_port = 0;
     addr.sin_addr.s_addr = INADDR_ANY;
 
@@ -96,7 +95,6 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
     bzero(&dst_addr, sizeof dst_addr);
     dst_addr.sin_addr.s_addr = ip;
     dst_addr.sin_port = port;
-    dst_addr.sin_len = sizeof dst_addr;
     dst_addr.sin_family = PF_INET;
 
     if (connect(socket, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)

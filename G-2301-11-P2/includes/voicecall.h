@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #define VC_OK 0
 #define VC_CALL_ENDED 1

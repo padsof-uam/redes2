@@ -48,6 +48,7 @@ DOXY_OUTPUTS := $(filter-out $(DOCDIR)/, $(dir $(wildcard $(DOCDIR)/*/)))
 FMT_BOLD := $(shell tput bold)
 FMT_NORM := $(shell tput sgr0)
 
+
 .PRECIOUS: %.o %.d
 .PHONY: debug clean pack doxydoc docclean
  

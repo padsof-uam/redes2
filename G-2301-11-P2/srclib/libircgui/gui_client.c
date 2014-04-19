@@ -115,22 +115,22 @@ void setApodo(const char *text)
 
 void setNombre(const char *text)
 {
-	gtk_entry_set_text(GTK_ENTRY(eNombre), text);
+    gtk_entry_set_text(GTK_ENTRY(eNombre), text);
 }
 
 void setNombreReal(const char *text)
 {
-	gtk_entry_set_text(GTK_ENTRY(eNombreR), text);
+    gtk_entry_set_text(GTK_ENTRY(eNombreR), text);
 }
 
-void setServidor(const char* text)
+void setServidor(const char *text)
 {
-	gtk_entry_set_text(GTK_ENTRY(eServidor), text);
+    gtk_entry_set_text(GTK_ENTRY(eServidor), text);
 }
 
-void setPuerto(const char* text)
+void setPuerto(const char *text)
 {
-	gtk_entry_set_text(GTK_ENTRY(ePuerto), text);
+    gtk_entry_set_text(GTK_ENTRY(ePuerto), text);
 }
 
 /*******************************************************************************
@@ -171,50 +171,50 @@ void disconnectCB (GtkButton *button, gpointer user_data)
 
 void topicProtectCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    topicProtect(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        topicProtect(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void externMsgCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    externMsg(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        externMsg(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void secretCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    secret(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        secret(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void guestsCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    guests(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        guests(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void privateCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    privated(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        privated(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void moderatedCB (GtkToggleButton *togglebutton, gpointer user_data)
 {
-    if(!btnChangeTriggered)	
-	    moderated(toggleButtonState(togglebutton));
-	else
-		btnChangeTriggered = FALSE;
+    if (!btnChangeTriggered)
+        moderated(toggleButtonState(togglebutton));
+    else
+        btnChangeTriggered = FALSE;
 }
 
 void readMessageCB (GtkWidget *msg, gpointer user_data)
@@ -244,15 +244,15 @@ static void gtkDisable(GtkWidget *wd)
 *                                                                              *
 *******************************************************************************/
 
-static void _set_btn_state(GtkToggleButton* btn, gboolean state, gboolean enabled)
+static void _set_btn_state(GtkToggleButton *btn, gboolean state, gboolean enabled)
 {
-	btnChangeTriggered = TRUE;
-	gtk_toggle_button_set_active(btn, state);
+    btnChangeTriggered = TRUE;
+    gtk_toggle_button_set_active(btn, state);
 
-	if(enabled)
-		gtkEnable(GTK_WIDGET(btn));
-	else
-		gtkDisable(GTK_WIDGET(btn));
+    if (enabled)
+        gtkEnable(GTK_WIDGET(btn));
+    else
+        gtkDisable(GTK_WIDGET(btn));
 }
 
 void setTopicProtect(gboolean state, gboolean enabled)
@@ -585,7 +585,7 @@ void ChatArea(GtkWidget *vbox)
 
 int spawn_thread_gui(pthread_t *gui_thread, int argc, const char **argv)
 {
-	struct gui_data *thdata = malloc(sizeof(struct gui_thdata));
+    struct gui_data *thdata = malloc(sizeof(struct gui_thdata));
 
     if (pthread_create(gui_thread, NULL, thread_gui, thdata))
     {
@@ -600,39 +600,39 @@ int spawn_thread_gui(pthread_t *gui_thread, int argc, const char **argv)
     return OK;
 }
 
-int saveUserSettings(const char* nick, const char* name, const char* realname)
+int saveUserSettings(const char *nick, const char *name, const char *realname)
 {
-	FILE* f = fopen(USERSETTINGS_FILE, "w");
-	
-	if(!f)
-		return ERR_SYS;
+    FILE *f = fopen(USERSETTINGS_FILE, "w");
 
-	fprintf(f, "%s\n%s\n%s\n", nick, name, realname);
+    if (!f)
+        return ERR_SYS;
 
-	fclose(f);
+    fprintf(f, "%s\n%s\n%s\n", nick, name, realname);
 
-	return OK;
+    fclose(f);
+
+    return OK;
 }
 
 void tryReadUserSettings()
 {
-	FILE* f = fopen(USERSETTINGS_FILE, "r");
-	char nick[100], name[100], realname[100];
+    FILE *f = fopen(USERSETTINGS_FILE, "r");
+    char nick[100], name[100], realname[100];
 
-	if(!f)
-		return;
+    if (!f)
+        return;
 
-	if(fgets(nick, 100, f) && fgets(name, 100, f) && fgets(realname, 100, f))
-	{
-		strip_end(nick);
-		strip_end(name);
-		strip_end(realname);
-		setApodo(nick);
-		setNombre(name);
-		setNombreReal(realname);
-	}
+    if (fgets(nick, 100, f) && fgets(name, 100, f) && fgets(realname, 100, f))
+    {
+        strip_end(nick);
+        strip_end(name);
+        strip_end(realname);
+        setApodo(nick);
+        setNombre(name);
+        setNombreReal(realname);
+    }
 
-	fclose(f);
+    fclose(f);
 }
 
 void *thread_gui(void *data)
@@ -669,7 +669,8 @@ void *thread_gui(void *data)
 
     setUserConnectionState(FALSE);
     tryReadUserSettings();
-
+    disableChanMods();
+    
     g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_widget_show_all(window); /* Presentación de las ventanas */
@@ -680,4 +681,25 @@ void *thread_gui(void *data)
     raise(SIGTERM); /* Cuando acaba la interfaz, salimos del programa */
 
     return 0;
+}
+
+
+void enableChanMods()
+{
+    setTopicProtect(FALSE, TRUE);
+    setExternMsg(FALSE, TRUE);
+    setSecret(FALSE, TRUE);
+    setGuests(FALSE, TRUE);
+    setPrivate(FALSE, TRUE);
+    setModerated(FALSE, TRUE);
+}
+
+void disableChanMods()
+{
+    setTopicProtect(FALSE, FALSE);
+    setExternMsg(FALSE, FALSE);
+    setSecret(FALSE, FALSE);
+    setGuests(FALSE, FALSE);
+    setPrivate(FALSE, FALSE);
+    setModerated(FALSE, FALSE);
 }

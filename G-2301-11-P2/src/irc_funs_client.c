@@ -47,6 +47,7 @@ int irc_recv_join(void* data)
 			irc_send_response(msgdata, "PART %s", msgdata->clientdata->chan);
 		
 		msgdata->clientdata->in_channel = 1;
+		enableChanMods();
 		strncpy(msgdata->clientdata->chan, params[0], MAX_CHAN_LEN);
 	}
 
@@ -67,9 +68,10 @@ int irc_recv_part(void* data)
 		return OK;
 	}	
 
-	if(!strncmp(user, msgdata->clientdata->nick, MAX_NICK_LEN))
+	if(!strncmp(user, msgdata->clientdata->nick, MAX_NICK_LEN) && !strncmp(msgdata->clientdata->chan, params[0], MAX_CHAN_LEN))
 	{
 		msgdata->clientdata->in_channel = 0;
+		disableChanMods();
 	}
 
 	messageText("%s ha salido del canal \"%s\"", user, params[0]);

@@ -77,6 +77,9 @@ int spawn_thread_gui(pthread_t *recv_thread,int argc, const char**argv);
 
 void * thread_gui(void * data);
 
+void enableChanMods();
+void disableChanMods();
+
 struct gui_thdata
 {
 	int queue;

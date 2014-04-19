@@ -136,7 +136,6 @@ void disconnectClient(void)
 
 void _send_flag(char flag, gboolean state)
 {
-    struct ircchan *chan = list_at(ircdata->chan_list, 0);
     char mod;
 
     if (state)
@@ -144,7 +143,7 @@ void _send_flag(char flag, gboolean state)
     else
         mod = '-';
 
-    irc_send_message(snd_qid, client->serv_sock, "MODE %s %c%c", chan->name, mod, flag);
+    irc_send_message(snd_qid, client->serv_sock, "MODE %s %c%c", client->chan, mod, flag);
 }
 
 void topicProtect(gboolean state)
@@ -154,8 +153,7 @@ void topicProtect(gboolean state)
 
 void externMsg(gboolean state)
 {
-    errorWindow("Función no implementada");
-    errorText("Función no implementada");
+    _send_flag('n', state);
 }
 
 void secret(gboolean state)

@@ -195,13 +195,23 @@ void *sound_receiver_entrypoint(void *data)
     struct rtp_header packet;
     struct pollfd pfd;
     int poll_retval;
+    int psize;
 
     pfd.events = POLLIN;
     pfd.fd = thdata->socket;
 
     while ((poll_retval = poll(&pfd, 1, -1)) == 1)
     {
-        if (rcv_message_staticbuf(thdata->socket, &packet, sizeof packet) != sizeof packet)
+        psize = rcv_message_staticbuf(thdata->socket, &packet, sizeof packet);
+
+        if (psize == 0)
+        {
+            slog(LOG_ERR, "Llamada cerrada en remoto. Sin avisar. Eso no se hace.");
+            thdata->recv_status = VC_CALL_ENDED;
+            call_stop(thdata->id);
+            return NULL;
+        }
+        else if (psize != sizeof packet)
         {
             slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor... ¿qué hacemos?");
             continue;

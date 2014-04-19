@@ -202,7 +202,9 @@ int irc_pcall(void* data)
 
 	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
 	msgdata->clientdata->call_socket = socket;
+	msgdata->clientdata->call_status = call_outgoing;
 	call_socket = &(msgdata->clientdata->call_socket);
+
 	signal(SIGALRM, _call_timeout);
 	alarm(CALL_TIMEOUT_SEC);
 
@@ -233,6 +235,8 @@ int irc_paccept(void* data)
 	get_socket_port(socket, &port);
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PACCEPT %d %d", msgdata->clientdata->call_user, msgdata->clientdata->client_ip, port);
 
+	msgdata->clientdata->call_status = call_running;
+
 	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket);
 	messageText("Aceptando llamada...");
 	return OK;
@@ -241,6 +245,7 @@ int irc_paccept(void* data)
 int irc_pclose(void* data)
 {
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	msgdata->clientdata->call_status = call_none;
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PCLOSE ", msgdata->clientdata->call_user);
 	call_stop(&(msgdata->clientdata->call_info));
 	messageText("Llamada terminada.");

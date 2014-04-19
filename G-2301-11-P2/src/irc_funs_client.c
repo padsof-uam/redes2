@@ -129,7 +129,6 @@ int irc_nickcollision(void* data)
 	struct irc_msgdata * msgdata = (struct irc_msgdata *) data;
 	
 	errorText("El nick que has escogido (%s) está en uso. Elige otro con el comando \"/nick tunuevonick\"", msgdata->clientdata->nick);
-	msgdata->clientdata->connected = 0;
 	return OK;
 }
 

@@ -150,7 +150,7 @@ void errorWindow(char *msg)
                                      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                      GTK_MESSAGE_ERROR,
                                      GTK_BUTTONS_CLOSE,
-                                    "Error:\n%s", msg);
+                                     "Error:\n%s", msg);
 
     gtk_dialog_run(GTK_DIALOG(pError));
     gtk_widget_destroy (pError);
@@ -219,8 +219,12 @@ void moderatedCB (GtkToggleButton *togglebutton, gpointer user_data)
 
 void readMessageCB (GtkWidget *msg, gpointer user_data)
 {
-    newText(gtk_entry_get_text(GTK_ENTRY(msg)));
-    gtk_entry_set_text(GTK_ENTRY(msg), "");
+    pthread_mutex_lock(&win_mutex);
+    {
+        newText(gtk_entry_get_text(GTK_ENTRY(msg)));
+        gtk_entry_set_text(GTK_ENTRY(msg), "");
+    }
+    pthread_mutex_unlock(&win_mutex);
 }
 
 static void gtkEnable(GtkWidget *wd)

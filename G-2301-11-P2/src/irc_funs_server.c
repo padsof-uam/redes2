@@ -9,6 +9,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 
 #define MSG_PRIVMSG 1
 #define MSG_NOTICE 2
@@ -803,10 +806,35 @@ int irc_away(void *data)
     return OK;
 }
 
-static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan, struct ircuser* sender)
+static void _send_who_msg(struct irc_msgdata* data, struct ircuser* user)
 {
     char who_msg[200];
     char who_text[200];
+    char ipaddr[INET_ADDRSTRLEN] = "0.0.0.0";
+    struct sockaddr_in name;
+    socklen_t len = sizeof(name);
+
+    if (getpeername(user->fd, (struct sockaddr *)&name, &len) != 0) 
+    {
+        slog(LOG_WARNING, "Error obteniendo IP del usuario %s", user->nick);
+    }
+    else 
+    {
+        inet_ntop(AF_INET, &name.sin_addr, ipaddr, sizeof ipaddr);
+    }
+
+    snprintf(who_msg, 200, "%s ~%s %s %s.local %s H@", 
+                "*", 
+                user->username, 
+                ipaddr,
+                data->globdata->servername,
+                user->nick);
+            snprintf(who_text, 200, "%d %s", 0, user->name);
+            irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);
+}
+
+static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan, struct ircuser* sender)
+{
     struct ircuser* user;
     int i;
 
@@ -818,19 +846,8 @@ static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan
                 continue;
 
         if(!(user->mode & user_invisible))
-        {
-            snprintf(who_msg, 200, "%s ~%s %s %s.local %s H@", 
-                chan->name, 
-                user->username, 
-                "0.0.0.0",
-                data->globdata->servername,
-                user->nick);
-            snprintf(who_text, 200, "%d %s", 0, user->name);
-            irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);
-        }
+            _send_who_msg(data, user);
     }
-
-
 }
 
 int irc_who(void *data)
@@ -839,6 +856,7 @@ int irc_who(void *data)
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct ircchan *chan;
     struct ircuser *source = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
+    struct ircuser *user;
     char *channame = NULL;
     int i;
 
@@ -859,6 +877,13 @@ int irc_who(void *data)
 
         if(chan)
             _send_who_msgs_channel(ircdata, chan, NULL);
+        else
+        {
+            user = irc_user_bynick(ircdata->globdata, channame);
+
+            if(user)
+                _send_who_msg(ircdata, user);
+        }
     }
 
     irc_send_numericreply(ircdata, RPL_ENDOFWHO, NULL);

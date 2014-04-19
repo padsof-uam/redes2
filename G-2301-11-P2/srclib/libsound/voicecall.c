@@ -64,7 +64,7 @@ int get_socket_port(int sock, int *port)
     if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
         return ERR_SOCK;
 
-    *port = ntohs(addr.sin_port);
+    *port = addr.sin_port;
 
     return OK;
 }

@@ -71,7 +71,7 @@ int serv_get_number(int servnum, struct serv_info *info)
 
     while (fgets(line, 200, serv_f) && line_num < servnum);
 
-    if (feof(serv_f))
+    if (feof(serv_f) && line_num != servnum)
     {
         fclose(serv_f);
         return ERR_NOTFOUND;

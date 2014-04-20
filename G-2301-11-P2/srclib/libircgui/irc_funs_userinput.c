@@ -24,6 +24,7 @@ const char* _ui_commands[] =
 	"pcall",
 	"paccept",
 	"pclose",
+	"quit",
 	"*"
 };
 
@@ -36,6 +37,7 @@ cmd_action _ui_actions[] =
 	irc_pcall,
 	irc_paccept,
 	irc_pclose,
+	irc_ui_quit,
 	irc_server_forward
 };
 

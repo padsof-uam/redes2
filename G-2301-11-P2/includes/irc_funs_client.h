@@ -11,6 +11,7 @@
  */
 void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata);
 
+int irc_ignore(void* data);
 int irc_default(void * data);
 int irc_recv_topic(void* data);
 int irc_recv_join(void* data);
@@ -24,6 +25,7 @@ int irc_recv_notice(void* data);
 int irc_recv_mode(void* data);
 int irc_recv_ping(void* data);
 int irc_recv_who(void* data);
+int irc_recv_end_motd(void* data);
 
 void parse_pcall(struct irc_clientdata* cdata, char* text, char* source);
 void parse_paccept(struct irc_clientdata* cdata, char* text, char* source);

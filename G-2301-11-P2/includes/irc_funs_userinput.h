@@ -12,6 +12,6 @@ int irc_server(void* data);
 int irc_pcall(void* data);
 int irc_paccept(void* data);
 int irc_pclose(void* data);
-
+int irc_ui_quit(void* data);
 
 #endif

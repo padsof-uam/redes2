@@ -197,10 +197,14 @@ int irc_nick(void *data)
         return OK;
     }
 
+    if(strlen(old_nick) == 0)
+        irc_send_welcome_message(ircdata); /* Si no tenía un nick le mandamos bienvenida */
+    else
+        irc_send_response(ircdata, ":%s NICK %s", old_nick, user->nick);
+
     for (i = 0; i < list_count(user->channels); ++i)
         irc_channel_broadcast(list_at(user->channels, i), ircdata->msg_tosend, user, ":%s NICK %s", old_nick, user->nick);
 
-    list_add(ircdata->msg_tosend, irc_response_create(ircdata->msgdata->fd, ":%s NICK %s", old_nick, user->nick));
 
     free(old_nick);
     return OK;
@@ -210,7 +214,6 @@ int irc_user(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     char *params[4];
-    char msg[MAX_IRC_MSG];
     struct ircuser *user;
 
     if (irc_parse_paramlist(ircdata->msg, params, 4) < 4)
@@ -220,11 +223,6 @@ int irc_user(void *data)
     }
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
-
-
-    sprintf(msg,"Bienvenido a %s! Eres el %d usuario",ircdata->globdata->servername,ircdata->msgdata->fd);
-    irc_send_numericreply_withtext(ircdata, RPL_MOTD, NULL,msg);
-
 
     if (user)
     {

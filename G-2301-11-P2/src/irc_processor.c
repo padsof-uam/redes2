@@ -464,6 +464,14 @@ char *irc_next_param(const char *msg)
         return space + 1;
 }
 
+void irc_send_welcome_message(struct irc_msgdata* ircdata)
+{
+    char msg[MAX_IRC_MSG];
+    snprintf(msg, MAX_IRC_MSG, "Bienvenido a %s! Eres el usuario %d.",ircdata->globdata->servername,ircdata->msgdata->fd);
+    irc_send_numericreply_withtext(ircdata, RPL_MOTD, NULL,msg);
+    irc_send_numericreply(ircdata, RPL_ENDOFMOTD, NULL);
+}
+
 char *irc_errstr(int errcode)
 {
     switch (errcode)
@@ -574,6 +582,8 @@ char *irc_errstr(int errcode)
         return "End of /LIST";
     case RPL_ENDOFWHO:
         return "End of /WHO list";
+    case RPL_ENDOFMOTD:
+        return "End of /MOTD command.";
     default:
         return "I don't know that error";
     }

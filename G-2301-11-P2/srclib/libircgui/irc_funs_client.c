@@ -15,6 +15,8 @@ const char *_irc_client_cmds[] =
     "436", /* ERR_NICKCOLLISION */
     "461", /* ERR_NEEDMOREPARAMS */
     "352", /* RPL_WHO */
+    "315", /* RPL_ENDOFWHO */
+    "376", /* RPL_ENDOFMOTD */
     "JOIN",
     "PART",
     "PRIVMSG",
@@ -33,6 +35,8 @@ cmd_action _irc_client_actions[] =
     irc_nickcollision,
     irc_needmoreparams,
     irc_recv_who,
+    irc_ignore,
+    irc_recv_end_motd,
     irc_recv_join,
     irc_recv_part,
     irc_recv_privmsg,
@@ -47,6 +51,20 @@ cmd_action _irc_client_actions[] =
 void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata)
 {
     _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions) / sizeof(cmd_action)));
+}
+
+int irc_ignore(void* data)
+{
+    return OK;
+}
+
+
+int irc_recv_end_motd(void* data)
+{
+    struct irc_msgdata *msgdata = (struct irc_msgdata *) data;
+    irc_send_response(msgdata, "WHO %s", msgdata->clientdata->nick);
+
+    return OK;
 }
 
 int irc_default(void *data)

@@ -258,5 +258,7 @@ int irc_send_message(int snd_qid, int fd, const char* format, ...);
  * @return     Siguiente parámetro o NULL si no hay más.
  */
 char* irc_next_param(const char* msg);
+
+void irc_send_welcome_message(struct irc_msgdata* ircdata);
 #endif
 

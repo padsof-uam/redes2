@@ -213,9 +213,11 @@ void *sound_receiver_entrypoint(void *data)
         }
         else if (psize != sizeof packet)
         {
-            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor... ¿qué hacemos?");
+            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d)... ¿qué hacemos?", psize);
             continue;
         }
+
+        slog(LOG_INFO, "Recibido paquete, seq %d", packet.seq);
 
         lfringbuf_push(thdata->ringbuf, packet.payload);
     }

@@ -18,6 +18,16 @@
 #include <poll.h>
 #include <sys/time.h>
 
+
+
+#define mark_delta(msg) do { \
+    tsa = tsb; \
+    tsb = get_timestamp(); \
+    slog(LOG_DEBUG, "Time delta %d ns: %s", tsb - tsa, msg); \
+} while(0)
+
+#define delta_reset() tsb = get_timestamp()
+
 struct cm_thdata
 {
     uint32_t dst_ip;
@@ -141,6 +151,7 @@ void *sound_sender_entrypoint(void *data)
     struct rtp_header packet;
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     int retval;
+    uint32_t tsa, tsb;
 
     pthread_cleanup_push(_cancel_record, NULL);
 
@@ -160,6 +171,7 @@ void *sound_sender_entrypoint(void *data)
 
     while (1)
     {
+        delta_reset();
         thdata->sndr_status = VC_OK;
 
         packet.timestamp = get_timestamp();
@@ -168,6 +180,8 @@ void *sound_sender_entrypoint(void *data)
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         retval = recordSound(packet.payload, VC_PAYLOAD_SIZE);
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+        mark_delta("record");
 
         if (retval != 0)
         {
@@ -182,18 +196,12 @@ void *sound_sender_entrypoint(void *data)
             call_stop(thdata->id);
             return NULL;
         }
+
+        mark_delta("send");
     }
 
     pthread_cleanup_pop(0);
 }
-
-#define mark_delta(msg) do { \
-    tsa = tsb; \
-    tsb = get_timestamp(); \
-    slog(LOG_INFO, "Time delta %d ns: %s", tsb - tsa, msg); \
-} while(0)
-
-#define delta_reset() tsb = get_timestamp()
 
 static void _cancel_play(void* data)
 {
@@ -205,6 +213,7 @@ void *sound_player_entrypoint(void *data)
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     char buffer[VC_PAYLOAD_SIZE];
     int retval;
+    uint32_t tsa, tsb;
 
     pthread_cleanup_push(_cancel_play, NULL);
 
@@ -212,13 +221,19 @@ void *sound_player_entrypoint(void *data)
 
     while (1)
     {
+        delta_reset();
         lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
+        mark_delta("wait");
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
         {   
+            mark_delta("pop");
             pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+            mark_delta("cancel disable");
             retval = playSound(buffer, VC_PAYLOAD_SIZE);
+            mark_delta("play");
             pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+            mark_delta("cancel enable");
 
             if(retval != 0)
                 slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
@@ -262,7 +277,7 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
-        // slog(LOG_INFO, "Recibido paquete, seq %d, time delta %d ns", packet.seq, get_timestamp() - packet.timestamp);
+        slog(LOG_DEBUG, "Recibido paquete, seq %d, time delta %d ns", packet.seq, get_timestamp() - packet.timestamp);
         lfringbuf_push(thdata->ringbuf, packet.payload);
     }
 

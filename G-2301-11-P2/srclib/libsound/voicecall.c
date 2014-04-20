@@ -182,7 +182,7 @@ void *sound_player_entrypoint(void *data)
     {
         lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
-        if (lfringbuf_pop(thdata->ringbuf, buffer) == 0)
+        if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
             playSound(buffer, VC_PAYLOAD_SIZE);
     }
 
@@ -217,7 +217,6 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
-        slog(LOG_ERR, "Probablemente deberías preocuparte de verificar que todo se ha recibido bien antes de reproducir el payload así a pelo, capullo.");
         lfringbuf_push(thdata->ringbuf, packet.payload);
     }
 

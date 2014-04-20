@@ -130,11 +130,19 @@ error:
     return retval;
 }
 
+static void _cancel_record(void* data)
+{
+    closeRecord();
+}
+
+
 void *sound_sender_entrypoint(void *data)
 {
     struct rtp_header packet;
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     int retval;
+
+    pthread_cleanup_push(_cancel_record, NULL);
 
     bzero(&packet, sizeof packet);
 
@@ -157,7 +165,11 @@ void *sound_sender_entrypoint(void *data)
         packet.timestamp = get_timestamp();
         packet.seq++;
 
-        if ((retval = recordSound(packet.payload, VC_PAYLOAD_SIZE)) != 0)
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+        retval = recordSound(packet.payload, VC_PAYLOAD_SIZE);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+        if (retval != 0)
         {
             slog(LOG_ERR, "Error grabando sonido: %d. Terminando.", retval);
             call_stop(thdata->id);
@@ -171,6 +183,21 @@ void *sound_sender_entrypoint(void *data)
             return NULL;
         }
     }
+
+    pthread_cleanup_pop(0);
+}
+
+#define mark_delta(msg) do { \
+    tsa = tsb; \
+    tsb = get_timestamp(); \
+    slog(LOG_INFO, "Time delta %d ns: %s", tsb - tsa, msg); \
+} while(0)
+
+#define delta_reset() tsb = get_timestamp()
+
+static void _cancel_play(void* data)
+{
+    closePlay();
 }
 
 void *sound_player_entrypoint(void *data)
@@ -179,6 +206,8 @@ void *sound_player_entrypoint(void *data)
     char buffer[VC_PAYLOAD_SIZE];
     int retval;
 
+    pthread_cleanup_push(_cancel_play, NULL);
+
     openPlay(VC_STREAM_ID);
 
     while (1)
@@ -186,8 +215,10 @@ void *sound_player_entrypoint(void *data)
         lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
-        {
+        {   
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
             retval = playSound(buffer, VC_PAYLOAD_SIZE);
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
             if(retval != 0)
                 slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
@@ -197,6 +228,8 @@ void *sound_player_entrypoint(void *data)
             slog(LOG_ERR, "lfringbuf pop error");
         }
     }
+
+    pthread_cleanup_pop(0);
 
     return NULL;
 }
@@ -229,8 +262,7 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
-        slog(LOG_INFO, "Recibido paquete, seq %d", packet.seq);
-
+        // slog(LOG_INFO, "Recibido paquete, seq %d, time delta %d ns", packet.seq, get_timestamp() - packet.timestamp);
         lfringbuf_push(thdata->ringbuf, packet.payload);
     }
 
@@ -252,7 +284,7 @@ int call_stop(struct cm_info *cm)
     pthread_cancel_join(&(cm->receiver_pth));
     pthread_cancel_join(&(cm->sender_pth));
     close(cm->thdata->socket);
-    
+
     return OK;
 }
 

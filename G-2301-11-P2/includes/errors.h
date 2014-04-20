@@ -6,6 +6,7 @@
 
 #define OK 0
 
+#define ERR -1
 #define ERR_REPEAT -2
 #define ERR_NOTFOUND -4
 #define ERR_PARSE -8
@@ -15,7 +16,7 @@
 #define ERR_RANGE -128
 #define ERR_SYS -256
 #define ERR_AIR -512
-#define ERR -1
+#define ERR_TIMEOUT -1024
 
 #endif
 #pragma GCC diagnostic pop

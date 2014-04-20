@@ -180,7 +180,7 @@ void *sound_player_entrypoint(void *data)
 
     while (1)
     {
-        lfringbuf_wait_for_items(thdata->ringbuf);
+        lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
         if (lfringbuf_pop(thdata->ringbuf, buffer) == 0)
             playSound(buffer, VC_PAYLOAD_SIZE);

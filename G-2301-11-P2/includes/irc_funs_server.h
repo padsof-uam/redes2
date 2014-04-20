@@ -1,6 +1,16 @@
 #ifndef IRC_FUNS_SERVER_H
 #define IRC_FUNS_SERVER_H
 
+#include "types.h"
+
+/**
+ * Función de procesado de mensajes en el lado del servidor.
+ * @param snd_qid Cola de mensajes donde encolar las respuestas.
+ * @param data    Datos del mensaje para procesar.
+ * @param gdata   Estructura de los datos de irc.
+ */
+void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
+
 int irc_privmsg(void* data);
 int irc_ping(void* data);
 int irc_nick(void* data);

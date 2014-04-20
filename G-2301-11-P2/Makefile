@@ -1,7 +1,7 @@
 CC = clang
 CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0)
 DEBUG_CFLAGS = -DDEBUG -ggdb 
-LDFLAGS := $(shell pkg-config --libs gtk+-2.0) $(shell pkg-config --libs libpulse-simple)
+LDFLAGS := $(shell pkg-config --libs libpulse-simple)
 E_LIBS = -lpthread
 
 CFLAGS += $(DEBUG_CFLAGS)
@@ -34,6 +34,7 @@ LIB_NAMES := $(patsubst $(LIBSRCDIR)/%, %, $(wildcard $(LIBSRCDIR)/*))
 LIBS :=	$(addprefix $(LIBDIR)/, $(addsuffix .a, $(LIB_NAMES)))
 LIB_DEPS := $(addsuffix .deps, $(addprefix $(OBJDIR)/., $(LIB_NAMES)))
 LIB_OBJDIRS := $(addprefix $(OBJDIR)/$(LIBSRCDIR)/, $(LIB_NAMES))
+LIBS_NOGUI := $(filter-out %/libircgui.a, $(LIBS))
 
 TEST_SRCS := $(wildcard $(TESTDIR)/*.c)
 TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
@@ -65,6 +66,7 @@ no-daemon: CFLAGS += -DNODAEMON
 no-daemon: debug
 
 chat: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
+chat: CFLAGS += $(shell pkg-config --libs gtk+-2.0) 
 chat: $(BINDIR)/chat
 
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
@@ -145,7 +147,7 @@ $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $
 test: CFLAGS += $(DEBUG_CFLAGS)
 test: $(BINDIR)/test | $(OBJDIR)
 
-$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
+$(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS_NOGUI) | $(BINDIR) depend
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
 

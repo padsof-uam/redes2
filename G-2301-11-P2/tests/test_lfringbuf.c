@@ -1,6 +1,7 @@
 #include "test_lfringbuf.h"
 #include "testmacros.h"
 #include "lfringbuf.h"
+#include "sysutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,6 +101,7 @@ int t_lfringbuf_wait_for_items__items_in_buffer__returns_inmediately() {
 
 	mu_assert_eq(retval, OK, "retval is not OK");
 	lfringbuf_destroy(rb);
+
 	mu_end;
 }
 
@@ -137,6 +139,7 @@ int t_lfringbuf_wait_for_items__empty_buffer__waits() {
 	mu_assert_eq(_thread_ended, 1, "the thread is still waiting.");
 
 	lfringbuf_destroy(rb);
+	pthread_cancel_join(&th);
 	mu_end;
 }
 int t_lfringbuf_pop__buffer_full__element_retrieved() {

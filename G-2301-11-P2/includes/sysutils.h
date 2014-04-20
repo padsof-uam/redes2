@@ -46,6 +46,6 @@ rlim_t get_soft_limit(int resource);
  */
 int install_stop_handlers();
 
-int pthread_cancel_join(pthread_t th);
+int pthread_cancel_join(pthread_t *th);
 #endif
 

@@ -3,6 +3,14 @@
 
 #include "types.h"
 
+/**
+ * Función de procesado de mensajes en el lado del cliente.
+ * @param snd_qid Cola de mensajes donde encolar las respuestas.
+ * @param data    Datos del mensaje para procesar.
+ * @param cdata   Estructura de los datos del cliente irc.
+ */
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata);
+
 int irc_default(void * data);
 int irc_recv_topic(void* data);
 int irc_recv_join(void* data);

@@ -234,9 +234,9 @@ uint32_t get_timestamp()
 
 int call_stop(struct cm_info *cm)
 {
-    pthread_cancel_join(cm->player_pth);
-    pthread_cancel_join(cm->receiver_pth);
-    pthread_cancel_join(cm->sender_pth);
+    pthread_cancel_join(&(cm->player_pth));
+    pthread_cancel_join(&(cm->receiver_pth));
+    pthread_cancel_join(&(cm->sender_pth));
 
     return OK;
 }

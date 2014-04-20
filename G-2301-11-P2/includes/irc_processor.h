@@ -16,22 +16,6 @@ struct ircflag
 #define IS_IRCFLAGS_END(flag) ((flag).code == -1 && (flag).value == -1)
 
 /**
- * Función de procesado de mensajes en el lado del servidor.
- * @param snd_qid Cola de mensajes donde encolar las respuestas.
- * @param data    Datos del mensaje para procesar.
- * @param gdata   Estructura de los datos de irc.
- */
-void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata);
-
-/**
- * Función de procesado de mensajes en el lado del cliente.
- * @param snd_qid Cola de mensajes donde encolar las respuestas.
- * @param data    Datos del mensaje para procesar.
- * @param cdata   Estructura de los datos del cliente irc.
- */
-void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata);
-
-/**
  * @internal
  * @param snd_qid Cola de mensajes que serán enviados.
  * @param data    Datos del mensaje para procesar.

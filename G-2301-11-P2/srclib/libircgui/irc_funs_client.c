@@ -8,6 +8,47 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+const char *_irc_client_cmds[] =
+{
+    "332", /* RPL_TOPIC */
+    "433", /* ERR_NICKNAMEINUSE */
+    "436", /* ERR_NICKCOLLISION */
+    "461", /* ERR_NEEDMOREPARAMS */
+    "352", /* RPL_WHO */
+    "JOIN",
+    "PART",
+    "PRIVMSG",
+    "NICK",
+    "QUIT",
+    "NOTICE",
+    "MODE",
+    "PING",
+    "*"
+};
+
+cmd_action _irc_client_actions[] =
+{
+    irc_recv_topic,
+    irc_nickcollision,
+    irc_nickcollision,
+    irc_needmoreparams,
+    irc_recv_who,
+    irc_recv_join,
+    irc_recv_part,
+    irc_recv_privmsg,
+    irc_recv_nick,
+    irc_recv_quit,
+    irc_recv_notice,
+    irc_recv_mode,
+    irc_recv_ping,
+    irc_default
+};
+
+void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_clientdata *cdata)
+{
+    _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions) / sizeof(cmd_action)));
+}
+
 int irc_default(void *data)
 {
     struct irc_msgdata *msgdata = (struct irc_msgdata *) data;

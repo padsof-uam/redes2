@@ -16,6 +16,66 @@
 #define MSG_PRIVMSG 1
 #define MSG_NOTICE 2
 
+
+const char *_irc_server_cmds[] =
+{
+    "PRIVMSG",
+    "PING",
+    "NICK",
+    "USER",
+    "QUIT",
+    "JOIN",
+    "PART",
+    "TOPIC",
+    "NAMES",
+    "LIST",
+    "KICK",
+    "TIME",
+    "NOTICE",
+    "PONG",
+    "USERS",
+    "OPER",
+    "MODE",
+    "INVITE",
+    "VERSION",
+    "KILL",
+    "AWAY",
+    "WHO",
+    "ISON"
+};
+
+cmd_action _irc_server_actions[] =
+{
+    irc_privmsg,
+    irc_ping,
+    irc_nick,
+    irc_user,
+    irc_quit,
+    irc_join,
+    irc_part,
+    irc_topic,
+    irc_names,
+    irc_list,
+    irc_kick,
+    irc_time,
+    irc_notice,
+    irc_pong,
+    irc_users,
+    irc_oper,
+    irc_mode,
+    irc_invite,
+    irc_version,
+    irc_kill,
+    irc_away,
+    irc_who,
+    irc_ison
+};
+
+void irc_server_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_globdata *gdata)
+{
+    _irc_msgprocess(snd_qid, data, gdata, NULL, _irc_server_cmds, _irc_server_actions, (sizeof(_irc_server_actions) / sizeof(cmd_action)));
+}
+
 static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, const char *text, int msgtype)
 {
     struct ircchan *chan = irc_channel_byname(irc->globdata, receiver);

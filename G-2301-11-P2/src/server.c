@@ -10,6 +10,7 @@
 #include "sysutils.h"
 #include "log.h"
 #include "irc_core.h"
+#include "irc_funs_server.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -42,7 +43,7 @@
  */
 #define irc_pth_exit(th_name) do { \
     if(th_name##_running) { \
-        if(pthread_cancel_join(th_name##_th) != OK) \
+        if(pthread_cancel_join(&th_name##_th) != OK) \
             slog(LOG_ERR, "Error saliendo del hilo " #th_name ": %s", strerror(errno)); \
     } \
 } while(0)

@@ -174,14 +174,14 @@ int install_stop_handlers()
     return retval;
 }
 
-int pthread_cancel_join(pthread_t th)
+int pthread_cancel_join(pthread_t* th)
 {
     int err;
-    if ((err = pthread_cancel(th)) < 0)
+    if ((err = pthread_cancel(*th)) < 0)
         return err;
     
 
-    if ((err = pthread_join(th, NULL)) < 0)
+    if ((err = pthread_join(*th, NULL)) < 0)
         return err;
 
     return OK;

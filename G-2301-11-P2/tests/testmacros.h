@@ -22,6 +22,11 @@
 	return MU_PASSED; \
 } while(0)
 
+#define mu_cleanup_end do { \
+	if(retval == MU_PASSED) { mu_end; } \
+	else { return retval; } \
+} while(0)
+
 #define mu_sysfail(message) do { perror(message); mu_fail(message); } while(0)
 
 #define mu_assert_eq(actual, expected, message) do { \

@@ -80,6 +80,8 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
 
     bzero(cm, sizeof(struct cm_info));
 
+    sampleFormat(VC_FORMAT, VC_CHANNELS);
+
     thdata->dst_ip = ip;
     thdata->dst_port = port;
     thdata->socket = socket;
@@ -249,7 +251,8 @@ int call_stop(struct cm_info *cm)
     pthread_cancel_join(&(cm->player_pth));
     pthread_cancel_join(&(cm->receiver_pth));
     pthread_cancel_join(&(cm->sender_pth));
-
+    close(cm->thdata->socket);
+    
     return OK;
 }
 

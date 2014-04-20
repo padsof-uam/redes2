@@ -11,7 +11,12 @@
 #define VC_FUCKOFF 4
 #define VC_TIMEOUT 8
 
-#define VC_PAYLOAD_SIZE 1000
+#define VC_CHUNK_TIME_MS 20
+#define VC_FORMAT PA_SAMPLE_ULAW
+#define VC_CHANNELS 1
+#define VC_PAYLOAD_SIZE 400
+
+
 #define VC_RINGBUF_CAP 1000
 #define VC_RECORD_ID "redirc-rec"
 #define VC_STREAM_ID "redirc-str"

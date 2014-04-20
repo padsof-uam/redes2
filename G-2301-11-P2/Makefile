@@ -1,7 +1,7 @@
-CC = clang
-CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0)
-DEBUG_CFLAGS = -DDEBUG -ggdb 
-LDFLAGS := $(shell pkg-config --libs libpulse-simple)
+CC = gcc
+CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) 
+DEBUG_CFLAGS = -DDEBUG -ggdb -rdynamic
+LDFLAGS := $(shell pkg-config --libs libpulse-simple) $(shell pkg-config --libs gtk+-2.0)
 E_LIBS = -lpthread
 
 CFLAGS += $(DEBUG_CFLAGS)
@@ -140,7 +140,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS) $(LDFLAGS)
 
 ## Tests
 
@@ -149,7 +149,7 @@ test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS_NOGUI) | $(BINDIR) depend
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS)
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS) $(LDFLAGS)
 
 ### Documentation
 

@@ -94,7 +94,6 @@ int irc_msg(void* data)
 		return ERR_PARSE;
 	}
 
-	msg_start = '\0';
 	msg_start++;
 
 	irc_send_to_server(msgdata, "PRIVMSG %s :%s", nick_start, msg_start);

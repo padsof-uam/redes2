@@ -175,6 +175,7 @@ void *sound_player_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     char buffer[VC_PAYLOAD_SIZE];
+    int retval;
 
     openPlay(VC_STREAM_ID);
 
@@ -183,7 +184,16 @@ void *sound_player_entrypoint(void *data)
         lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
-            playSound(buffer, VC_PAYLOAD_SIZE);
+        {
+            retval = playSound(buffer, VC_PAYLOAD_SIZE);
+
+            if(retval != 0)
+                slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
+        }
+        else
+        {
+            slog(LOG_ERR, "lfringbuf pop error");
+        }
     }
 
     return NULL;

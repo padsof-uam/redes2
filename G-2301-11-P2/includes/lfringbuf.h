@@ -11,7 +11,9 @@ struct lfringbuf {
 	size_t item_size;
 	void* list;
 	short next_push_is_overwrite;
-	pthread_cond_t* waiting_signal;
+	pthread_cond_t waiting_cond;
+	pthread_mutex_t waiting_mutex;
+	short destroying;
 };
 
 typedef struct lfringbuf lfringbuf;

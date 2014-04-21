@@ -59,9 +59,15 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 /* Variables globales */
-pthread_mutex_t win_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_t gtk_tid;
+
+#define gtk_threads_enter_if_required() do { if(!pthread_equal(pthread_self(), gtk_tid)) gdk_threads_enter(); } while(0)
+#define gtk_threads_leave_if_required() do { if(!pthread_equal(pthread_self(), gtk_tid)) gdk_threads_leave(); } while(0)
 
 GtkWidget *window;
 GtkWidget *eApodo, *eNombre, *eNombreR, *eServidor, *ePuerto;
@@ -293,14 +299,14 @@ void setModerated(gboolean state, gboolean enabled)
 
 void publicText(const char *user, const char *text)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "italic",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "italic",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 /*******************************************************************************
@@ -316,14 +322,14 @@ void publicText(const char *user, const char *text)
 
 void privateText(const char *user, const char *text)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, user, -1, "blue_fg", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, ": ", -1, "blue_fg", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1, "green_fg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "green_fg",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 /*******************************************************************************
@@ -338,7 +344,7 @@ void privateText(const char *user, const char *text)
 
 void errorText(const char *errormessage, ...)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         char fmt_message[500];
         va_list ap;
@@ -349,7 +355,7 @@ void errorText(const char *errormessage, ...)
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "black_bg", "italic", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 /*******************************************************************************
@@ -364,7 +370,7 @@ void errorText(const char *errormessage, ...)
 
 void messageText(const char *message, ...)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
 
         char fmt_message[500];
@@ -376,13 +382,13 @@ void messageText(const char *message, ...)
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "magenta_fg", "italic", "bold", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "magenta_fg",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 
 }
 
 void noticeText(const char *message, ...)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         char fmt_message[500];
         va_list ap;
@@ -393,12 +399,12 @@ void noticeText(const char *message, ...)
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "blue_fg", "italic", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "blue_fg",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 void actionText(const char *username, const char *message, ...)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         char fmt_message[500];
         va_list ap;
@@ -410,7 +416,7 @@ void actionText(const char *username, const char *message, ...)
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, fmt_message, -1, "green", "lmarg",  NULL);
         gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, "\n", -1, "green",  NULL);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 void setUserConnectionState(const gboolean isConnected)
@@ -437,7 +443,7 @@ void setUserConnectionState(const gboolean isConnected)
 
 void scrolling(GtkWidget *widget, gpointer data)
 {
-    pthread_mutex_lock(&win_mutex);
+    gtk_threads_enter_if_required();
     {
         GtkAdjustment *adjustment;
 
@@ -445,7 +451,7 @@ void scrolling(GtkWidget *widget, gpointer data)
         adjustment->value = adjustment->upper;
         gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(widget), adjustment);
     }
-    pthread_mutex_unlock(&win_mutex);
+    gtk_threads_leave_if_required();
 }
 
 void ConnectArea(GtkWidget *vbox)
@@ -646,6 +652,8 @@ void *thread_gui(void *data)
     g_type_init (); /* Necesario para tener funcionalidad de hilos */
 #pragma GCC diagnostic pop
 
+    gtk_tid = pthread_self();
+
     gdk_threads_init ();
     gdk_threads_enter ();
     gtk_init(&(thdata->argc), NULL); /* Inicia gnome */
@@ -674,9 +682,11 @@ void *thread_gui(void *data)
     g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_widget_show_all(window); /* Presentación de las ventanas */
-
     gdk_threads_leave (); /* Salida de hilos */
+
+    gdk_threads_enter();
     gtk_main(); /* Administración de la interacción */
+    gdk_threads_leave();
 
     raise(SIGTERM); /* Cuando acaba la interfaz, salimos del programa */
 

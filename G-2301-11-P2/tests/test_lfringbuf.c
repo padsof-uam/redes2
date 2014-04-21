@@ -12,6 +12,9 @@ int t_lfringbuf_pop__empty_buffer_after_cycle__fails() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i, val;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
+
 	for(i = 0; i < 10; i++)
 	{
 		retval = lfringbuf_push(rb, &i);
@@ -33,6 +36,9 @@ int t_lfringbuf_pop__empty_buffer_after_cycle__fails() {
 int t_lfringbuf_push__full_buffer_after_cycle__fails() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i, val;
+
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
 
 	for(i = 0; i < 10; i++)
 	{
@@ -63,6 +69,9 @@ int t_lfringbuf_wait_for_items__empty_buffer_after_full__returns_timeout() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i, val;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
+
 	for(i = 0; i < 10; i++)
 	{
 		retval = lfringbuf_push(rb, &i);
@@ -77,7 +86,9 @@ int t_lfringbuf_wait_for_items__empty_buffer_after_full__returns_timeout() {
 
 	retval = lfringbuf_wait_for_items(rb, 100);
 
-	mu_assert_eq(retval, ERR_TIMEOUT, "retval is not ERR_TIMEOUT");
+	if(retval != ERR_TIMEOUT)
+		mu_sysfail("retval is not ERR_TIMEOUT");
+
 	lfringbuf_destroy(rb);
 	mu_end;
 }
@@ -85,9 +96,14 @@ int t_lfringbuf_wait_for_items__empty_buffer_timeout__returns_timeout() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
+
 	retval = lfringbuf_wait_for_items(rb, 100);
 
-	mu_assert_eq(retval, ERR_TIMEOUT, "retval is not ERR_TIMEOUT");
+	if(retval != ERR_TIMEOUT)
+		mu_sysfail("retval is not ERR_TIMEOUT");
+
 	lfringbuf_destroy(rb);
 	mu_end;
 }
@@ -96,12 +112,16 @@ int t_lfringbuf_wait_for_items__items_in_buffer__returns_inmediately() {
 	int retval;
 	int item = 2;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
+
 	lfringbuf_push(rb, &item);
 	retval = lfringbuf_wait_for_items(rb, 100);
 
-	mu_assert_eq(retval, OK, "retval is not OK");
-	lfringbuf_destroy(rb);
+	if(retval != OK)
+		mu_sysfail("retval is not OK");
 
+	lfringbuf_destroy(rb);
 	mu_end;
 }
 
@@ -122,6 +142,8 @@ int t_lfringbuf_wait_for_items__empty_buffer__waits() {
 	pthread_t th;
 	int item = 2;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
 	_thread_ended = 0;
 
 	if(pthread_create(&th, NULL, _fun_wait, rb) != 0)
@@ -145,6 +167,9 @@ int t_lfringbuf_wait_for_items__empty_buffer__waits() {
 int t_lfringbuf_pop__buffer_full__element_retrieved() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i, val;
+
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
 
 	for(i = 0; i < 10; i++)
 	{
@@ -180,6 +205,9 @@ int t_lfringbuf_pop__empty_buffer__fails() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, val;
 
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
+
 	retval = lfringbuf_pop(rb, &val);
 	mu_assert_eq(retval, ERR, "pop: retval is not error");
 
@@ -189,6 +217,9 @@ int t_lfringbuf_pop__empty_buffer__fails() {
 int t_lfringbuf_push__buffer_full__fails() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i, val = 10;
+
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
 
 	for(i = 0; i < 10; i++)
 	{
@@ -205,6 +236,9 @@ int t_lfringbuf_push__buffer_full__fails() {
 int t_lfringbuf_push__items_in_buffer__element_pushed() {
 	lfringbuf* rb = lfringbuf_new(10, sizeof(int));
 	int retval, i;
+	
+	if(!rb)
+		mu_sysfail("lfringbuf_new");
 
 	for(i = 0; i < 5; i++)
 	{

@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <stdint.h>
 
+#include "sound.h"
+
 #define VC_OK 0
 #define VC_CALL_ENDED 1
 #define VC_ERR 2
@@ -38,11 +40,10 @@ struct rtp_header {
 	uint16_t seq;
 	uint32_t timestamp;
 	uint32_t ssrc_id;
-	char payload[VC_PAYLOAD_SIZE];
 };
 
 int open_listen_socket();
-int spawn_call_manager_thread(struct cm_info* cm, uint32_t ip, uint16_t port, int socket);
+int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms);
 void* sound_sender_entrypoint(void* data);
 void* sound_receiver_entrypoint(void* data);
 void* sound_player_entrypoint(void* data);

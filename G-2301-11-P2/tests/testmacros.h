@@ -17,6 +17,8 @@
 
 #define mu_fail(message) do { mu_perror(message); return MU_ERR; } while(0)
 
+#define mu_ignore do { printf(TYELLOW "IGN\n" TRESET); return MU_PASSED; } while(0)
+
 #define mu_end do { \
 	printf(TGREEN "OK\n" TRESET); \
 	return MU_PASSED; \

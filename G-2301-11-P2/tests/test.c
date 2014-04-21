@@ -1,3 +1,4 @@
+#include "test_voicecall.h"
 #include "test_server_history.h"
 #include "test_lfringbuf.h"
 #include "test_irc_core.h"
@@ -13,6 +14,8 @@
 #include "test_daemonize.h"
 #include "termcolor.h"
 #include "sysutils.h"
+#include "log.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -30,18 +33,18 @@ int include_test(const char *testname, int argc, const char **argv)
     int i;
 
     if (argc == 1)
-        return 1; /* No hay especificaciones */
+        return 1; /* No hay especificaciones */    
 
-    if (!strncasecmp("include", argv[1], strlen(testname)))
+    if (!strncasecmp("include", argv[0], strlen(testname)))
         is_including = 1;
-    else if (!strncasecmp("exclude", argv[1], strlen(testname)))
+    else if (!strncasecmp("exclude", argv[0], strlen(testname)))
         is_including = 0;
     else
         fprintf(stderr, "include/exclude not recognized. Assuming 'exclude'\n");
 
-    for(i = 2; i < argc; i++)
-    	if(!strncasecmp(testname, argv[i], strlen(testname)))
-    		return is_including;
+    for(i = 1; i < argc; i++)
+        if(!strncasecmp(testname, argv[i], strlen(testname)))
+            return is_including;
 
     return !is_including;
 }
@@ -51,36 +54,50 @@ int main(int argc, const char **argv)
     time_t t;
     int success = 0, error = 0, run = 0;
     time(&t);   
+    const char **spec_start = argv + 1;
+
+    argc--;
+
+    if(argc >= 1 && !strncasecmp("-v", argv[1], 2))
+    {
+        slog_set_level(LOG_DEBUG);
+        spec_start++;
+        argc--;
+    }
+    
+    slog_set_output(stderr);
 
     install_stop_handlers();
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
-	if(include_test("server_history", argc, argv))
+	if(include_test("voicecall", argc, spec_start))
+		run += test_voicecall_suite(&error, &success);
+	if(include_test("server_history", argc, spec_start))
 		run += test_server_history_suite(&error, &success);
-	if(include_test("lfringbuf", argc, argv))
+	if(include_test("lfringbuf", argc, spec_start))
 		run += test_lfringbuf_suite(&error, &success);
-	if(include_test("irc_core", argc, argv))
+	if(include_test("irc_core", argc, spec_start))
 		run += test_irc_core_suite(&error, &success);
-	if(include_test("strings", argc, argv))
+	if(include_test("strings", argc, spec_start))
 		run += test_strings_suite(&error, &success);
-	if(include_test("irc_funs", argc, argv))
+	if(include_test("irc_funs", argc, spec_start))
 		run += test_irc_funs_suite(&error, &success);
-	if(include_test("irc_processor", argc, argv))
+	if(include_test("irc_processor", argc, spec_start))
 		run += test_irc_processor_suite(&error, &success);
-	if(include_test("dictionary", argc, argv))
+	if(include_test("dictionary", argc, spec_start))
 		run += test_dictionary_suite(&error, &success);
-	if(include_test("list", argc, argv))
+	if(include_test("list", argc, spec_start))
 		run += test_list_suite(&error, &success);
-	if(include_test("poller", argc, argv))
+	if(include_test("poller", argc, spec_start))
 		run += test_poller_suite(&error, &success);
-	if(include_test("listener", argc, argv))
+	if(include_test("listener", argc, spec_start))
 		run += test_sockutils_suite(&error, &success);
-	if(include_test("messager", argc, argv))
+	if(include_test("messager", argc, spec_start))
 		run += test_messager_suite(&error, &success);
-    if(include_test("commparser", argc, argv))
+    if(include_test("commparser", argc, spec_start))
 	    run += test_commparser_suite(&error, &success);
-    if(include_test("daemonize", argc, argv))
+    if(include_test("daemonize", argc, spec_start))
     	run += test_daemonize_suite(&error, &success);
 
     /* END TEST REGION */

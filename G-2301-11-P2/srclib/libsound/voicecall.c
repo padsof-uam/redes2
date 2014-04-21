@@ -18,7 +18,7 @@
 #include <poll.h>
 #include <sys/time.h>
 
-
+#define rtp_payload(buffer) (buffer + sizeof(struct rtp_header))
 
 #define mark_delta(msg) do { \
     tsa = tsb; \
@@ -39,6 +39,9 @@ struct cm_thdata
     short player_status;
     uint32_t ssrc;
     lfringbuf *ringbuf;
+    int payload_size;
+    int sample_duration_ms;
+    int payload_format;
 };
 
 int open_listen_socket()
@@ -79,7 +82,7 @@ int get_socket_port(int sock, int *port)
     return OK;
 }
 
-int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket)
+int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms)
 {
     struct cm_thdata *thdata = malloc(sizeof(struct cm_thdata));
     struct sockaddr_in dst_addr;
@@ -90,14 +93,21 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
 
     bzero(cm, sizeof(struct cm_info));
 
-    sampleFormat(VC_FORMAT, VC_CHANNELS);
-
+    thdata->payload_format = sampleFormat(format, channels);
+    thdata->payload_size = getBytesPerSample(format, channels, chunk_time_ms);
+    thdata->sample_duration_ms = chunk_time_ms;
     thdata->dst_ip = ip;
     thdata->dst_port = port;
     thdata->socket = socket;
     thdata->ssrc = generate_ssrc();
     thdata->id = cm;
-    thdata->ringbuf = lfringbuf_new(VC_RINGBUF_CAP, VC_PAYLOAD_SIZE);
+    thdata->ringbuf = lfringbuf_new(VC_RINGBUF_CAP, thdata->payload_size);
+
+    if(!thdata->ringbuf)
+    {
+        slog(LOG_CRIT, "Error creando un buffer circular de tamaño %ld", VC_RINGBUF_CAP * thdata->payload_size);
+        return ERR_MEM;
+    }
 
     cm->thdata = thdata;
 
@@ -121,7 +131,7 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
         goto error;
     }
 
-    if (pthread_create(&(cm->receiver_pth), NULL, sound_sender_entrypoint, thdata) != 0)
+    if (pthread_create(&(cm->sender_pth), NULL, sound_sender_entrypoint, thdata) != 0)
     {
         slog(LOG_CRIT, "Error creando hilo de envío de sonido: %s", strerror(errno));
         goto error;
@@ -148,58 +158,67 @@ static void _cancel_record(void* data)
 
 void *sound_sender_entrypoint(void *data)
 {
-    struct rtp_header packet;
+    char* packet;
+    struct rtp_header* header;
+    size_t buf_size;
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     int retval;
-    uint32_t tsa, tsb;
+
+    buf_size = sizeof(struct rtp_header) + thdata->payload_size;
+
+    packet = calloc(buf_size, sizeof(char));
+
+    if(!packet)
+    {
+        slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de envío: %s", buf_size, strerror(errno));
+        call_stop(thdata->id);
+        return NULL;
+    }
+
+    slog(LOG_DEBUG, "Memoria reservada, tamaño %d", buf_size);
 
     pthread_cleanup_push(_cancel_record, NULL);
-
-    bzero(&packet, sizeof packet);
+    pthread_cleanup_push(free, packet);
 
     openRecord(VC_RECORD_ID);
 
-    packet.version = 2;
-    packet.padding = 0;
-    packet.extension = 0;
-    packet.contributor_count = 0;
-    packet.marker = 0;
-    packet.payload_type = sampleFormat(PA_SAMPLE_ALAW, 1);
+    header = (struct rtp_header*) packet;
 
-    packet.seq = 0;
-    packet.ssrc_id = thdata->ssrc;
+    header->version = 2;
+    header->padding = 0;
+    header->extension = 0;
+    header->contributor_count = 0;
+    header->marker = 0;
+    header->payload_type = thdata->payload_format;
+
+    header->seq = 0;
+    header->ssrc_id = thdata->ssrc;
 
     while (1)
     {
-        delta_reset();
         thdata->sndr_status = VC_OK;
 
-        packet.timestamp = get_timestamp();
-        packet.seq++;
+        header->timestamp = get_timestamp();
+        header->seq++;
 
-        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-        retval = recordSound(packet.payload, VC_PAYLOAD_SIZE);
-        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-        mark_delta("record");
+        retval = recordSound(rtp_payload(packet), thdata->payload_size);
 
         if (retval != 0)
         {
-            slog(LOG_ERR, "Error grabando sonido: %d. Terminando.", retval);
+            slog(LOG_ERR, "Error grabando sonido: %d (%s). Terminando.", retval, pa_strerror(retval));
             call_stop(thdata->id);
             return NULL;
         }
 
-        if (send_message(thdata->socket, &packet, sizeof packet) != OK)
+        if (send_message(thdata->socket, packet, buf_size) != OK)
         {
             slog(LOG_ERR, "Error enviando a través del socket: %s. Terminando.", strerror(errno));
             call_stop(thdata->id);
             return NULL;
         }
-
-        mark_delta("send");
     }
 
+    pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
 }
 
@@ -211,29 +230,33 @@ static void _cancel_play(void* data)
 void *sound_player_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
-    char buffer[VC_PAYLOAD_SIZE];
+    char* buffer;
+    size_t buf_size;
     int retval;
-    uint32_t tsa, tsb;
 
+    buf_size = thdata->payload_size;
+
+    buffer = calloc(buf_size, sizeof(char));
+
+    if(!buffer)
+    {
+        slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de reproducción: %s", buf_size, strerror(errno));
+        call_stop(thdata->id);
+        return NULL;
+    }
+
+    pthread_cleanup_push(free, buffer);
     pthread_cleanup_push(_cancel_play, NULL);
 
     openPlay(VC_STREAM_ID);
 
     while (1)
     {
-        delta_reset();
         lfringbuf_wait_for_items(thdata->ringbuf, -1);
 
-        mark_delta("wait");
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
         {   
-            mark_delta("pop");
-            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-            mark_delta("cancel disable");
-            retval = playSound(buffer, VC_PAYLOAD_SIZE);
-            mark_delta("play");
-            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-            mark_delta("cancel enable");
+            retval = playSound(buffer, thdata->payload_size);
 
             if(retval != 0)
                 slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
@@ -245,6 +268,7 @@ void *sound_player_entrypoint(void *data)
     }
 
     pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);
 
     return NULL;
 }
@@ -252,7 +276,9 @@ void *sound_player_entrypoint(void *data)
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
-    struct rtp_header packet;
+    struct rtp_header* packet;
+    char* buffer;
+    size_t buf_size;
     struct pollfd pfd;
     int poll_retval;
     int psize;
@@ -260,9 +286,24 @@ void *sound_receiver_entrypoint(void *data)
     pfd.events = POLLIN;
     pfd.fd = thdata->socket;
 
+    buf_size = sizeof(struct rtp_header) + thdata->payload_size;
+
+    buffer = calloc(buf_size, sizeof(char));
+
+    if(!buffer)
+    {
+        slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de recepción: %s", buf_size, strerror(errno));
+        call_stop(thdata->id);
+        return NULL;
+    }
+
+    pthread_cleanup_push(free, buffer);
+
+    packet = (struct rtp_header*) buffer;
+
     while ((poll_retval = poll(&pfd, 1, -1)) == 1)
     {
-        psize = rcv_message_staticbuf(thdata->socket, &packet, sizeof packet);
+        psize = rcv_message_staticbuf(thdata->socket, buffer, buf_size);
 
         if (psize == 0)
         {
@@ -271,15 +312,16 @@ void *sound_receiver_entrypoint(void *data)
             call_stop(thdata->id);
             return NULL;
         }
-        else if (psize != sizeof packet)
+        else if (psize != buf_size)
         {
             slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d)... ¿qué hacemos?", psize);
             continue;
         }
 
-        slog(LOG_DEBUG, "Recibido paquete, seq %d, time delta %d ns", packet.seq, get_timestamp() - packet.timestamp);
-        lfringbuf_push(thdata->ringbuf, packet.payload);
+        lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
     }
+
+    pthread_cleanup_pop(0);
 
     return NULL;
 }
@@ -289,15 +331,20 @@ uint32_t get_timestamp()
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    return (tv.tv_sec % 10000) * 1000 + tv.tv_usec / 1000;
 }
 
 
 int call_stop(struct cm_info *cm)
 {
+    if(!cm)
+        return ERR;
+
     pthread_cancel_join(&(cm->player_pth));
     pthread_cancel_join(&(cm->receiver_pth));
     pthread_cancel_join(&(cm->sender_pth));
+
+    lfringbuf_destroy(cm->thdata->ringbuf);
     close(cm->thdata->socket);
 
     return OK;

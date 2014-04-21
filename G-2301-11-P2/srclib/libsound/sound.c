@@ -6,6 +6,12 @@
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
+#include "sound.h"
+
+int _use_mocks = 0;
+sound_cb _play_cb = NULL;
+sound_cb _record_cb = NULL;
+
 pa_sample_spec ss =
 {
     .format = PA_SAMPLE_S16BE,
@@ -17,20 +23,20 @@ pa_simple *sr = NULL, *sp = NULL;
 
 long getFormatBps(enum pa_sample_format format, int channels)
 {
-	int rate, bits_per_sample;
+    int rate, bits_per_sample;
 
-	if(format == PA_SAMPLE_ALAW || format == PA_SAMPLE_ULAW)
-	{
-		rate = 8000;
-		bits_per_sample = 8;
-	}
-	else
-	{
-		rate = 44100;
-		bits_per_sample = 16;
-	}
+    if (format == PA_SAMPLE_ALAW || format == PA_SAMPLE_ULAW)
+    {
+        rate = 8000;
+        bits_per_sample = 8;
+    }
+    else
+    {
+        rate = 44100;
+        bits_per_sample = 16;
+    }
 
-	return rate * bits_per_sample * channels;
+    return rate * bits_per_sample * channels;
 }
 
 
@@ -38,22 +44,22 @@ long getBytesPerSample(enum pa_sample_format format, int channels, int ms_sample
 {
     long bps = getFormatBps(format, channels);
 
-    return bps * (ms_samplelen / 1000);
+    return (bps / 8) * ((double) ms_samplelen / 1000);
 }
 
 int sampleFormat(enum pa_sample_format format, int channels)
 {
     switch (format)
     {
-	    case PA_SAMPLE_ULAW:
-	   	case PA_SAMPLE_ALAW:
-            if (channels != 1) return -1;
-	        ss.rate = 8000;
-	        break;
-	    case PA_SAMPLE_S16BE:
-	        if (channels != 1 && channels != 2) return -1;
-	        break;
-	    default: return -1;
+    case PA_SAMPLE_ULAW:
+        case PA_SAMPLE_ALAW:
+                if (channels != 1) return -1;
+        ss.rate = 8000;
+        break;
+    case PA_SAMPLE_S16BE:
+        if (channels != 1 && channels != 2) return -1;
+        break;
+    default: return -1;
     }
 
     ss.format = format;
@@ -67,7 +73,7 @@ int sampleFormat(enum pa_sample_format format, int channels)
     return -1;
 }
 
-int openRecord(char *identificacion)
+int _openRecord(char *identificacion)
 {
     int error;
 
@@ -76,7 +82,7 @@ int openRecord(char *identificacion)
     return 0;
 }
 
-int openPlay(char *identificacion)
+int _openPlay(char *identificacion)
 {
     int error;
 
@@ -85,16 +91,16 @@ int openPlay(char *identificacion)
     return 0;
 }
 
-void closeRecord()
+void _closeRecord()
 {
     pa_simple_free(sr);
 }
-void closePlay()
+void _closePlay()
 {
     pa_simple_free(sp);
 }
 
-int recordSound(char *buf, int size)
+int _recordSound(char *buf, int size)
 {
     int error;
 
@@ -102,7 +108,7 @@ int recordSound(char *buf, int size)
     return 0;
 }
 
-int playSound(char *buf, int size)
+int _playSound(char *buf, int size)
 {
     int error;
 
@@ -110,5 +116,93 @@ int playSound(char *buf, int size)
     return 0;
 }
 
+int _openMock(char *identificacion)
+{
+    return 0;
+}
+int _closeMock()
+{
+    return 0;
+}
+
+int _set_record_cb(sound_cb cb)
+{
+    _record_cb = cb;
+    return 0;
+}
+
+int _set_play_cb(sound_cb cb)
+{
+    _play_cb = cb;
+    return 0;
+}
 
 
+int _playMock(char *buf, int size)
+{
+    if (_play_cb)
+        return _play_cb(buf, size);
+    else
+        return -1;
+}
+
+int _recordMock(char *buf, int size)
+{
+    if (_record_cb)
+        return _record_cb(buf, size);
+    else
+        return -1;
+}
+
+int openRecord(char *id)
+{
+    if (!_use_mocks)
+        return _openRecord(id);
+    else
+        return _openMock(id);
+}
+
+int openPlay(char *id)
+{
+    if (!_use_mocks)
+        return _openPlay(id);
+    else
+        return _openMock(id);
+}
+
+int recordSound(char *buf, int size)
+{
+    if (!_use_mocks)
+        return _recordSound(buf, size);
+    else
+        return _recordMock(buf, size);
+}
+
+int playSound(char *buf, int size)
+{
+    if (!_use_mocks)
+        return _playSound(buf, size);
+    else
+        return _playMock(buf, size);
+}
+
+void closeRecord()
+{
+    if (!_use_mocks)
+        _closeRecord();
+    else
+        _closeMock();
+}
+
+void closePlay()
+{
+    if (!_use_mocks)
+        _closePlay();
+    else
+        _closeMock();
+}
+
+void _set_use_mocks(int use_mocks)
+{
+	_use_mocks = use_mocks;
+}

@@ -238,7 +238,7 @@ int irc_paccept(void* data)
 
 	msgdata->clientdata->call_status = call_running;
 
-	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket);
+	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket, VC_FORMAT, VC_CHANNELS, VC_CHUNK_TIME_MS);
 	messageText("Aceptando llamada...");
 	return OK;
 } 

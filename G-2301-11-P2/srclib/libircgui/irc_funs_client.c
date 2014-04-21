@@ -389,7 +389,7 @@ void parse_paccept(struct irc_clientdata *cdata, char *text, char *source)
 
     signal(SIGALRM, SIG_IGN);
 
-    spawn_call_manager_thread(&(cdata->call_info), ip, port, cdata->call_socket);
+    spawn_call_manager_thread(&(cdata->call_info), ip, port, cdata->call_socket, VC_FORMAT, VC_CHANNELS, VC_CHUNK_TIME_MS);
     cdata->call_status = call_running;
     messageText("Llamada aceptada.");
 }

@@ -21,10 +21,10 @@
 #define rtp_payload(buffer) (buffer + sizeof(struct rtp_header))
 
 #define mark_delta(msg) do { \
-    tsa = tsb; \
-    tsb = get_timestamp(); \
-    slog(LOG_DEBUG, "Time delta %d ns: %s", tsb - tsa, msg); \
-} while(0)
+        tsa = tsb; \
+        tsb = get_timestamp(); \
+        slog(LOG_DEBUG, "Time delta %d ns: %s", tsb - tsa, msg); \
+    } while(0)
 
 #define delta_reset() tsb = get_timestamp()
 
@@ -42,6 +42,7 @@ struct cm_thdata
     int payload_size;
     int sample_duration_ms;
     int payload_format;
+    volatile sig_atomic_t stop;
 };
 
 int open_listen_socket()
@@ -101,9 +102,10 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
     thdata->socket = socket;
     thdata->ssrc = generate_ssrc();
     thdata->id = cm;
+    thdata->stop = 0;
     thdata->ringbuf = lfringbuf_new(VC_RINGBUF_CAP, thdata->payload_size);
 
-    if(!thdata->ringbuf)
+    if (!thdata->ringbuf)
     {
         slog(LOG_CRIT, "Error creando un buffer circular de tamaño %ld", VC_RINGBUF_CAP * thdata->payload_size);
         return ERR_MEM;
@@ -150,7 +152,7 @@ error:
     return retval;
 }
 
-static void _cancel_record(void* data)
+static void _cancel_record(void *data)
 {
     closeRecord();
 }
@@ -158,8 +160,8 @@ static void _cancel_record(void* data)
 
 void *sound_sender_entrypoint(void *data)
 {
-    char* packet;
-    struct rtp_header* header;
+    char *packet;
+    struct rtp_header *header;
     size_t buf_size;
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     int retval;
@@ -168,7 +170,7 @@ void *sound_sender_entrypoint(void *data)
 
     packet = calloc(buf_size, sizeof(char));
 
-    if(!packet)
+    if (!packet)
     {
         slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de envío: %s", buf_size, strerror(errno));
         call_stop(thdata->id);
@@ -182,7 +184,7 @@ void *sound_sender_entrypoint(void *data)
 
     openRecord(VC_RECORD_ID);
 
-    header = (struct rtp_header*) packet;
+    header = (struct rtp_header *) packet;
 
     header->version = 2;
     header->padding = 0;
@@ -194,7 +196,7 @@ void *sound_sender_entrypoint(void *data)
     header->seq = 0;
     header->ssrc_id = thdata->ssrc;
 
-    while (1)
+    while (!thdata->stop)
     {
         thdata->sndr_status = VC_OK;
 
@@ -220,9 +222,11 @@ void *sound_sender_entrypoint(void *data)
 
     pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
+
+    return NULL;
 }
 
-static void _cancel_play(void* data)
+static void _cancel_play(void *data)
 {
     closePlay();
 }
@@ -230,7 +234,7 @@ static void _cancel_play(void* data)
 void *sound_player_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
-    char* buffer;
+    char *buffer;
     size_t buf_size;
     int retval;
 
@@ -238,7 +242,7 @@ void *sound_player_entrypoint(void *data)
 
     buffer = calloc(buf_size, sizeof(char));
 
-    if(!buffer)
+    if (!buffer)
     {
         slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de reproducción: %s", buf_size, strerror(errno));
         call_stop(thdata->id);
@@ -250,15 +254,24 @@ void *sound_player_entrypoint(void *data)
 
     openPlay(VC_STREAM_ID);
 
-    while (1)
+    while (!thdata->stop)
     {
-        lfringbuf_wait_for_items(thdata->ringbuf, -1);
+        if (thdata->ringbuf)
+            retval = lfringbuf_wait_for_items(thdata->ringbuf, -1);
+        else
+            retval = ERR;
+
+        if (retval != OK)
+        {
+            slog(LOG_ERR, "Error al esperar nuevos elementos en lfringbuf.");
+            return NULL;
+        }
 
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
-        {   
+        {
             retval = playSound(buffer, thdata->payload_size);
 
-            if(retval != 0)
+            if (retval != 0)
                 slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
         }
         else
@@ -276,8 +289,8 @@ void *sound_player_entrypoint(void *data)
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
-    struct rtp_header* packet;
-    char* buffer;
+    struct rtp_header *packet;
+    char *buffer;
     size_t buf_size;
     struct pollfd pfd;
     int poll_retval;
@@ -290,7 +303,7 @@ void *sound_receiver_entrypoint(void *data)
 
     buffer = calloc(buf_size, sizeof(char));
 
-    if(!buffer)
+    if (!buffer)
     {
         slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de recepción: %s", buf_size, strerror(errno));
         call_stop(thdata->id);
@@ -299,9 +312,9 @@ void *sound_receiver_entrypoint(void *data)
 
     pthread_cleanup_push(free, buffer);
 
-    packet = (struct rtp_header*) buffer;
+    packet = (struct rtp_header *) buffer;
 
-    while ((poll_retval = poll(&pfd, 1, -1)) == 1)
+    while (!thdata->stop && (poll_retval = poll(&pfd, 1, -1)) == 1)
     {
         psize = rcv_message_staticbuf(thdata->socket, buffer, buf_size);
 
@@ -318,7 +331,8 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
-        lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
+        if (thdata->ringbuf)
+            lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
     }
 
     pthread_cleanup_pop(0);
@@ -337,14 +351,31 @@ uint32_t get_timestamp()
 
 int call_stop(struct cm_info *cm)
 {
-    if(!cm)
+    lfringbuf *rb;
+
+    if (!cm)
         return ERR;
 
+    cm->thdata->stop = 1;
+
+    if(cm->thdata->ringbuf)
+        lfringbuf_signal_destroying(cm->thdata->ringbuf);
+
+    usleep(100 * 1000);
+
+    slog(LOG_DEBUG, "Esperando a player...");
     pthread_cancel_join(&(cm->player_pth));
+    slog(LOG_DEBUG, "Esperando a receiver...");
     pthread_cancel_join(&(cm->receiver_pth));
+    slog(LOG_DEBUG, "Esperando a sender...");
     pthread_cancel_join(&(cm->sender_pth));
 
-    lfringbuf_destroy(cm->thdata->ringbuf);
+    rb = cm->thdata->ringbuf;
+    cm->thdata->ringbuf = NULL;
+
+    if(rb)
+        lfringbuf_destroy(rb);
+
     close(cm->thdata->socket);
 
     return OK;

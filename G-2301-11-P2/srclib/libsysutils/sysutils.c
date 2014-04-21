@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <execinfo.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 int write_pid(const char* file)
 {
@@ -177,11 +178,11 @@ int install_stop_handlers()
 int pthread_cancel_join(pthread_t* th)
 {
     int err;
-    if ((err = pthread_cancel(*th)) < 0)
-        return err;
-    
 
-    if ((err = pthread_join(*th, NULL)) < 0)
+    if ((err = pthread_cancel(*th)) != 0)
+        return err;
+
+    if ((err = pthread_join(*th, NULL)) != 0)
         return err;
 
     return OK;

@@ -23,5 +23,6 @@ int lfringbuf_push(lfringbuf* rb, void* item);
 int lfringbuf_wait_for_items(lfringbuf* rb, long ms_timeout);
 int lfringbuf_pop(lfringbuf* rb, void* dst);
 void lfringbuf_destroy(lfringbuf* rb);
+void lfringbuf_signal_destroying(lfringbuf* rb);
 
 #endif

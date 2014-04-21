@@ -128,6 +128,14 @@ int lfringbuf_wait_for_items(lfringbuf* rb, long ms_timeout)
 	    return OK;
 }
 
+void lfringbuf_signal_destroying(lfringbuf* rb)
+{
+	__sync_lock_test_and_set(&(rb->destroying), 0);
+	pthread_mutex_lock(&rb->waiting_mutex);
+	pthread_cond_signal(&rb->waiting_cond);
+	pthread_mutex_unlock(&rb->waiting_mutex);
+}
+
 void lfringbuf_destroy(lfringbuf* rb)
 {
 	if(!rb)
@@ -135,10 +143,7 @@ void lfringbuf_destroy(lfringbuf* rb)
 
 	if(pthread_cond_destroy(&rb->waiting_cond) == EBUSY)
 	{
-		__sync_lock_test_and_set(&(rb->destroying), 0);
-		pthread_mutex_lock(&rb->waiting_mutex);
-		pthread_cond_signal(&rb->waiting_cond);
-		pthread_mutex_unlock(&rb->waiting_mutex);
+		lfringbuf_signal_destroying(rb);		
 
 		usleep(1000);
 		pthread_cond_destroy(&rb->waiting_cond);	

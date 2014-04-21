@@ -93,11 +93,19 @@ int _openPlay(char *identificacion)
 
 void _closeRecord()
 {
+    if(!sr)
+        return;
+
     pa_simple_free(sr);
+    sr = NULL;
 }
 void _closePlay()
 {
+    if(!sp)
+        return;
+
     pa_simple_free(sp);
+    sp = NULL;
 }
 
 int _recordSound(char *buf, int size)

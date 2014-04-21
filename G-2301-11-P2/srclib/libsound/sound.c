@@ -33,6 +33,14 @@ long getFormatBps(enum pa_sample_format format, int channels)
 	return rate * bits_per_sample * channels;
 }
 
+
+long getBytesPerSample(enum pa_sample_format format, int channels, int ms_samplelen)
+{
+    long bps = getFormatBps(format, channels);
+
+    return bps * (ms_samplelen / 1000);
+}
+
 int sampleFormat(enum pa_sample_format format, int channels)
 {
     switch (format)

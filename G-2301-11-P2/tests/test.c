@@ -32,7 +32,7 @@ int include_test(const char *testname, int argc, const char **argv)
     int is_including = 0;
     int i;
 
-    if (argc == 1)
+    if (argc == 0)
         return 1; /* No hay especificaciones */    
 
     if (!strncasecmp("include", argv[0], strlen(testname)))

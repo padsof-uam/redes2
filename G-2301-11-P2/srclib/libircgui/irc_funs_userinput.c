@@ -25,6 +25,7 @@ const char* _ui_commands[] =
 	"paccept",
 	"pclose",
 	"quit",
+	"ban",
 	"*"
 };
 
@@ -38,6 +39,7 @@ cmd_action _ui_actions[] =
 	irc_paccept,
 	irc_pclose,
 	irc_ui_quit,
+	irc_ui_ban,
 	irc_server_forward
 };
 
@@ -301,6 +303,25 @@ int irc_ui_nick(void* data)
 	strncpy(msgdata->clientdata->nick, nick, MAX_NICK_LEN);	
 
 	irc_send_to_server(msgdata, msgdata->msg);
+
+	return OK;
+}
+
+int irc_ui_ban(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	char* msg_dup = strdup(msgdata->msg);
+	char* params[2];
+
+	if(irc_parse_paramlist(msg_dup, params, 2) != 2)
+	{
+		free(msg_dup);
+		errorText("Error de sintaxis. Uso: /ban canal usuario");
+		return OK;
+	}
+
+	irc_send_to_server(msgdata, "MODE %s +b %s", params[0], params[1]);
+	free(msg_dup);
 
 	return OK;
 }

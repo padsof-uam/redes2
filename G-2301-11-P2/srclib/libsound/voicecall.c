@@ -305,16 +305,16 @@ void *sound_receiver_entrypoint(void *data)
     {
         psize = rcv_message_staticbuf(thdata->socket, buffer, buf_size);
 
-        if (psize == 0)
+        if (psize <= 0)
         {
-            slog(LOG_ERR, "Llamada cerrada en remoto. Sin avisar. Eso no se hace.");
+            slog(LOG_ERR, "Error de recepción: %s", strerror(errno));
             thdata->recv_status = VC_CALL_ENDED;
             call_stop(thdata->id);
             return NULL;
         }
         else if (psize != buf_size)
         {
-            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d)... ¿qué hacemos?", psize);
+            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d)... Ignorando.", psize);
             continue;
         }
 

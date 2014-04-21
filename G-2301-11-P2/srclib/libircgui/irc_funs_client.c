@@ -182,7 +182,7 @@ int irc_needmoreparams(void *data)
         return OK;
     }
 
-    errorText("Se necesitan más parámetros para el comando %s", params[0]);
+    errorText("Se necesitan más parámetros para el comando %s", params[1]);
 
     return OK;
 }

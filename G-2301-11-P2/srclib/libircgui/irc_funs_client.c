@@ -18,6 +18,7 @@ const char *_irc_client_cmds[] =
     "352", /* RPL_WHO */
     "315", /* RPL_ENDOFWHO */
     "376", /* RPL_ENDOFMOTD */
+    "401", /* ERR_NOSUCHNICK */
     "JOIN",
     "PART",
     "PRIVMSG",
@@ -38,6 +39,7 @@ cmd_action _irc_client_actions[] =
     irc_recv_who,
     irc_ignore,
     irc_recv_end_motd,
+    irc_recv_nosuchnick,
     irc_recv_join,
     irc_recv_part,
     irc_recv_privmsg,
@@ -410,7 +412,7 @@ void parse_pclose(struct irc_clientdata *cdata, char *text, char *source)
         {
             call_stop(&(cdata->call_info));
         }
-        
+
         cdata->call_status = call_none;
     }
 }
@@ -459,6 +461,33 @@ int irc_recv_who(void *data)
             msgdata->clientdata->client_ip = ip;
             slog(LOG_INFO, "Guardada IP del cliente: %s", host);
         }
+    }
+
+    return OK;
+}
+
+int irc_recv_nosuchnick(void* data)
+{
+    struct irc_msgdata *msgdata = (struct irc_msgdata *) data;
+    char* params[2];
+
+    if(irc_parse_paramlist(msgdata->msg, params, 2) != 2)
+    {
+        slog(LOG_WARNING, "Recibido mensaje ERR_NOSUCHNICK (401) mal formado: %s", msgdata->msg);
+        return OK;
+    }
+
+    if(!strncmp(params[1], msgdata->clientdata->call_user, MAX_NICK_LEN) && 
+        msgdata->clientdata->call_status == call_outgoing)
+    {
+        errorText("No se puede realizar la llamada: el usuario %s no existe.", params[1]);
+        msgdata->clientdata->call_status = call_none;
+        close(msgdata->clientdata->call_socket);
+        signal(SIGALRM, SIG_IGN);
+    }
+    else
+    {
+        errorText("El usuario %s no existe", params[1]);
     }
 
     return OK;

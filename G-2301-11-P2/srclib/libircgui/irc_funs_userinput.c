@@ -31,7 +31,7 @@ const char* _ui_commands[] =
 cmd_action _ui_actions[] = 
 {
 	irc_msg,
-	irc_server_forward,
+	irc_ui_nick,
 	irc_me,
 	irc_server,
 	irc_pcall,
@@ -209,7 +209,7 @@ int irc_pcall(void* data)
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PCALL %d %d", user, msgdata->clientdata->client_ip, port);
 	messageText("Esperando respuesta de %s...", user);
 
-	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
+	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN + 1);
 	msgdata->clientdata->call_socket = socket;
 	msgdata->clientdata->call_status = call_outgoing;
 
@@ -288,6 +288,19 @@ int irc_ui_quit(void* data)
 	const char* msg = irc_next_param(msgdata->msg);
 
 	disconnectClient(msg);
+
+	return OK;
+}
+
+int irc_ui_nick(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	const char* nick = irc_next_param(msgdata->msg);
+
+	setApodo(nick);
+	strncpy(msgdata->clientdata->nick, nick, MAX_NICK_LEN);	
+
+	irc_send_to_server(msgdata, msgdata->msg);
 
 	return OK;
 }

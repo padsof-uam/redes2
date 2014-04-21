@@ -26,6 +26,7 @@ int irc_recv_mode(void* data);
 int irc_recv_ping(void* data);
 int irc_recv_who(void* data);
 int irc_recv_end_motd(void* data);
+int irc_recv_nosuchnick(void* data);
 
 void parse_pcall(struct irc_clientdata* cdata, char* text, char* source);
 void parse_paccept(struct irc_clientdata* cdata, char* text, char* source);

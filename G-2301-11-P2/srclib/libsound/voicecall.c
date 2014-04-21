@@ -331,6 +331,9 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
+        if(thdata->stop)
+            break;
+
         if (thdata->ringbuf)
             lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
     }

@@ -13,5 +13,6 @@ int irc_pcall(void* data);
 int irc_paccept(void* data);
 int irc_pclose(void* data);
 int irc_ui_quit(void* data);
+int irc_ui_nick(void* data);
 
 #endif

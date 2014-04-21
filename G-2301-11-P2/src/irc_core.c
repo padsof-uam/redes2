@@ -120,6 +120,7 @@ static void _chan_destructor(void *ptr)
     list_destroy(chan->users, NULL);
     dic_destroy(chan->invited_users, NULL);
     list_destroy(chan->operators, NULL);
+    list_destroy(chan->banned_users, free);
 
     free(chan);
 }
@@ -268,6 +269,9 @@ int irc_channel_adduser(struct irc_globdata *data, struct ircchan *channel, stru
     if (list_count(user->channels) >= MAX_CHANNELES_USER)
         return ERR_TOOMANYCHANNELS;
 
+    if(irc_is_banned(channel, user))
+        return ERR_BANNEDFROMCHAN;
+
     if (list_add(channel->users, user) != OK)
         return ERR;
     else if (list_add(user->channels, channel) != OK)
@@ -305,6 +309,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     chan->invited_users = dic_new_withstr();
     chan->operators = list_new();
     chan->user_limit = -1;
+    chan->banned_users = list_new();
 
     return chan;
 }
@@ -335,3 +340,91 @@ int irc_channel_removeop(struct ircchan *chan, struct ircuser *user)
     return list_remove_element(chan->operators, ptr_comparator, user);
 }
 
+int irc_add_ban(struct ircchan* chan, const char* banmask)
+{
+    int idx;
+    char* banmask_cpy = strdup(banmask);
+    int retval;
+
+    idx = list_find(chan->banned_users, (comparator) strcmp, banmask_cpy);
+
+    if(idx != -1)
+    {
+        free(banmask_cpy);
+        return ERR_REPEAT;
+    }
+
+    retval =  list_add(chan->banned_users, banmask_cpy);
+
+    if(retval != OK)
+        free(banmask_cpy);
+
+    return retval;
+}
+
+int irc_lift_ban(struct ircchan* chan, const char* banmask)
+{
+    int idx;
+    char* ban;
+
+    idx = list_find(chan->banned_users, (comparator) strcmp, banmask);
+
+    if(idx == -1)
+        return ERR_NOTFOUND;
+
+    ban = list_at(chan->banned_users, idx);
+    
+    if(ban)
+        free(ban);
+
+    return list_remove(chan->banned_users, idx);
+}
+
+int irc_is_banned(struct ircchan* chan, struct ircuser* user)
+{
+    int i;
+    char* banmask;
+
+    for(i = 0; i < list_count(chan->banned_users); i++)
+    { 
+        banmask = list_at(chan->banned_users, i);  
+
+        if(irc_name_matches(banmask, user->nick))
+            return 1;
+    }
+
+    return 0;
+}
+
+int irc_name_matches(const char* banmask, const char* name)
+{
+    short in_wildcard;
+
+    if(!banmask || !name)
+        return 0;
+
+    while((*banmask != '\0' || in_wildcard) && *name != '\0')
+    {
+        if(*banmask == '*')
+        {
+            in_wildcard = 1;
+            banmask++;
+        }
+        else if(*banmask == *name)
+        {
+            in_wildcard = 0;
+            banmask++;
+            name++;
+        }
+        else if(in_wildcard)
+        {
+            name++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return *banmask == *name;
+}

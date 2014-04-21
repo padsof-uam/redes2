@@ -140,5 +140,36 @@ int irc_set_channel_pass(struct ircchan* chan, const char* pass);
  */
 int irc_channel_removeop(struct ircchan* chan, struct ircuser* user);
 
+/**
+ * Devuelve 1 o 0 según un usuario esté baneado en un canal o no.
+ * @param  chan  Canal
+ * @param  user  Usuario
+ * @return       1 si está baneado, 0 si no.
+ */
+int irc_is_banned(struct ircchan* chan, struct ircuser* user);
+
+/**
+ * Elimina el baneo de un usuario.
+ * @param  chan    Canal.
+ * @param  banmask Máscara de baneo.
+ * @return         OK o ERR_NOTFOUND si no se ha encontrado.
+ */
+int irc_lift_ban(struct ircchan* chan, const char* banmask);
+
+/**
+ * Añade un usuario baneado a un canal.	
+ * @param  chan    Canal
+ * @param  banmask Máscara de baneo.
+ * @return         OK o ERR_REPEAT si la máscara ya existía.
+ */
+int irc_add_ban(struct ircchan* chan, const char* banmask);
+
+/**
+ * Comprueba si el nombre dado coincide con la máscara de baneo.
+ * @param  banmask Máscara.
+ * @param  name    Nombre.
+ * @return         1 ó 0 ssegún coincida o no.
+ */
+int irc_name_matches(const char* banmask, const char* name);
 
 #endif

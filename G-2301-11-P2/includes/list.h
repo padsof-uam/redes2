@@ -86,7 +86,7 @@ int list_remove_element(list* ls, comparator comp, void* element);
  * @param  element Elemento a buscar.
  * @return         La posición en la que se encuentra el elemento o -1 si no se ha encontrado.
  */
-int list_find(list* ls, comparator comp, void * element);
+int list_find(list* ls, comparator comp, const void * element);
 
 
 /**

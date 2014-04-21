@@ -153,7 +153,7 @@ int irc_ping(void *data)
 {
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
     struct sockcomm_data *msg_tosend = malloc(sizeof(struct sockcomm_data));
-    bzero(msg_tosend, sizeof(struct sockcomm_data*));
+    bzero(msg_tosend, sizeof(struct sockcomm_data *));
 
     slog(LOG_INFO, "ping!");
     strcpy(msg_tosend->data, "PONG\r\n");
@@ -197,7 +197,7 @@ int irc_nick(void *data)
         return OK;
     }
 
-    if(strlen(old_nick) == 0)
+    if (strlen(old_nick) == 0)
         irc_send_welcome_message(ircdata); /* Si no tenía un nick le mandamos bienvenida */
     else
         irc_send_response(ircdata, ":%s NICK %s", old_nick, user->nick);
@@ -245,7 +245,7 @@ int irc_join(void *data)
     struct ircuser *user;
     int retval = OK;
 
-    bzero(params, 2 * sizeof(char*));
+    bzero(params, 2 * sizeof(char *));
 
     if (irc_parse_paramlist(ircdata->msg, params, 2) == 0)
     {
@@ -286,8 +286,6 @@ int irc_join(void *data)
             irc_channel_broadcast(channel, ircdata->msg_tosend, NULL, ":%s JOIN %s", user->nick, channel->name);
         }
     }
-
-
 
     return OK;
 }
@@ -494,12 +492,12 @@ int irc_kick(void *data)
     sender = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
     kicked = irc_user_bynick(ircdata->globdata, username);
 
-    if(irc_user_inchannel(chan, sender)!=OK)
+    if (irc_user_inchannel(chan, sender) != OK)
     {
         irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, chan_name);
         return OK;
     }
-    else if (!kicked || irc_user_inchannel(chan, kicked)!=OK)
+    else if (!kicked || irc_user_inchannel(chan, kicked) != OK)
     {
         irc_send_numericreply(ircdata, ERR_USERNOTINCHANNEL, chan_name);
         return OK;
@@ -634,7 +632,7 @@ int irc_mode(void *data)
     mode = params[1];
     param = params[2];
 
-    if (pnum>1)
+    if (pnum > 1)
         mode_add = mode[0] == '+';
 
     user = irc_user_byid(ircdata->globdata, ircdata->msgdata->fd);
@@ -661,7 +659,7 @@ int irc_mode(void *data)
         }
         else
         {
-            irc_flagparse(mode, (int *) &(chan->mode), chan_flags);
+            irc_flagparse(mode, (int *) & (chan->mode), chan_flags);
 
             if (strchr(mode, 'l'))
             {
@@ -689,7 +687,7 @@ int irc_mode(void *data)
                     chan->has_password = 0;
             }
 
-            if(strchr(mode, 'o'))
+            if (strchr(mode, 'o'))
             {
                 if (pnum < 3)
                 {
@@ -699,7 +697,7 @@ int irc_mode(void *data)
 
                 op = irc_user_bynick(ircdata->globdata, param);
 
-                if(!op)
+                if (!op)
                     irc_send_numericreply(ircdata, ERR_NOSUCHNICK, param);
                 else if (irc_user_inchannel(chan, op) == ERR_NOTFOUND)
                     irc_send_numericreply(ircdata, ERR_NOTONCHANNEL, param);
@@ -707,6 +705,19 @@ int irc_mode(void *data)
                     irc_channel_addop(chan, op);
                 else
                     irc_channel_removeop(chan, op);
+            }
+
+            if (strchr(mode, 'b'))
+            {
+                if (pnum == 3)
+                {
+                    if (mode_add)
+                        irc_add_ban(chan, param);
+                    else
+                        irc_lift_ban(chan, param);
+                }
+
+                irc_send_banned_list(ircdata, chan);
             }
         }
     }
@@ -864,7 +875,7 @@ int irc_away(void *data)
     return OK;
 }
 
-static void _send_who_msg(struct irc_msgdata* data, struct ircuser* user)
+static void _send_who_msg(struct irc_msgdata *data, struct ircuser *user)
 {
     char who_msg[200];
     char who_text[200];
@@ -872,38 +883,38 @@ static void _send_who_msg(struct irc_msgdata* data, struct ircuser* user)
     struct sockaddr_in name;
     socklen_t len = sizeof(name);
 
-    if (getpeername(user->fd, (struct sockaddr *)&name, &len) != 0) 
+    if (getpeername(user->fd, (struct sockaddr *)&name, &len) != 0)
     {
         slog(LOG_WARNING, "Error obteniendo IP del usuario %s", user->nick);
     }
-    else 
+    else
     {
         inet_ntop(AF_INET, &name.sin_addr, ipaddr, sizeof ipaddr);
     }
 
-    snprintf(who_msg, 200, "%s ~%s %s %s.local %s H@", 
-                "*", 
-                user->username, 
-                ipaddr,
-                data->globdata->servername,
-                user->nick);
-            snprintf(who_text, 200, "%d %s", 0, user->name);
-            irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);
+    snprintf(who_msg, 200, "%s ~%s %s %s.local %s H@",
+             "*",
+             user->username,
+             ipaddr,
+             data->globdata->servername,
+             user->nick);
+    snprintf(who_text, 200, "%d %s", 0, user->name);
+    irc_send_numericreply_withtext(data, RPL_WHOREPLY, who_msg, who_text);
 }
 
-static void _send_who_msgs_channel(struct irc_msgdata* data,struct ircchan* chan, struct ircuser* sender)
+static void _send_who_msgs_channel(struct irc_msgdata *data, struct ircchan *chan, struct ircuser *sender)
 {
-    struct ircuser* user;
+    struct ircuser *user;
     int i;
 
-    for(i = 0; i < list_count(chan->users); i++)
+    for (i = 0; i < list_count(chan->users); i++)
     {
         user = list_at(chan->users, i);
 
-        if(irc_users_have_common_chans(user, sender))
-                continue;
+        if (irc_users_have_common_chans(user, sender))
+            continue;
 
-        if(!(user->mode & user_invisible))
+        if (!(user->mode & user_invisible))
             _send_who_msg(data, user);
     }
 }
@@ -921,25 +932,25 @@ int irc_who(void *data)
     if (irc_parse_paramlist(ircdata->msg, params, 1) == 1)
         channame = params[0];
 
-    if(!channame)
+    if (!channame)
     {
-        for(i = 0; i < list_count(ircdata->globdata->chan_list); i++)
+        for (i = 0; i < list_count(ircdata->globdata->chan_list); i++)
         {
             chan = list_at(ircdata->globdata->chan_list, i);
-            _send_who_msgs_channel(ircdata, chan, source);            
+            _send_who_msgs_channel(ircdata, chan, source);
         }
     }
     else
     {
         chan = irc_channel_byname(ircdata->globdata, channame);
 
-        if(chan)
+        if (chan)
             _send_who_msgs_channel(ircdata, chan, NULL);
         else
         {
             user = irc_user_bynick(ircdata->globdata, channame);
 
-            if(user)
+            if (user)
                 _send_who_msg(ircdata, user);
         }
     }
@@ -949,36 +960,38 @@ int irc_who(void *data)
     return OK;
 }
 
-int irc_ison(void * data)
+int irc_ison(void *data)
 {
     char *params[10];
-    char * str_return = calloc(MAX_IRC_MSG, sizeof(char));
-    char * to_ret;
+    char *str_return = calloc(MAX_IRC_MSG, sizeof(char));
+    char *to_ret;
     struct irc_msgdata *ircdata = (struct irc_msgdata *) data;
 
-    int i,num_params = irc_parse_paramlist(ircdata->msg, params, 10);
+    int i, num_params = irc_parse_paramlist(ircdata->msg, params, 10);
 
     to_ret = str_return;
 
     if (num_params == 0)
     {
-        irc_send_numericreply_withtext(ircdata, ERR_NEEDMOREPARAMS,NULL, "ISON nick_to_check");
+        irc_send_numericreply_withtext(ircdata, ERR_NEEDMOREPARAMS, NULL, "ISON nick_to_check");
         free(to_ret);
-        return OK;        
+        return OK;
     }
 
 
     for (i = 0; i < num_params; ++i)
     {
-        if(!irc_user_bynick(ircdata->globdata, params[i])){
+        if (!irc_user_bynick(ircdata->globdata, params[i]))
+        {
             strcpy(str_return, params[i]);
-            str_return+=strlen(params[i]);
-            *str_return=' ';
+            str_return += strlen(params[i]);
+            *str_return = ' ';
             str_return++;
         }
 
     }
-    if (str_return!=NULL){
+    if (str_return != NULL)
+    {
         str_return--;
         *str_return = '\0';
     }

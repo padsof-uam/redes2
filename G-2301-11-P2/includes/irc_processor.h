@@ -260,5 +260,13 @@ int irc_send_message(int snd_qid, int fd, const char* format, ...);
 char* irc_next_param(const char* msg);
 
 void irc_send_welcome_message(struct irc_msgdata* ircdata);
+
+/**
+ * Responde con la lista de usuarios baneados de un canal.
+ * @param  ircdata Mensaje
+ * @param  chan    Datos del canal.
+ * @return         OK/ERR.
+ */
+int irc_send_banned_list(struct irc_msgdata* ircdata, struct ircchan* chan);
 #endif
 

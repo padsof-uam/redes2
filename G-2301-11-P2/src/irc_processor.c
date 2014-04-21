@@ -472,6 +472,27 @@ void irc_send_welcome_message(struct irc_msgdata* ircdata)
     irc_send_numericreply(ircdata, RPL_ENDOFMOTD, NULL);
 }
 
+int irc_send_banned_list(struct irc_msgdata* ircdata, struct ircchan* chan)
+{
+    int i;
+    struct ircuser* banned;
+    char ban_msg[MAX_IRC_MSG];
+
+    for(i = 0; i < list_count(chan->banned_users); i++)
+    {
+        banned = list_at(chan->banned_users, i);
+        snprintf(ban_msg, MAX_IRC_MSG, "%s %s", chan->name, banned->nick);
+        
+        if(irc_send_numericreply_withtext(ircdata, RPL_BANLIST, ban_msg, NULL) == ERR)
+            return ERR;
+    }
+
+    if(irc_send_numericreply(ircdata, RPL_ENDOFBANLIST, NULL) == ERR)
+        return ERR;
+
+    return OK;
+}
+
 char *irc_errstr(int errcode)
 {
     switch (errcode)

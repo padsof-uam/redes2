@@ -13,6 +13,24 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_join__banned_user__denied() {
+    struct irc_globdata * irc=irc_init();
+    list * output;
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircchan * chan = irc_register_channel(irc, "#foobar");
+    char str[]="JOIN #foobar";
+
+    irc_add_ban(chan, "Pac*");
+
+    output = _process_message(irc_join, irc, 1, str);
+
+    assert_generated(1);
+    assert_numeric_reply(msgnum(0), ERR_BANNEDFROMCHAN, NULL);
+
+    mu_assert("El usuario ha entrado en el canal.", irc_user_inchannel(chan, user) != OK);
+
+    irc_testend;
+}
 int t_irc_ison__ok() {
     struct irc_globdata * irc = irc_init();
     list * output;
@@ -1039,6 +1057,7 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_join__banned_user__denied);
 	mu_run_test(t_irc_ison__ok);
 	mu_run_test(t_irc_ison__bad_params);
 	mu_run_test(t_irc_names__private_channel__not_listed);

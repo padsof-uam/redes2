@@ -113,7 +113,7 @@ void* list_at(list* ls, int index)
 }
 
 
-int list_find(list* ls, comparator comp, void * element)
+int list_find(list* ls, comparator comp, const void * element)
 {
 	int i;
 	int size = list_count(ls);

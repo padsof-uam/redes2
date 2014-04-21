@@ -57,6 +57,7 @@ struct ircchan {
 	list* users; /**< Lista de punteros a las estructuras de usuario de los participantes del canal>. */
 	dictionary* invited_users; /**< Diccionario de punteros a las estructuras de usuarios con los nick's como clave>*/
 	list* operators; /**< Lista de punteros a las estructuras de usuario de los operadores */
+	list* banned_users;
 	char password[MAX_KEY_LEN + 1];
 	short has_password;
 	int user_limit;

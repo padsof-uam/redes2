@@ -163,14 +163,16 @@ int irc_server(void* data)
 	return OK;
 }
 
-int *call_socket;
+int *_call_socket;
+int *_call_status;
 
 static void _call_timeout(int sig)
 {
 	if(sig == SIGALRM)
 	{
-		close(*call_socket);
-		*call_socket = -1;
+		close(*_call_socket);
+		*_call_socket = -1;
+		*_call_status = call_none;
 		errorText("Tiempo de espera superado, cancelando llamada.");
 	}
 }
@@ -182,6 +184,12 @@ int irc_pcall(void* data)
 	int port;
 	int socket;
 	
+	if(msgdata->clientdata->call_status != call_none)
+	{
+		errorText("Sólo puedes hacer una llamada a la vez.");
+		return OK;
+	}
+
 	if(irc_parse_paramlist(msgdata->msg, &user, 1) != 1)
 	{
 		errorText("Error de sintaxis. Uso: /pcall <nick>");
@@ -204,7 +212,9 @@ int irc_pcall(void* data)
 	strncpy(msgdata->clientdata->call_user, user, MAX_NICK_LEN);
 	msgdata->clientdata->call_socket = socket;
 	msgdata->clientdata->call_status = call_outgoing;
-	call_socket = &(msgdata->clientdata->call_socket);
+
+	_call_socket = &(msgdata->clientdata->call_socket);
+	_call_status = (int*) &(msgdata->clientdata->call_status);
 
 	signal(SIGALRM, _call_timeout);
 	alarm(CALL_TIMEOUT_SEC);
@@ -237,6 +247,7 @@ int irc_paccept(void* data)
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PACCEPT %d %d", msgdata->clientdata->call_user, msgdata->clientdata->client_ip, port);
 
 	msgdata->clientdata->call_status = call_running;
+	msgdata->clientdata->call_socket = socket;
 
 	spawn_call_manager_thread(&(msgdata->clientdata->call_info), msgdata->clientdata->call_ip, msgdata->clientdata->call_port, socket, VC_FORMAT, VC_CHANNELS, VC_CHUNK_TIME_MS);
 	messageText("Aceptando llamada...");
@@ -246,9 +257,27 @@ int irc_paccept(void* data)
 int irc_pclose(void* data)
 {
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
-	msgdata->clientdata->call_status = call_none;
+
+	if(msgdata->clientdata->call_status == call_none)
+	{
+		errorText("No hay ninguna llamada que cancelar.");
+		return OK;
+	}
+
+
 	irc_send_to_server(msgdata, "PRIVMSG %s :$PCLOSE ", msgdata->clientdata->call_user);
-	call_stop(&(msgdata->clientdata->call_info));
+	
+	if(msgdata->clientdata->call_status == call_running)
+	{
+		call_stop(&(msgdata->clientdata->call_info));
+	}
+	else if(msgdata->clientdata->call_status == call_outgoing)
+	{
+		close(msgdata->clientdata->call_socket);
+		signal(SIGALRM, SIG_IGN);
+	}
+	
+	msgdata->clientdata->call_status = call_none;
 	messageText("Llamada terminada.");
 	return OK;
 } 

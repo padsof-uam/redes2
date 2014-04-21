@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 const char *_irc_client_cmds[] =
 {
@@ -399,8 +400,18 @@ void parse_pclose(struct irc_clientdata *cdata, char *text, char *source)
     if (cdata->call_status != call_none)
     {
         messageText("El usuario remoto ha terminado la llamada.");
+            
+        if(cdata->call_status == call_outgoing)
+        {
+            close(cdata->call_socket);
+            signal(SIGALRM, SIG_IGN);
+        }
+        else if(cdata->call_status == call_running)
+        {
+            call_stop(&(cdata->call_info));
+        }
+        
         cdata->call_status = call_none;
-        call_stop(&(cdata->call_info));
     }
 }
 

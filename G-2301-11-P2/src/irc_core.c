@@ -121,6 +121,7 @@ static void _chan_destructor(void *ptr)
     dic_destroy(chan->invited_users, NULL);
     list_destroy(chan->operators, NULL);
     list_destroy(chan->banned_users, free);
+    list_destroy(chan->voiced_users, NULL);
 
     free(chan);
 }
@@ -310,6 +311,7 @@ struct ircchan *irc_register_channel(struct irc_globdata *data, const char *name
     chan->operators = list_new();
     chan->user_limit = -1;
     chan->banned_users = list_new();
+    chan->voiced_users = list_new();
 
     return chan;
 }
@@ -427,4 +429,27 @@ int irc_name_matches(const char* banmask, const char* name)
     }
 
     return *banmask == *name;
+}
+
+int irc_has_voice(struct ircchan* chan, struct ircuser* user)
+{
+    return list_find(chan->voiced_users, ptr_comparator, user) != -1;
+}
+
+int irc_give_voice(struct ircchan* chan, struct ircuser* user)
+{
+    if(irc_has_voice(chan, user))
+        return ERR_REPEAT;
+
+    return list_add(chan->voiced_users, user);
+}
+
+int irc_remove_voice(struct ircchan* chan, struct ircuser* user)
+{
+    return list_remove_element(chan->voiced_users, ptr_comparator, user);
+}
+
+int irc_can_talk_in_channel(struct ircchan* chan, struct ircuser* user)
+{
+    return !(chan->mode & chan_moderated) || (irc_is_channel_op(chan, user) || irc_has_voice(chan, user));
 }

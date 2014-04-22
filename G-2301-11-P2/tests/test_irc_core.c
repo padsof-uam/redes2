@@ -8,6 +8,49 @@
 
 
 /* BEGIN TESTS */
+int t_irc_can_talk_in_channel__moderated_voice__returns_true() {
+    struct irc_globdata * irc = irc_init();
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1, user);
+    int retval;
+
+    chan->mode |= chan_moderated;
+
+    retval = irc_give_voice(chan, user);
+    mu_assert_eq(retval, OK, "irc_give_voice failed");
+
+    retval = irc_can_talk_in_channel(chan, user);
+    mu_assert("user doesn't have voice", retval);
+
+    irc_destroy(irc);
+    mu_end;
+}
+int t_irc_can_talk_in_channel__moderated_no_voice__returns_false() {
+    struct irc_globdata * irc = irc_init();
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1, user);
+    int retval;
+
+    chan->mode |= chan_moderated;
+
+    retval = irc_can_talk_in_channel(chan, user);
+    mu_assert("user has voice", !retval);
+
+    irc_destroy(irc);
+    mu_end;
+}
+int t_irc_can_talk_in_channel__not_moderated__returns_true() {
+    struct irc_globdata * irc = irc_init();
+    struct ircuser * user = _irc_register_withnick(irc, 1, "Paco");
+    struct ircchan * chan = _irc_create_chan(irc, "#foobar", 1, user);
+    int retval;
+
+    retval = irc_can_talk_in_channel(chan, user);
+    mu_assert("user doesn't have voice", retval);
+
+    irc_destroy(irc);
+    mu_end;
+}
 int t_irc_name_matches__wildcard_combined__correct()
 {
     char match[] = "implented";
@@ -115,6 +158,9 @@ int test_irc_core_suite(int *errors, int *success)
 
     printf("Begin test_irc_core suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_can_talk_in_channel__moderated_voice__returns_true);
+	mu_run_test(t_irc_can_talk_in_channel__moderated_no_voice__returns_false);
+	mu_run_test(t_irc_can_talk_in_channel__not_moderated__returns_true);
     mu_run_test(t_irc_name_matches__wildcard_combined__correct);
     mu_run_test(t_irc_name_matches__wildcard_middle__correct);
     mu_run_test(t_irc_name_matches__wildcard_end__correct);

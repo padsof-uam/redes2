@@ -89,7 +89,10 @@ static int _irc_send_msg_tochan(struct irc_msgdata *irc, const char *receiver, c
         return OK;
     }
 
-    irc_channel_broadcast(chan, irc->msg_tosend, sender, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text);
+    if(irc_can_talk_in_channel(chan, sender))
+        irc_channel_broadcast(chan, irc->msg_tosend, sender, ":%s %s %s :%s", sender->nick, cmd_name, receiver, text);
+    else
+        irc_send_numericreply(irc, ERR_CANNOTSENDTOCHAN, receiver);
 
     return OK;
 }

@@ -172,4 +172,39 @@ int irc_add_ban(struct ircchan* chan, const char* banmask);
  */
 int irc_name_matches(const char* banmask, const char* name);
 
+/**
+ * Comprueba si un usuario ha sido dado la voz en un canal.
+ * @param  chan Canal
+ * @param  user Usuario
+ * @return      0 si no tiene voz, 1 si la tiene.
+ */
+int irc_has_voice(struct ircchan* chan, struct ircuser* user);
+
+/**
+ * Da la voz a un usuario en un canal.
+ * @param  chan Canal
+ * @param  user Usuario
+ * @return      OK o ERR_REPEAT si el usuario ya tenía la voz.
+ */
+int irc_give_voice(struct ircchan* chan, struct ircuser* user);
+
+/**
+ * Quita la voz a un usuario en un canal.
+ * @param  chan Canal
+ * @param  user Usuario
+ * @return      OK o ERR_NOTFOUND si el usuario no tenía la voz.
+ */
+int irc_remove_voice(struct ircchan* chan, struct ircuser* user);
+
+/**
+ * Comprueba si el canal está moderado o no y si el usuario tiene la voz
+ * 	para decidir si puede enviar mensajes.
+ * @param  chan Canal.
+ * @param  user Usuario.
+ * @return      0 si no puede hablar, otro valor en otro caso.
+ */
+int irc_can_talk_in_channel(struct ircchan* chan, struct ircuser* user);
+
+
+
 #endif

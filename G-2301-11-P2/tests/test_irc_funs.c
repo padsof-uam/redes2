@@ -13,6 +13,25 @@
 #include <stdarg.h>
 
 /* BEGIN TESTS */
+int t_irc_privmsg__modchan_user_no_voice__cannot_talk() {
+    struct irc_globdata *irc = irc_init();
+    list *output;
+    struct ircuser *a = _irc_register_withnick(irc, 1, "pepe");
+    struct ircuser *b = _irc_register_withnick(irc, 2, "paco");
+    struct ircchan* chan = _irc_create_chan(irc, "#testchan", 2, a, b);
+    struct ircuser* user = _irc_register_withnick(irc, 3, "luis");
+    char msg[] = "PRIVMSG #testchan :todos";
+
+    chan->mode |= chan_moderated;
+
+    output = _process_message(irc_privmsg, irc, 3, msg);
+
+    assert_generated(1);
+    assert_dest(msgnum(0), user);
+    assert_numeric_reply(msgnum(0), ERR_CANNOTSENDTOCHAN, "#testchan");
+
+    irc_testend;
+}
 int t_irc_join__banned_user__denied() {
     struct irc_globdata * irc=irc_init();
     list * output;
@@ -1057,6 +1076,7 @@ int test_irc_funs_suite(int *errors, int *success)
 
     printf("Begin test_irc_funs suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_irc_privmsg__modchan_user_no_voice__cannot_talk);
 	mu_run_test(t_irc_join__banned_user__denied);
 	mu_run_test(t_irc_ison__ok);
 	mu_run_test(t_irc_ison__bad_params);

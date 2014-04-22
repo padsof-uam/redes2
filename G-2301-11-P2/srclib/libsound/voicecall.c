@@ -286,6 +286,40 @@ void *sound_player_entrypoint(void *data)
     return NULL;
 }
 
+static void _list_cleanup(void *ls)
+{
+    list_destroy((list *) ls, free);
+}
+
+static char *memdup(char *buffer, size_t size)
+{
+    char *new = malloc(size);
+
+    if (!new) return NULL;
+
+    memcpy(new, buffer, size);
+
+    return new;
+}
+
+static char *_get_packet_with_seq(list *ls, int seq)
+{
+    int i;
+    struct rtp_header *p;
+
+    for (i = 0; i < list_count(ls); i++)
+    {
+        p = list_at(ls, i);
+        if (p->seq == seq)
+        {
+            list_remove(ls, i);
+            return (char *) p;
+        }
+    }
+
+    return NULL;
+}
+
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
@@ -295,6 +329,9 @@ void *sound_receiver_entrypoint(void *data)
     struct pollfd pfd;
     int poll_retval;
     int psize;
+    list *pending_packets = list_new();
+    int last_seq = 0;
+    char *pending_packet_buf;
 
     pfd.events = POLLIN;
     pfd.fd = thdata->socket;
@@ -311,6 +348,7 @@ void *sound_receiver_entrypoint(void *data)
     }
 
     pthread_cleanup_push(free, buffer);
+    pthread_cleanup_push(_list_cleanup, pending_packets);
 
     packet = (struct rtp_header *) buffer;
 
@@ -331,13 +369,31 @@ void *sound_receiver_entrypoint(void *data)
             continue;
         }
 
-        if(thdata->stop)
+        if (thdata->stop)
             break;
 
+        if (packet->seq != last_seq + 1)
+        {
+            list_add(pending_packets, memdup(buffer, buf_size));
+            continue;
+        }
+
+        last_seq++;
+
         if (thdata->ringbuf)
+        {
             lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
+
+            while ((pending_packet_buf = _get_packet_with_seq(pending_packets, last_seq + 1)) != NULL)
+            {
+                lfringbuf_push(thdata->ringbuf, pending_packet_buf);
+                last_seq++;
+                free(pending_packet_buf);
+            }
+        }
     }
 
+    pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
 
     return NULL;
@@ -361,7 +417,7 @@ int call_stop(struct cm_info *cm)
 
     cm->thdata->stop = 1;
 
-    if(cm->thdata->ringbuf)
+    if (cm->thdata->ringbuf)
         lfringbuf_signal_destroying(cm->thdata->ringbuf);
 
     usleep(100 * 1000);
@@ -376,7 +432,7 @@ int call_stop(struct cm_info *cm)
     rb = cm->thdata->ringbuf;
     cm->thdata->ringbuf = NULL;
 
-    if(rb)
+    if (rb)
         lfringbuf_destroy(rb);
 
     close(cm->thdata->socket);

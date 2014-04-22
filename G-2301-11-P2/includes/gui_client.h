@@ -23,6 +23,9 @@
 /* Función de ventana de error */
 void errorWindow(char *msg);
 
+/* Pregunta al usuario. */
+int promptWindow(const char* msg);
+
 /* Interfaz de impresión de textos */
 void publicText(const char *username, const char *text);
 void privateText(const char *username, const char *text);

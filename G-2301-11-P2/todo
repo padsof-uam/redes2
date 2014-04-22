@@ -1,4 +1,7 @@
-- El project falla algo.
+Abrir un puerto cualquiera para ftp, no uno dado a pelo. (Varias transferencias para varios usuarios.)
 
-- Sincronización de newText con el receiver.
-- liberar el mutex al acabar el programa.
+Espera bloqueante o no bloqueante!? asegurarse.
+
+HANDSHAKE para enviar.
+
+fwrite, fputs, write, fprintf... y para leer?

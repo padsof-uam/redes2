@@ -22,6 +22,7 @@ lfringbuf* lfringbuf_new(unsigned int capacity, size_t item_size)
 	rb->item_size = item_size;
 	rb->next_push_is_overwrite = 0;
 	rb->destroying = 0;
+	rb->items = 1;
 
 	pthread_mutex_init(&rb->waiting_mutex, NULL);
 	pthread_cond_init(&rb->waiting_cond, NULL);
@@ -60,6 +61,8 @@ int lfringbuf_push(lfringbuf* rb, void* item)
 	/* marcamos el avance la última posición, ya lista para leer */
 	__sync_lock_test_and_set(&(rb->end_ptr), (end_ptr + 1) % rb->capacity);
 
+	__sync_add_and_fetch(&(rb->items), 1);
+
 	pthread_mutex_lock(&rb->waiting_mutex);
 	pthread_cond_signal(&rb->waiting_cond);
 	pthread_mutex_unlock(&rb->waiting_mutex);
@@ -85,6 +88,7 @@ int lfringbuf_pop(lfringbuf* rb, void* dst)
 	memcpy(dst, list_ptr, rb->item_size);
 	__sync_lock_test_and_set(&(rb->start_ptr), (start_ptr + 1) % rb->capacity);
 	__sync_lock_test_and_set(&(rb->next_push_is_overwrite), 0);
+	__sync_sub_and_fetch(&(rb->items), 1);
 
 	return 0;
 }
@@ -138,15 +142,7 @@ void lfringbuf_signal_destroying(lfringbuf* rb)
 
 int lfringbuf_count(lfringbuf* rb)
 {
-	int start_ptr, end_ptr;
-
-	start_ptr = __sync_retrieve(rb->start_ptr);
-	end_ptr = __sync_retrieve(rb->end_ptr);
-
-	if(start_ptr > end_ptr)
-		end_ptr += rb->capacity;
-
-	return end_ptr - start_ptr;
+	return __sync_retrieve(rb->items);
 }
 
 void lfringbuf_destroy(lfringbuf* rb)

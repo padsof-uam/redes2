@@ -14,6 +14,7 @@ struct lfringbuf {
 	pthread_cond_t waiting_cond;
 	pthread_mutex_t waiting_mutex;
 	short destroying;
+	int items;
 };
 
 typedef struct lfringbuf lfringbuf;

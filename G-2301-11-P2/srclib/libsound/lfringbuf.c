@@ -51,7 +51,7 @@ int lfringbuf_push(lfringbuf* rb, void* item)
 		return ERR;
 
 	overwrite_pos = (end_ptr + 1) % rb->capacity;
-	rb->next_push_is_overwrite = __sync_are_equal(rb->start_ptr, overwrite_pos);;
+	rb->next_push_is_overwrite = __sync_are_equal(rb->start_ptr, overwrite_pos);
 
 	list_ptr += end_ptr * rb->item_size;
 
@@ -134,6 +134,19 @@ void lfringbuf_signal_destroying(lfringbuf* rb)
 	pthread_mutex_lock(&rb->waiting_mutex);
 	pthread_cond_signal(&rb->waiting_cond);
 	pthread_mutex_unlock(&rb->waiting_mutex);
+}
+
+int lfringbuf_count(lfringbuf* rb)
+{
+	int start_ptr, end_ptr;
+
+	start_ptr = __sync_retrieve(rb->start_ptr);
+	end_ptr = __sync_retrieve(rb->end_ptr);
+
+	if(start_ptr > end_ptr)
+		end_ptr += rb->capacity;
+
+	return end_ptr - start_ptr;
 }
 
 void lfringbuf_destroy(lfringbuf* rb)

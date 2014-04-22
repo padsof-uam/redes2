@@ -19,6 +19,11 @@
 #include <sys/time.h>
 
 #define ERR_THRESHOLD 5
+#define RUNNING_AVG_FACTOR 0.2
+#define PACKET_MIN_DROP_MS_SEP 200
+#define LATENCY_THRESHOLD_MS 150
+
+#define __sync_retrieve(val) __sync_add_and_fetch(&(val), 0)
 
 #define rtp_payload(buffer) (buffer + sizeof(struct rtp_header))
 
@@ -44,6 +49,7 @@ struct cm_thdata
     int payload_size;
     int sample_duration_ms;
     int payload_format;
+    int play_latency;
     volatile sig_atomic_t stop;
 };
 
@@ -248,6 +254,7 @@ void *sound_player_entrypoint(void *data)
     char *buffer;
     size_t buf_size;
     int retval;
+    long latency;
 
     buf_size = thdata->payload_size;
 
@@ -267,6 +274,9 @@ void *sound_player_entrypoint(void *data)
 
     while (!thdata->stop)
     {
+        latency = getMsLatencyPlay();
+        __sync_lock_test_and_set(&(thdata->play_latency), latency);
+
         if (thdata->ringbuf)
             retval = lfringbuf_wait_for_items(thdata->ringbuf, -1);
         else
@@ -281,6 +291,7 @@ void *sound_player_entrypoint(void *data)
         if (lfringbuf_pop(thdata->ringbuf, buffer) == OK)
         {
             retval = playSound(buffer, thdata->payload_size);
+            usleep((thdata->sample_duration_ms - 5) * 1000);
 
             if (retval != 0)
                 slog(LOG_ERR, "Error reproduciendo sonido: %s", pa_strerror(retval));
@@ -331,6 +342,14 @@ static char *_get_packet_with_seq(list *ls, int seq)
     return NULL;
 }
 
+static void _update_running_avg(double* avg, int newval)
+{
+    if(*avg < 0)
+        *avg = newval;
+    else
+        *avg = (1 - RUNNING_AVG_FACTOR) * (*avg) + RUNNING_AVG_FACTOR * newval;
+}
+
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
@@ -345,6 +364,12 @@ void *sound_receiver_entrypoint(void *data)
     char *pending_packet_buf;
     char *blank_buf;
     int recv_errors = 0, max_recv_err_threshold = ERR_THRESHOLD;
+    int last_force_drop_ts = -1;
+    int current_ts;
+    int empty_buffer = 0;
+    int queue_delay_ms, tx_delay_ms;
+    double tx_delay_avg = -1;
+    int packets_per_sec = 1000 / ((double) thdata->sample_duration_ms);
 
     pfd.events = POLLIN;
     pfd.fd = thdata->socket;
@@ -404,21 +429,51 @@ void *sound_receiver_entrypoint(void *data)
         if (packet->seq != last_seq + 1)
         {
             list_add(pending_packets, memdup(buffer, buf_size));
-            continue;
+            
+            /* Más de 10 paquetes pendientes, damos el que nos falta por perdido */
+            if(list_count(pending_packets) >= 10)
+            {
+                slog(LOG_DEBUG, "Paquete con secuencia %d dado por perdido.", last_seq + 1);
+                empty_buffer = 1;
+                last_seq++;
+            }
+            else
+            {
+                continue;
+            }
         }
 
         last_seq++;
 
+        current_ts = get_timestamp();
+        tx_delay_ms = current_ts - packet->timestamp;
+        queue_delay_ms = lfringbuf_count(thdata->ringbuf) * thdata->sample_duration_ms + __sync_retrieve(thdata->play_latency);
+
+        _update_running_avg(&tx_delay_avg, tx_delay_ms);
+
+        if(last_seq % packets_per_sec == 0)
+            slog(LOG_DEBUG, "Current tx calculated delay: %f ms. Queue delay: %d ms", tx_delay_avg, queue_delay_ms);
+
+        if(abs(queue_delay_ms - tx_delay_avg) > LATENCY_THRESHOLD_MS && 
+            (current_ts - last_force_drop_ts > PACKET_MIN_DROP_MS_SEP))
+        {
+            last_force_drop_ts = current_ts;
+            slog(LOG_DEBUG, "Dropping packet, trying to reduce latency.");
+            continue;
+        }
+        
         if (thdata->ringbuf)
         {
             lfringbuf_push(thdata->ringbuf, rtp_payload(buffer));
 
-            while ((pending_packet_buf = _get_packet_with_seq(pending_packets, last_seq + 1)) != NULL)
+            while (empty_buffer || (pending_packet_buf = _get_packet_with_seq(pending_packets, last_seq + 1)) != NULL)
             {
                 lfringbuf_push(thdata->ringbuf, pending_packet_buf);
                 last_seq++;
                 free(pending_packet_buf);
             }
+
+            empty_buffer = 0;
         }
     }
 
@@ -470,7 +525,7 @@ int call_stop(struct cm_info *cm)
 
     close(cm->thdata->socket);
 
-    slog(LOG_DEBUG, "Llamada cerrada, recursos liberados");
+    slog(LOG_INFO, "Llamada cerrada, recursos liberados");
 
     return OK;
 }

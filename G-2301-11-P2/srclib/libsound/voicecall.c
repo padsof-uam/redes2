@@ -18,6 +18,8 @@
 #include <poll.h>
 #include <sys/time.h>
 
+#define ERR_THRESHOLD 5
+
 #define rtp_payload(buffer) (buffer + sizeof(struct rtp_header))
 
 #define mark_delta(msg) do { \
@@ -165,6 +167,8 @@ void *sound_sender_entrypoint(void *data)
     size_t buf_size;
     struct cm_thdata *thdata = (struct cm_thdata *) data;
     int retval;
+    int send_errors = 0;
+    int max_send_error_threshold = ERR_THRESHOLD;
 
     buf_size = sizeof(struct rtp_header) + thdata->payload_size;
 
@@ -214,9 +218,16 @@ void *sound_sender_entrypoint(void *data)
 
         if (send_message(thdata->socket, packet, buf_size) != OK)
         {
-            slog(LOG_ERR, "Error enviando a través del socket: %s. Terminando.", strerror(errno));
-            call_stop(thdata->id);
-            return NULL;
+            slog(LOG_ERR, "Error (%d) enviando datos de sonido a través del socket: %s.", send_errors, strerror(errno));
+            send_errors++;
+
+            if (send_errors >= max_send_error_threshold)
+            {
+                slog(LOG_ERR, "Superado margen de errores (%d) en sender. Terminando llamada.", max_send_error_threshold);
+                call_stop(thdata->id);
+                return NULL;
+            }
+
         }
     }
 
@@ -332,6 +343,8 @@ void *sound_receiver_entrypoint(void *data)
     list *pending_packets = list_new();
     int last_seq = 0;
     char *pending_packet_buf;
+    char *blank_buf;
+    int recv_errors = 0, max_recv_err_threshold = ERR_THRESHOLD;
 
     pfd.events = POLLIN;
     pfd.fd = thdata->socket;
@@ -339,15 +352,21 @@ void *sound_receiver_entrypoint(void *data)
     buf_size = sizeof(struct rtp_header) + thdata->payload_size;
 
     buffer = calloc(buf_size, sizeof(char));
+    blank_buf = calloc(buf_size, sizeof(char));
 
-    if (!buffer)
+
+    if (!buffer || !blank_buf)
     {
+        if (blank_buf) free(blank_buf);
+        if (buffer) free(buffer);
+
         slog(LOG_CRIT, "No se ha podido reservar memoria (%d bytes) para el buffer de recepción: %s", buf_size, strerror(errno));
         call_stop(thdata->id);
         return NULL;
     }
 
     pthread_cleanup_push(free, buffer);
+    pthread_cleanup_push(free, blank_buf);
     pthread_cleanup_push(_list_cleanup, pending_packets);
 
     packet = (struct rtp_header *) buffer;
@@ -358,14 +377,24 @@ void *sound_receiver_entrypoint(void *data)
 
         if (psize <= 0)
         {
-            slog(LOG_ERR, "Error de recepción: %s", strerror(errno));
-            thdata->recv_status = VC_CALL_ENDED;
-            call_stop(thdata->id);
-            return NULL;
+            slog(LOG_ERR, "Error de recepción (%d): %s", recv_errors, strerror(errno));
+            recv_errors++;
+
+            if (recv_errors >= max_recv_err_threshold)
+            {
+                slog(LOG_ERR, "Margen de errores de recepción (%d) alcanzado. Saliendo.", max_recv_err_threshold);
+                thdata->recv_status = VC_CALL_ENDED;
+                call_stop(thdata->id);
+                return NULL;
+            }
+            else
+            {
+                continue;
+            }
         }
         else if (psize != buf_size)
         {
-            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d)... Ignorando.", psize);
+            slog(LOG_WARNING, "Hemos recibido un paquete de longitud menor (%d). Ignorando.", psize);
             continue;
         }
 
@@ -395,6 +424,7 @@ void *sound_receiver_entrypoint(void *data)
 
     pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);
 
     return NULL;
 }
@@ -415,6 +445,8 @@ int call_stop(struct cm_info *cm)
     if (!cm)
         return ERR;
 
+    slog(LOG_DEBUG, "Cerrando llamada.");
+
     cm->thdata->stop = 1;
 
     if (cm->thdata->ringbuf)
@@ -422,12 +454,13 @@ int call_stop(struct cm_info *cm)
 
     usleep(100 * 1000);
 
-    slog(LOG_DEBUG, "Esperando a player...");
-    pthread_cancel_join(&(cm->player_pth));
-    slog(LOG_DEBUG, "Esperando a receiver...");
-    pthread_cancel_join(&(cm->receiver_pth));
-    slog(LOG_DEBUG, "Esperando a sender...");
+
+    slog(LOG_DEBUG, "Cerrando sender...");
     pthread_cancel_join(&(cm->sender_pth));
+    slog(LOG_DEBUG, "Cerrando receiver...");
+    pthread_cancel_join(&(cm->receiver_pth));
+    slog(LOG_DEBUG, "Cerrando player...");
+    pthread_cancel_join(&(cm->player_pth));
 
     rb = cm->thdata->ringbuf;
     cm->thdata->ringbuf = NULL;
@@ -436,6 +469,8 @@ int call_stop(struct cm_info *cm)
         lfringbuf_destroy(rb);
 
     close(cm->thdata->socket);
+
+    slog(LOG_DEBUG, "Llamada cerrada, recursos liberados");
 
     return OK;
 }

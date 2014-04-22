@@ -10,20 +10,13 @@
 
 
 
-/**
-- Tiene que abrir un puerto de escucha 
-e iniciar un hilo dispuesto a escuchar y recibir el fichero.
-
-- Controlar timeout de tiempo de espera.
-
-- 
-*/
+/** - Tiene que abrir un puerto de escucha 
+e iniciar un hilo dispuesto a escuchar y recibir el fichero.*/
 
 void * thread_wait_file(void * ftpdata){
 	struct th_ftpdata * data = ftpdata;
 	char * buffer;
 	int recv_bytes;
-
 
 	do{
 		recv_bytes = rcv_message(data->sock, (void **) &buffer);
@@ -40,7 +33,7 @@ void * thread_wait_file(void * ftpdata){
 	/* Controlar timeout*/
 	} while(recv_bytes != 0 );
 
-/* Recepción completada*/
+	/* Recepción completada*/
 	data->cb(ftp_finished);
 
 	slog(LOG_DEBUG, "Hilo de recepción de fichero saliendo");

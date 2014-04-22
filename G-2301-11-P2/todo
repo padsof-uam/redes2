@@ -1,3 +1,5 @@
+FTP:
+
 Abrir un puerto cualquiera para ftp, no uno dado a pelo. (Varias transferencias para varios usuarios.)
 
 Espera bloqueante o no bloqueante!? asegurarse.
@@ -5,3 +7,5 @@ Espera bloqueante o no bloqueante!? asegurarse.
 HANDSHAKE para enviar.
 
 fwrite, fputs, write, fprintf... y para leer?
+
+Timeouts de tiempos de espera.

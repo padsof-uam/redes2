@@ -2,12 +2,29 @@
 #define IRC_FTP_H
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/**
+* Longitud máxima de los tamaños ftp.
+*/
+#define MAX_LEN_FTP 1024
+#define FTP_PORT 6668
 
 typedef enum {
 	ftp_finished, ftp_aborted, ftp_timeout, ftp_started
 } ftp_status;
 
 typedef void (*ftp_callback)(ftp_status);
+
+struct th_ftpdata
+{
+	FILE * f;
+	int listen_port;
+	ftp_callback cb;
+
+} ;
+
 
 /**
  * Espera la recepción de un archivo.

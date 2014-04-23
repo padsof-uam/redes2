@@ -5,6 +5,7 @@
 #include "messager.h"
 #include "lfringbuf.h"
 #include "sysutils.h"
+#include "sockutils.h"
 #include "irc_processor.h"
 #include "gui_client.h"
 
@@ -68,19 +69,6 @@ int open_listen_socket()
     }
 
     return sock;
-}
-
-int get_socket_port(int sock, int *port)
-{
-    struct sockaddr_in addr;
-    socklen_t sa_size = sizeof(struct sockaddr_in);
-
-    if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
-        return ERR_SOCK;
-
-    *port = addr.sin_port;
-
-    return OK;
 }
 
 int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms)

@@ -27,14 +27,28 @@ int server_listen_connect(int handler);
 * @return	OK/ERR.
 */
 int server_close_communication(int handler);
+
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len);
 
 int resolve_ip4(const char* host, uint32_t* ip);
-
+/**
+ * Obtiene el puerto en el que está escuchando un socket.
+ * @param  sock 	El socket del que queremos saber el puerto.
+ * @param  port 	Puntero al puerto donde devolverlo.
+ * @return			OK/ERR.
+ */
 int get_socket_port(int sock, int *port);
 
+/**
+ * Abre un socket de escucha UDP.
+ * @return	Un valor negativo en caso de error o el handler del socket creado.
+ */
 int open_listen_udp_socket();
 
+/**
+ * Abre un socket de escucha TCP.
+ * @return	Un valor negativo en caso de error o el handler del socket creado.
+ */
 int open_listen_tcp_socket();
 
 #endif

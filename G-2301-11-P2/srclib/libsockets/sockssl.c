@@ -1,5 +1,7 @@
 #include "sockssl.h"
 
+#include <unistd.h>
+
 void inicializar_nivel_SSL()
 {
 	CRYPTO_malloc_init(); // Initialize malloc, free, etc for OpenSSL's use
@@ -49,8 +51,7 @@ int conectar_canal_seguro_SSL(SSL_CTX* ctx, int socket, SSL** ssl, const struct 
 
 	if(SSL_set_fd(*ssl, socket) == 0)
 	{
-		SSL_shutdown(*ssl);
-        SSL_free(*ssl);
+		cerrar_canal_SSL(*ssl);
         *ssl = NULL;
 		return ERR_SSL;
 	}
@@ -61,12 +62,9 @@ int conectar_canal_seguro_SSL(SSL_CTX* ctx, int socket, SSL** ssl, const struct 
 	return OK;
 }
 
-int aceptar_canal_seguro_SSL(SSL_CTX* ctx, int socket, int* newsock, SSL** ssl)
+int aceptar_canal_seguro_SSL(SSL_CTX* ctx, int socket, int* newsock, SSL** ssl, struct sockaddr* addr, socklen_t* addr_len)
 {
-	struct sockaddr addr;
-    socklen_t addr_len = sizeof(addr);
-
-	*newsock = accept(socket, &addr, &addr_len);
+	*newsock = accept(socket, addr, addr_len);
 
 	if(*newsock == -1)
 		return ERR_SOCK;
@@ -74,22 +72,29 @@ int aceptar_canal_seguro_SSL(SSL_CTX* ctx, int socket, int* newsock, SSL** ssl)
 	*ssl = SSL_new(ctx);
 
 	if(!*ssl)
+	{
+		close(*newsock);
 		return ERR_SSL;
+	}
 
 	if(SSL_set_fd(*ssl, socket) == 0)
 	{
 		cerrar_canal_SSL(*ssl);
         *ssl = NULL;
+        close(*newsock);
 		return ERR_SSL;
 	}
 
 	if(SSL_accept(*ssl) != 1)
+	{
+		close(*newsock);
 		return ERR_SSL;
+	}
 
 	return OK;
 }
 
-int evaluar_post_connectar_SSL(SSL_CTX* ctx, SSL* ssl)
+int evaluar_post_conectar_SSL(SSL_CTX* ctx, SSL* ssl)
 {
 	X509* cert = SSL_get_peer_certificate(ssl);
 

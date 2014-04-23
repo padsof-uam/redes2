@@ -23,19 +23,19 @@ struct th_ftpdata
 	FILE * f;
 	int sock;
 	ftp_callback cb;
-
+	int size;
 } ;
 
 
 /**
  * Espera la recepción de un archivo.
  * @param  dest        Ruta de destino.
- * @param  listen_sock Puntero donde guardar el socket de escucha.
+ * @param  port 	   Puntero donde guardar el puerto de escucha.
  * @param  cb          Función que se llamará cuando la transferencia cambie de estado.
  * @param  recv_ftp_th Identificador del hilo que se creará para la recepción.
  * @return             OK o ERR.
  */
-int ftp_wait_file(const char* dest, int* listen_sock, ftp_callback cb, pthread_t * recv_ftp_th);
+int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv_ftp_th);
 
 /**
  * Envía un fichero.

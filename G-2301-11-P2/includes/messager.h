@@ -30,7 +30,14 @@ int send_message(int socket, const void* msg, ssize_t len);
  */
 ssize_t rcv_message(int socket, void** buffer);
 
-
+/**
+ * Recibe un mensaje de un socket dado un tamaño fijo del buffer.
+ * @param  socket	Socket.
+ * @param  buffer	Puntero al buffer en el que almacenar los bytes recibidos.
+ * @param  buflen	Tamaño fijo del buffer.
+ * @return ERR/Bytes leídos.
+ */
 ssize_t rcv_message_staticbuf(int socket, void *buffer, ssize_t buflen);
+
 #endif
 

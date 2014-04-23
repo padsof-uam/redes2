@@ -1,7 +1,7 @@
 #ifndef _SOUND_H
 #define _SOUND_H
 
-/*#include <pulse/simple.h>
+#include <pulse/simple.h>
 #include <pulse/error.h>
 
 typedef int (*sound_cb)(char*, int);
@@ -32,5 +32,5 @@ int _playMock(char* buf, int size);
 int _recordMock(char* buf, int size);
 
 void _set_use_mocks(int use_mocks);
-*/
+
 #endif

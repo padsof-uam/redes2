@@ -95,6 +95,29 @@ int server_open_socket(int port, int max_long)
     return handler;
 }
 
+int server_open_tcp_socket_b(int port, int max_long)
+{
+    int handler = _server_open_socket();
+
+    if (handler == ERR_SOCK)
+    {
+        slog(LOG_ERR, "Error al abrir el socket");
+        return ERR_SOCK;
+    }
+
+    if(_link_socket_port(port, handler) != OK)
+        return ERR_SOCK;
+
+    if ( _set_queue_socket(handler, max_long) != OK)
+        return ERR_SOCK;
+
+    if (listen(handler, 1) != OK)
+        return ERR_SOCK;
+
+    return handler;
+}
+
+
 int server_listen_connect(int handler)
 {
     struct sockaddr peer_addr;
@@ -225,18 +248,18 @@ int get_socket_port(int sock, int *port)
     return OK;
 }
 
-int open_listen_tcp_socket()
+/*int open_listen_tcp_socket(int port)
 {
     int sock;
     struct sockaddr_in addr;
 
     bzero(&addr, sizeof(struct sockaddr_in));
 
-    addr.sin_family = PF_INET;
-    addr.sin_port = 0;
+    addr.sin_port = htons(port);
+    addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_TCP);
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (sock == -1)
         return ERR_SOCK;
@@ -249,7 +272,7 @@ int open_listen_tcp_socket()
 
     return sock;
 }
-
+*/
 int open_listen_udp_socket()
 {
     int sock;

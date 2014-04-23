@@ -47,9 +47,11 @@ int open_listen_udp_socket();
 
 /**
  * Abre un socket de escucha TCP.
+ * @param  port     Puerto de escucha.
+ * @param  max_long Longitud de la cola de escucha del socket.
  * @return	Un valor negativo en caso de error o el handler del socket creado.
  */
-int open_listen_tcp_socket();
+int server_open_tcp_socket_b(int port, int max_long);
 
 #endif
 

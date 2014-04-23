@@ -17,6 +17,7 @@ void set_ssl_ctx(SSL_CTX* ctx);
 int init_transparent_ssl();
 void cleanup_transparent_ssl();
 
+int init_all_ssl_default();
 int init_all_ssl(const char* ca_path, const char* ca_key, short verify_peer);
 void cleanup_all_ssl();
 

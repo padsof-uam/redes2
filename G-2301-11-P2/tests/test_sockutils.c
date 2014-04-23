@@ -36,7 +36,6 @@ int t_Server_close_communication__close_connected_socket() {
 	if(res != OK)
 		mu_sysfail("close s2 failed");
 
-
 	mu_end;
 }
 
@@ -49,10 +48,12 @@ int t_server_open_socket__opensocket() {
 }
 
 int t_server_open_socket_ssl__opensocket() {
+	init_all_ssl_default();
 	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE, 1);
 	mu_assert("Server won't open", handler !=ERR_SOCK);
 
 	close(handler);
+	cleanup_all_ssl();
 	mu_end;
 }
 

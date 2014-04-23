@@ -99,7 +99,7 @@ int aceptar_canal_seguro_SSL(SSL_CTX *ctx, int socket, int *newsock, SSL **ssl, 
         return ERR_SSL;
     }
 
-    if (SSL_set_fd(*ssl, socket) == 0)
+    if (SSL_set_fd(*ssl, *newsock) == 0)
     {
         cerrar_canal_SSL(*ssl);
         *ssl = NULL;
@@ -121,9 +121,9 @@ int evaluar_post_conectar_SSL(SSL_CTX *ctx, SSL *ssl)
     X509 *cert = SSL_get_peer_certificate(ssl);
 
     if (!cert)
-        return 0;
+        return -1;
 
-    return SSL_get_verify_result(ssl) == X509_V_OK;
+    return SSL_get_verify_result(ssl);
 }
 
 void cerrar_canal_SSL(SSL *ssl)

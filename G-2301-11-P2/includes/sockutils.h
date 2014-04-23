@@ -28,8 +28,8 @@ int server_listen_connect(int handler);
 */
 int server_close_communication(int handler);
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl);
-
 int resolve_ip4(const char* host, uint32_t* ip);
+int ssl_socketpair(int domain, int type, int protocol, int sockets[2]);
 
 #endif
 

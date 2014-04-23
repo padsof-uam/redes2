@@ -23,10 +23,11 @@
 #include <errno.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 static int _server_close_socket(int handler)
 {
-    if (handler > 0 && dshutdown(handler,SHUT_RDWR) < 0 && errno != ENOTCONN)
+    if (handler > 0 && dshutdown(handler, SHUT_RDWR) < 0 && errno != ENOTCONN)
     {
         slog(LOG_ERR, "Error cerrando el socket: %s", strerror(errno));
         return ERR_SOCK;
@@ -86,7 +87,7 @@ int server_open_socket(int port, int max_long, short use_ssl)
         return ERR_SOCK;
     }
 
-    if(_link_socket_port(port, handler) != OK)
+    if (_link_socket_port(port, handler) != OK)
         return ERR_SOCK;
 
     if (_set_queue_socket(handler, max_long) != OK)
@@ -111,7 +112,7 @@ int server_listen_connect(int handler)
         return ERR_SOCK;
     }
 
-    if(fcntl(handler_accepted, F_SETFL, O_NONBLOCK) == -1)
+    if (fcntl(handler_accepted, F_SETFL, O_NONBLOCK) == -1)
     {
         slog(LOG_WARNING, "Error al marcar el socket %d como O_NONBLOCK: %s", handler_accepted, strerror(errno));
     }
@@ -125,7 +126,7 @@ int server_close_communication(int handler)
     return _server_close_socket(handler);
 }
 
-int resolve_ip4(const char* host, uint32_t* ip)
+int resolve_ip4(const char *host, uint32_t *ip)
 {
     struct addrinfo *info;
     struct addrinfo hints;
@@ -145,14 +146,14 @@ int resolve_ip4(const char* host, uint32_t* ip)
     else if (retval != 0)
         return ERR_AIR;
 
-    *ip = ((struct sockaddr_in*)info->ai_addr)->sin_addr.s_addr; 
-    
+    *ip = ((struct sockaddr_in *)info->ai_addr)->sin_addr.s_addr;
+
     freeaddrinfo(info);
 
     return OK;
 }
 
-int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl)
+int client_connect_to(const char *host, const char *port, char *resolved_addr, size_t resadr_len, short use_ssl)
 {
     int sock;
     struct addrinfo *info, *info_orig;
@@ -160,7 +161,7 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
     int retval;
     short connected = 0;
     int port_num;
-    char addr_buffer[INET6_ADDRSTRLEN+10];
+    char addr_buffer[INET6_ADDRSTRLEN + 10];
 
     bzero(&hints, sizeof(struct addrinfo));
 
@@ -193,23 +194,111 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
         }
     }
 
-    if(resolved_addr && info != NULL)
+    if (resolved_addr && info != NULL)
     {
-        if(info->ai_family == PF_INET)
-            port_num = ntohs(((struct sockaddr_in*)info->ai_addr)->sin_port);
+        if (info->ai_family == PF_INET)
+            port_num = ntohs(((struct sockaddr_in *)info->ai_addr)->sin_port);
         else if (info->ai_family == PF_INET6)
-            port_num = ntohs(((struct sockaddr_in6*)info->ai_addr)->sin6_port);
+            port_num = ntohs(((struct sockaddr_in6 *)info->ai_addr)->sin6_port);
         else
             port_num = -1;
 
-        inet_ntop(info->ai_family, &(((struct sockaddr_in*)info->ai_addr)->sin_addr), addr_buffer, info->ai_addrlen);
+        inet_ntop(info->ai_family, &(((struct sockaddr_in *)info->ai_addr)->sin_addr), addr_buffer, info->ai_addrlen);
         snprintf(resolved_addr, resadr_len, "%s:%d", addr_buffer, port_num);
     }
-    
+
     freeaddrinfo(info_orig);
 
     if (!connected)
         return ERR_NOTFOUND;
 
     return sock;
+}
+
+struct _ssl_sp_data {
+    int sock;
+    struct sockaddr* addr;
+    socklen_t addr_len;
+    int retval;
+};
+
+static void* _sp_connect(void* data)
+{
+    struct _ssl_sp_data* thdata = data;
+
+    thdata->retval = dconnect(thdata->sock, thdata->addr, thdata->addr_len);
+
+    return NULL;
+}
+
+int ssl_socketpair(int domain, int type, int protocol, int sockets[2])
+{
+    int sock_snd = -1, sock_rcv = -1, sock_lst = -1;
+    struct sockaddr addr, caddr;
+    socklen_t addr_len = sizeof addr, caddr_len = sizeof caddr;
+    struct _ssl_sp_data thdata;
+    pthread_t th;
+
+    sock_snd = dsocket(domain, type, protocol, 1);
+    sock_lst = dsocket(domain, type, protocol, 1);
+
+    if (type == SOCK_STREAM || type == SOCK_SEQPACKET)
+    {
+        if (_link_socket_port(0, sock_lst) == -1)
+            goto error;
+
+        if (_set_queue_socket(sock_lst, 1) == -1)
+            goto error;
+    }
+    else
+    {
+        if (getsockname(sock_snd, &addr, &addr_len) == -1)
+            goto error;
+
+        if (dconnect(sock_lst, &addr, addr_len) == -1)
+            goto error;
+    }
+
+    addr_len = sizeof addr;
+
+    if (getsockname(sock_lst, &addr, &addr_len) == -1)
+        goto error;
+
+    thdata.sock = sock_snd;
+    thdata.addr = &addr;
+    thdata.addr_len = addr_len;
+
+    if(pthread_create(&th, NULL, _sp_connect, &thdata) == -1)
+        goto error;
+
+    sock_rcv = daccept(sock_lst, &caddr, &caddr_len);
+
+    if(sock_rcv == -1)
+    {
+        pthread_cancel(th);
+        pthread_join(th, NULL);
+        goto error;
+    }
+
+    if(pthread_join(th, NULL) != 0)
+        goto error;
+
+    if(thdata.retval == -1)
+        goto error;
+
+    sockets[0] = sock_snd;
+    sockets[1] = sock_rcv;
+
+    close(sock_lst);
+
+    return 0;
+error:
+    if (sock_snd != -1)
+        dclose(sock_snd);
+    if (sock_lst != -1)
+        dclose(sock_lst);
+    if (sock_rcv != -1)
+        dclose(sock_rcv);
+
+    return -1;
 }

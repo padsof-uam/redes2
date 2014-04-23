@@ -47,6 +47,14 @@ int t_server_open_socket__opensocket() {
 	mu_end;
 }
 
+int t_server_open_socket_ssl__opensocket() {
+	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE, 1);
+	mu_assert("Server won't open", handler !=ERR_SOCK);
+
+	close(handler);
+	mu_end;
+}
+
 /* END TESTS */
 
 int test_sockutils_suite(int* errors, int* success) {
@@ -58,6 +66,7 @@ int test_sockutils_suite(int* errors, int* success) {
 	mu_run_test(t_Server_close_communication__close_noconnected_socket);
 	mu_run_test(t_Server_close_communication__close_connected_socket);
 	mu_run_test(t_server_open_socket__opensocket);
+	mu_run_test(t_server_open_socket_ssl__opensocket);
 	
 /* END TEST EXEC */
 	if(tests_passed == tests_run)

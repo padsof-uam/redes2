@@ -7,6 +7,15 @@
 SSL_CTX* _ctx = NULL;
 dictionary* _sockets = NULL;
 
+static void _assert_ssltrans_init()
+{
+	if(!_ctx || !_sockets)
+	{
+		fprintf(stderr, "SSLTRANS not initialized. Please call init_transparent_ssl() and set_ssl_ctx at app start.\n");
+		abort();
+	}
+}
+
 SSL_CTX* get_ssl_ctx() { return _ctx; }
 void set_ssl_ctx(SSL_CTX* ctx) { _ctx = ctx; }
 
@@ -48,6 +57,9 @@ void set_ssl(int socket, SSL* ssl)
 int dsocket(int domain, int type, int protocol, short use_ssl)
 {
 	int sock = socket(domain, type, protocol);
+
+	if(use_ssl)
+		_assert_ssltrans_init();
 
 	if(sock != -1 && use_ssl)
 		set_ssl(sock, NULL);

@@ -15,6 +15,7 @@
 #include "termcolor.h"
 #include "sysutils.h"
 #include "log.h"
+#include "ssltrans.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +70,8 @@ int main(int argc, const char **argv)
 
     install_stop_handlers();
 
+    init_transparent_ssl();
+
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
 	if(include_test("voicecall", argc, spec_start))
@@ -104,6 +107,8 @@ int main(int argc, const char **argv)
     time(&t);
     printf("End test run %s", ctime(&t));
     printf("Run %d." TGREEN " %d success, "TRED "%d errors.\n" TRESET, run, success, error);
+
+    cleanup_transparent_ssl();
 
     return 0;
 }

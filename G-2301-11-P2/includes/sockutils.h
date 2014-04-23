@@ -31,5 +31,7 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
 
 int resolve_ip4(const char* host, uint32_t* ip);
 
+int get_socket_port(int sock, int *port);
+
 #endif
 

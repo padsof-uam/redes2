@@ -211,3 +211,16 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
 
     return sock;
 }
+
+int get_socket_port(int sock, int *port)
+{
+    struct sockaddr_in addr;
+    socklen_t sa_size = sizeof(struct sockaddr_in);
+
+    if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
+        return ERR_SOCK;
+
+    *port = addr.sin_port;
+
+    return OK;
+}

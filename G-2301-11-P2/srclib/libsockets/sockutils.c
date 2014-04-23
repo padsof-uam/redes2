@@ -87,7 +87,7 @@ int server_open_socket(int port, int max_long)
     if(_link_socket_port(port, handler) != OK)
         return ERR_SOCK;
 
-    if ( _set_queue_socket(handler, max_long) != OK)
+    if (_set_queue_socket(handler, max_long) != OK)
         return ERR_SOCK;
 
     fcntl(handler, F_SETFL, O_NONBLOCK);

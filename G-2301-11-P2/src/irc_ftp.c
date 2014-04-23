@@ -58,29 +58,47 @@ void * thread_wait_file(void * ftpdata){
 
 	/* Recepción completada*/
 	if (recv_bytes >= 0 /*&& !timeout*/ )
-		data->cb(ftp_finished);
+	data->cb(ftp_finished);
 
 	slog(LOG_DEBUG, "Hilo de recepción de fichero saliendo");
 
-    pthread_cleanup_pop(0);
-    pthread_cleanup_pop(0);
-    pthread_exit(0);
+	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);
+	pthread_exit(0);
 }
 
 
 void * thread_send_file(void * ftpdata){
 	struct th_ftpdata * data = ftpdata;
 	char buffer;
-	int snd_bytes;
+	int snd_bytes = 1;
+	int counter_snd_bytes = 0;
 
-	snd_bytes = fread(&buffer, 1, MAX_LEN_FTP - 1, data->f);
-	if (snd_bytes < 0)
-	{
+	pthread_cleanup_push(free, data);
 
+	while (snd_bytes >=0 && counter_snd_bytes <= data->size){
+		snd_bytes = fread(&buffer, 1, MAX_LEN_FTP - 1, data->f);
+		if (snd_bytes < 0)
+		{
+			if (send_message(data->sock, &buffer, snd_bytes) < 0)
+			{
+				slog(LOG_ERR, "Error enviando un mensaje de transmisión ftp");
+				data->cb(ftp_aborted);
+				break;
+			}
+
+			counter_snd_bytes += snd_bytes;
+		}
 	}
 
+	if (counter_snd_bytes == data->size)
+	{
+		data->cb(ftp_finished);
+		slog(LOG_INFO, "Transmisión finalizada con éxito");
+	}
 
-    pthread_exit(0);
+	pthread_cleanup_pop(0);
+	pthread_exit(0);
 
 }
 
@@ -89,11 +107,11 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 {
 	struct th_ftpdata * th_data = malloc(sizeof(struct th_ftpdata));
 	struct sockaddr_in dst_addr;
-    int sock;
-    unsigned long size;
+	int sock;
+	unsigned long size;
 	
 	FILE * f = fopen(file, "r");
-   
+
 	if (f == NULL)
 	{
 		slog(LOG_ERR, "Error abriendo el fichero: %s (para en envío de datos ftp)",file);
@@ -103,50 +121,50 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 
 
 
-    bzero(&dst_addr, sizeof dst_addr);
-    dst_addr.sin_addr.s_addr = ip;
-    dst_addr.sin_port = port;
-    dst_addr.sin_family = PF_INET;
+	bzero(&dst_addr, sizeof dst_addr);
+	dst_addr.sin_addr.s_addr = ip;
+	dst_addr.sin_port = port;
+	dst_addr.sin_family = PF_INET;
 
-    sock = open_listen_tcp_socket();
-    if (sock == ERR_SOCK)
-    {
-        slog(LOG_CRIT, "Error creando socket de envío: %s", strerror(errno));
-        return ERR_SOCK;
-    }
+	sock = open_listen_tcp_socket();
+	if (sock == ERR_SOCK)
+	{
+		slog(LOG_CRIT, "Error creando socket de envío: %s", strerror(errno));
+		return ERR_SOCK;
+	}
 
-    if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
-    {
-        slog(LOG_CRIT, "Error asociando socket al otro extremo de la conexión: %s", strerror(errno));
-        return ERR_SOCK;
-    }
+	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+	{
+		slog(LOG_CRIT, "Error asociando socket al otro extremo de la conexión: %s", strerror(errno));
+		return ERR_SOCK;
+	}
 
     /*Envío un primer mensaje con el tamaño.*/
 	fseek(f, 0L, SEEK_END);
 	size = ftell(f);
 	fseek(f, 0L, SEEK_SET);
-    th_data->size = size;
+	th_data->size = size;
 
 	th_data->f = f;
 	th_data->cb = cb;
-    th_data->sock = sock;
+	th_data->sock = sock;
 
-    if (send_message(sock, &size, sizeof(unsigned long)) < 0){
-    	slog(LOG_ERR, "Error enviando el tamaño del fichero ftp: %s",strerror(errno));
-    	return ERR;
-    }
+	if (send_message(sock, &size, sizeof(unsigned long)) < 0){
+		slog(LOG_ERR, "Error enviando el tamaño del fichero ftp: %s",strerror(errno));
+		return ERR;
+	}
 
-    if (pthread_create(snd_ftp_th, NULL, thread_send_file, th_data))
-    {
-        slog(LOG_CRIT, "Error creando thread de envío ftp en el puerto %d: %s", th_data->sock, strerror(errno));
-        return ERR_SYS;
-    }
-    else
-    {
-        slog(LOG_INFO, "Thread de envío ftp creado.");
-        cb(ftp_started);
-        return OK;
-    }
+	if (pthread_create(snd_ftp_th, NULL, thread_send_file, th_data))
+	{
+		slog(LOG_CRIT, "Error creando thread de envío ftp en el puerto %d: %s", th_data->sock, strerror(errno));
+		return ERR_SYS;
+	}
+	else
+	{
+		slog(LOG_INFO, "Thread de envío ftp creado.");
+		cb(ftp_started);
+		return OK;
+	}
 
 	return OK;
 }
@@ -167,19 +185,18 @@ int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv
 	th_data->f = f;
 	th_data->cb = cb;
 
-	th_data->sock = server_open_socket(FTP_RCV_PORT,MAX_LEN_FTP);
+	th_data->sock = open_listen_tcp_socket();
 	server_listen_connect(th_data->sock);
-
 	get_socket_port(th_data->sock,port);
 
-    if (pthread_create(recv_ftp_th, NULL, thread_wait_file, th_data))
-    {
-        slog(LOG_CRIT, "Error creando thread de recepción ftp en el puerto %d: %s", th_data->sock, strerror(errno));
-        return ERR;
-    }
-    else
-    {
-        slog(LOG_INFO, "Thread de recepción ftp creado.");
-        return OK;
-    }
+	if (pthread_create(recv_ftp_th, NULL, thread_wait_file, th_data))
+	{
+		slog(LOG_CRIT, "Error creando thread de recepción ftp en el puerto %d: %s", th_data->sock, strerror(errno));
+		return ERR;
+	}
+	else
+	{
+		slog(LOG_INFO, "Thread de recepción ftp creado.");
+		return OK;
+	}
 }

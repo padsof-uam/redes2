@@ -9,8 +9,6 @@
 * Longitud máxima de los tamaños ftp.
 */
 #define MAX_LEN_FTP 10240
-#define FTP_RCV_PORT 6668
-#define FTP_SND_PORT 6669
 
 typedef enum {
 	ftp_finished, ftp_aborted, ftp_timeout, ftp_started

@@ -9,6 +9,8 @@
 #define CA_PATH "cert/root.pemr"
 #define CA_KEY 	"cert/server.pem"
 
+#define SSL_NOT_CONN ((SSL*) 1)
+
 SSL_CTX* get_ssl_ctx();
 void set_ssl_ctx(SSL_CTX* ctx);
 

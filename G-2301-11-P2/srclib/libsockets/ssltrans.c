@@ -29,13 +29,21 @@ int init_transparent_ssl()
 		return OK;
 }
 
+static void _free_ssl_entry(void* entry)
+{
+	SSL* ssl = entry;
+
+	if(ssl != NULL && ssl != SSL_NOT_CONN)
+		cerrar_canal_SSL(ssl);
+}
+
 void cleanup_transparent_ssl()
 {
 	if(_sockets)
-		dic_destroy(_sockets, (destructor) cerrar_canal_SSL);
+		dic_destroy(_sockets, _free_ssl_entry);
 }
 
-int is_ssl_dsocket(int socket)
+int is_ssl_socket(int socket)
 {
 	return _ctx != NULL && get_ssl(socket) != NULL;
 }
@@ -62,7 +70,7 @@ int dsocket(int domain, int type, int protocol, short use_ssl)
 		_assert_ssltrans_init();
 
 	if(sock != -1 && use_ssl)
-		set_ssl(sock, NULL);
+		set_ssl(sock, SSL_NOT_CONN);
 
 	return sock;
 }
@@ -72,7 +80,7 @@ int daccept(int socket, struct sockaddr* addr, socklen_t* addr_len)
 	int newsock, retval;
 	SSL* ssl;
 
-	if(is_ssl_dsocket(socket))
+	if(is_ssl_socket(socket))
 	{
 		retval = aceptar_canal_seguro_SSL(get_ssl_ctx(), socket, &newsock, &ssl, addr, addr_len);
 
@@ -99,7 +107,7 @@ int dconnect(int socket, const struct sockaddr *addr, socklen_t addr_len)
 	SSL* ssl;
 	int retval;
 
-	if(is_ssl_dsocket(socket))
+	if(is_ssl_socket(socket))
 	{
 		retval = conectar_canal_seguro_SSL(get_ssl_ctx(), socket, &ssl, addr, addr_len);
 

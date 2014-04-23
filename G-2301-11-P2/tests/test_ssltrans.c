@@ -10,6 +10,45 @@
 #define KEY_PEM "cert/server.pem"
 
 /* BEGIN TESTS */
+int t_is_ssl_socket__ssl__returns_true()
+{
+    int retval;
+    int socket;
+
+    retval = init_all_ssl(CA_PEM, KEY_PEM, 1);
+    mu_assert_eq(retval, OK, "didn't init");
+
+    socket = dsocket(PF_LOCAL, SOCK_DGRAM, 0, 1);
+
+    mu_assert("not marked as ssl", is_ssl_socket(socket));
+
+    cleanup_all_ssl();
+    mu_end;
+}
+
+int t_is_ssl_socket__no_ss__returns_false()
+{
+    int retval;
+    int socket;
+
+    retval = init_all_ssl(CA_PEM, KEY_PEM, 1);
+    mu_assert_eq(retval, OK, "didn't init");
+
+    socket = dsocket(PF_LOCAL, SOCK_DGRAM, 0, 0);
+
+    mu_assert("marked as ssl", !is_ssl_socket(socket));
+
+    cleanup_all_ssl();
+    mu_end;
+}
+int t_is_ssl_socket__no_init__returns_false()
+{
+    int socket;
+    socket = dsocket(PF_LOCAL, SOCK_DGRAM, 0, 0);
+
+    mu_assert("marked as ssl", !is_ssl_socket(socket));
+    mu_end;
+}
 int t_init_all_ssl__verify_peer__can_init()
 {
     int retval;
@@ -39,6 +78,9 @@ int test_ssltrans_suite(int *errors, int *success)
 
     printf("Begin test_ssltrans suite.\n");
     /* BEGIN TEST EXEC */
+    mu_run_test(t_is_ssl_socket__ssl__returns_true);
+    mu_run_test(t_is_ssl_socket__no_ss__returns_false);
+    mu_run_test(t_is_ssl_socket__no_init__returns_false);
     mu_run_test(t_init_all_ssl__verify_peer__can_init);
     mu_run_test(t_init_all_ssl__no_verify_peer__can_init);
     /* END TEST EXEC */

@@ -22,6 +22,6 @@ int dconnect(int socket, const struct sockaddr *addr, socklen_t addr_len);
 ssize_t dsend(int socket, const void *buffer, size_t length, int flags);
 ssize_t drecv(int socket, void *buffer, size_t length, int flags);
 void dclose(int socket);
-void dshutdown(int socket, int mode);
+int dshutdown(int socket, int mode);
 
 #endif

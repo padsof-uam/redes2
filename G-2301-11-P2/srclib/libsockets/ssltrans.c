@@ -135,7 +135,7 @@ void dclose(int socket)
 	close(socket);
 }
 
-void dshutdown(int socket, int mode)
+int dshutdown(int socket, int mode)
 {
 	SSL* ssl = get_ssl(socket);
 
@@ -145,5 +145,5 @@ void dshutdown(int socket, int mode)
 		dic_remove(_sockets, &socket);
 	}
 
-	shutdown(socket, mode);
+	return shutdown(socket, mode);
 }

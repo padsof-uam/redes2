@@ -40,7 +40,7 @@ int t_Server_close_communication__close_connected_socket() {
 }
 
 int t_server_open_socket__opensocket() {
-	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
+	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE, 0);
 	mu_assert("Server won't open", handler !=ERR_SOCK);
 
 	close(handler);

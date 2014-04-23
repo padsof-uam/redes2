@@ -56,7 +56,7 @@ void *thread_listener(void *data)
     char *commbuf;
 
     slog(LOG_NOTICE, "Hilo de escucha creado.");
-    listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE);
+    listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE, 0);
     thdata->listen_sock = listen_sock;
     pthread_cleanup_push(listener_cleanup, thdata);
 

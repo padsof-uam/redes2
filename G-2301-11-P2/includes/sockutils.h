@@ -12,7 +12,7 @@
 * @return 	Un valor negativo en caso de error o el handler del socket
 *			en caso de éxito.
 */
-int server_open_socket(int port, int max_long);
+int server_open_socket(int port, int max_long, short use_ssl);
 
 /**
 * Función encargada de aceptar una conexión en un socket.
@@ -27,7 +27,7 @@ int server_listen_connect(int handler);
 * @return	OK/ERR.
 */
 int server_close_communication(int handler);
-int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len);
+int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl);
 
 int resolve_ip4(const char* host, uint32_t* ip);
 

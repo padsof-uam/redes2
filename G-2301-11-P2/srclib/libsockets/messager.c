@@ -6,7 +6,9 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <string.h>
+
 #include "log.h"
+#include "ssltrans.h"
 
 #define INITIAL_RECEIVE_BUFFER 1024
 
@@ -34,7 +36,7 @@ int send_message(int socket, const void *msg, ssize_t len)
 
     while (sent < len)
     {
-        batch_sent = send(socket, buf + sent, len - sent, 0);
+        batch_sent = dsend(socket, buf + sent, len - sent, 0);
 
         if (batch_sent == -1)
             return ERR_SOCK;
@@ -64,7 +66,7 @@ static ssize_t _rcv_message(int socket, void **buffer, int static_buf, ssize_t b
 
     while (sock_data_available(socket))
     {
-        batch_bytes = recv(socket, internal_buf + read_bytes, buf_size - read_bytes, 0);
+        batch_bytes = drecv(socket, internal_buf + read_bytes, buf_size - read_bytes, 0);
 
         if (batch_bytes == buf_size - read_bytes) /* Hemos leído todo lo que podemos leer. */
         {

@@ -4,6 +4,7 @@
 #include "messager.h"
 #include "log.h"
 #include "sysutils.h"
+#include "ssltrans.h"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -25,7 +26,7 @@
 
 static int _server_close_socket(int handler)
 {
-    if (handler > 0 && shutdown(handler,SHUT_RDWR) < 0 && errno != ENOTCONN)
+    if (handler > 0 && dshutdown(handler,SHUT_RDWR) < 0 && errno != ENOTCONN)
     {
         slog(LOG_ERR, "Error cerrando el socket: %s", strerror(errno));
         return ERR_SOCK;
@@ -34,9 +35,9 @@ static int _server_close_socket(int handler)
     return OK;
 }
 
-static int _server_open_socket()
+static int _server_open_socket(short use_ssl)
 {
-    int handler = socket(AF_INET, SOCK_STREAM, TCP);
+    int handler = dsocket(AF_INET, SOCK_STREAM, TCP, use_ssl);
     if (handler == -1)
     {
         slog(LOG_ERR, "Error en la creación de socket");
@@ -75,9 +76,10 @@ static int _set_queue_socket(int handler, int long_max)
 }
 
 
-int server_open_socket(int port, int max_long)
+int server_open_socket(int port, int max_long, short use_ssl)
 {
-    int handler = _server_open_socket();
+    int handler = _server_open_socket(use_ssl);
+
     if (handler == ERR_SOCK)
     {
         slog(LOG_ERR, "Error al abrir el socket");
@@ -101,7 +103,7 @@ int server_listen_connect(int handler)
     socklen_t peer_len = sizeof(peer_addr);
     int handler_accepted;
 
-    handler_accepted = accept(handler, &peer_addr, &peer_len);
+    handler_accepted = daccept(handler, &peer_addr, &peer_len);
 
     if (handler_accepted == -1)
     {
@@ -150,7 +152,7 @@ int resolve_ip4(const char* host, uint32_t* ip)
     return OK;
 }
 
-int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len)
+int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl)
 {
     int sock;
     struct addrinfo *info, *info_orig;
@@ -178,11 +180,11 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
 
     while (info != NULL && !connected)
     {
-        sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+        sock = dsocket(info->ai_family, info->ai_socktype, info->ai_protocol, use_ssl);
 
-        if (sock == -1 || connect(sock, info->ai_addr, info->ai_addrlen) == -1)
+        if (sock == -1 || dconnect(sock, info->ai_addr, info->ai_addrlen) == -1)
         {
-            close(sock);
+            dclose(sock);
             info = info->ai_next;
         }
         else

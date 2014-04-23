@@ -7,6 +7,7 @@
 #include "sysutils.h"
 #include "irc_processor.h"
 #include "gui_client.h"
+#include "ssltrans.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -56,7 +57,7 @@ int open_listen_socket()
     addr.sin_port = 0;
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sock = dsocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
 
     if (sock == -1)
         return ERR_SOCK;

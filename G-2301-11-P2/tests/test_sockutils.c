@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include "errors.h"
 #include "sockutils.h"
+#include "ssltrans.h"
 
 /* BEGIN TESTS */
 int t_Server_close_communication__close_noconnected_socket() {

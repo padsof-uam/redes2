@@ -1,3 +1,4 @@
+#include "test_ssltrans.h"
 #include "test_voicecall.h"
 #include "test_server_history.h"
 #include "test_lfringbuf.h"
@@ -70,10 +71,10 @@ int main(int argc, const char **argv)
 
     install_stop_handlers();
 
-    init_transparent_ssl();
-
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("ssltrans", argc, argv))
+		run += test_ssltrans_suite(&error, &success);
 	if(include_test("voicecall", argc, spec_start))
 		run += test_voicecall_suite(&error, &success);
 	if(include_test("server_history", argc, spec_start))
@@ -107,8 +108,6 @@ int main(int argc, const char **argv)
     time(&t);
     printf("End test run %s", ctime(&t));
     printf("Run %d." TGREEN " %d success, "TRED "%d errors.\n" TRESET, run, success, error);
-
-    cleanup_transparent_ssl();
 
     return 0;
 }

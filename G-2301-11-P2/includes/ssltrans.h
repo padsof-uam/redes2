@@ -6,11 +6,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define CA_PATH "cert/root.pemr"
+#define CA_KEY 	"cert/server.pem"
+
 SSL_CTX* get_ssl_ctx();
 void set_ssl_ctx(SSL_CTX* ctx);
 
 int init_transparent_ssl();
 void cleanup_transparent_ssl();
+
+int init_all_ssl(const char* ca_path, const char* ca_key, short verify_peer);
+void cleanup_all_ssl();
 
 int is_ssl_socket(int socket);
 SSL* get_ssl(int socket);

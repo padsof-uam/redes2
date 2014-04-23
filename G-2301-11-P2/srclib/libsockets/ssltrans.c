@@ -159,3 +159,31 @@ int dshutdown(int socket, int mode)
 
 	return shutdown(socket, mode);
 }
+
+
+int init_all_ssl(const char* ca_path, const char* ca_key, short verify_peer)
+{
+	SSL_CTX* ctx;
+
+	init_transparent_ssl();
+	inicializar_nivel_SSL();
+	ctx = fijar_contexto_SSL(ca_path, ca_key, verify_peer);
+
+	if(!ctx)
+	{
+		slog(LOG_ERR, "Error al inicializar contexto SSL.");            
+		ERR_print_errors_fp(stderr);
+		return ERR_SSL;
+	}
+
+	set_ssl_ctx(ctx);
+
+	return OK;
+}
+
+void cleanup_all_ssl()
+{
+	cleanup_transparent_ssl();
+	SSL_CTX_free(get_ssl_ctx());
+	set_ssl_ctx(NULL);
+}

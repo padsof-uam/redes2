@@ -51,7 +51,7 @@ FMT_BOLD := $(shell tput bold)
 FMT_NORM := $(shell tput sgr0)
 
 
-.PRECIOUS: %.o %.d %.key %.csr %.crt %.scrt %.pem
+.PRECIOUS: %.o %.d %.key %.csr %.crt %.cer %.pem
 .PHONY: debug clean pack doxydoc docclean
  
 all: test $(TARGETS)
@@ -187,12 +187,16 @@ pack: docs
 ### Certificates
 
 ROOTKEY = $(CERTDIR)/root.key
-ROOTCERT = $(CERTDIR)/root.scrt
-ROOTPEM = $(CERTDIR)/root.pem
+ROOTCERT = $(CERTDIR)/root.cer
+ROOTPEM = $(CERTDIR)/root.pemr
 CLIENTPEM = $(CERTDIR)/client.pem
 SERVPEM = $(CERTDIR)/server.pem
 
-certificates: $(ROOTPEM) $(CLIENTPEM) $(SERVPEM) | $(CERTDIR)
+certificates: $(ROOTPEM) $(SERVPEM) | $(CERTDIR)
+
+certclean:
+	@echo "$(FMT_BOLD)Cleaning certificates...$(FMT_NORM)"
+	@-rm -r $(CERTDIR)
 
 $(CERTDIR): 
 	@mkdir -p $(CERTDIR)
@@ -202,22 +206,25 @@ $(CERTDIR):
 	@openssl genrsa -out $@ 2048
 
 %.csr: %.key | $(CERTDIR)
-	@echo "$(FMT_BOLD)Generate certificate signing request...$(FMT_NORM)"
+	@echo "$(FMT_BOLD)Generate certificate signing request $@ from $<...$(FMT_NORM)"
 	@openssl req -new -key $< -out $@
 
 %.crt: %.csr $(ROOTCERT) $(ROOTKEY) | $(CERTDIR)
-	@echo "$(FMT_BOLD)Signing client certificate...$(FMT_NORM)"
+	@echo "$(FMT_BOLD)Signing client certificate request $< with $(ROOTCERT)...$(FMT_NORM)"
 	@openssl x509 -req -in $< -CA $(ROOTCERT) -CAkey $(ROOTKEY) -CAcreateserial -out $@ -days 500
 
-%.scrt: %.key | $(CERTDIR)
-	@echo "$(FMT_BOLD)Self-signing root certificate...$(FMT_NORM)"	
+%.cer: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Self-signing certificate $@...$(FMT_NORM)"	
 	@openssl req -new -x509 -key $< -out $@
 
 %.pem: %.crt %.key $(ROOTCERT) | $(CERTDIR)
-	@echo "$(FMT_BOLD)Generating client certificate...$(FMT_NORM)"
-	@cat $^ > $@
-
-$(ROOTPEM): %.scrt %.key | $(CERTDIR)
-	@echo "$(FMT_BOLD)Generating root certificate...$(FMT_NORM)"
+	@echo "$(FMT_BOLD)Generating certificate $@...$(FMT_NORM)"
 	@cat $^ > $@
 	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@
+
+%.pemr: %.cer %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating root certificate $@ from $^...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@

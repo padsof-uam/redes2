@@ -5,6 +5,7 @@
 #include "messager.h"
 #include "lfringbuf.h"
 #include "sysutils.h"
+#include "sockutils.h"
 #include "irc_processor.h"
 #include "gui_client.h"
 
@@ -45,44 +46,6 @@ struct cm_thdata
     volatile sig_atomic_t stop;
 };
 
-int open_listen_socket()
-{
-    int sock;
-    struct sockaddr_in addr;
-
-    bzero(&addr, sizeof(struct sockaddr_in));
-
-    addr.sin_family = PF_INET;
-    addr.sin_port = 0;
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if (sock == -1)
-        return ERR_SOCK;
-
-    if (bind(sock, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in) ) == -1)
-    {
-        close(sock);
-        return ERR_SOCK;
-    }
-
-    return sock;
-}
-
-int get_socket_port(int sock, int *port)
-{
-    struct sockaddr_in addr;
-    socklen_t sa_size = sizeof(struct sockaddr_in);
-
-    if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
-        return ERR_SOCK;
-
-    *port = addr.sin_port;
-
-    return OK;
-}
-
 int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms)
 {
     struct cm_thdata *thdata = malloc(sizeof(struct cm_thdata));
@@ -90,7 +53,7 @@ int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, in
     int retval = ERR_SYS;
 
     if (socket == 0)
-        socket = open_listen_socket();
+        socket = open_listen_udp_socket();
 
     bzero(cm, sizeof(struct cm_info));
 

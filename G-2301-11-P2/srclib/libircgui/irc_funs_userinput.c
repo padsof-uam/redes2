@@ -2,6 +2,7 @@
 #include "irc_processor.h"
 #include "gui_client.h"
 #include "voicecall.h"
+#include "sockutils.h"
 #include "log.h"
 
 #include <string.h>
@@ -200,7 +201,7 @@ int irc_pcall(void* data)
 		return OK;
 	}
 
-	socket = open_listen_socket();
+	socket = open_listen_udp_socket();
 
 	if(socket <= 0)
 	{
@@ -238,7 +239,7 @@ int irc_paccept(void* data)
 		return OK;
 	}
 
-	socket = open_listen_socket();
+	socket = open_listen_udp_socket();
 
 	if(socket <= 0)
 	{

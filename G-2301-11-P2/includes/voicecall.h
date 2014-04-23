@@ -42,7 +42,6 @@ struct rtp_header {
 	uint32_t ssrc_id;
 };
 
-int open_listen_socket();
 int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms);
 void* sound_sender_entrypoint(void* data);
 void* sound_receiver_entrypoint(void* data);
@@ -50,6 +49,5 @@ void* sound_player_entrypoint(void* data);
 int call_stop(struct cm_info* cm);
 uint32_t generate_ssrc();
 uint32_t get_timestamp();
-int get_socket_port(int sock, int *port);
 
 #endif

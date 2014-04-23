@@ -211,3 +211,67 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
 
     return sock;
 }
+
+int get_socket_port(int sock, int *port)
+{
+    struct sockaddr_in addr;
+    socklen_t sa_size = sizeof(struct sockaddr_in);
+
+    if (getsockname(sock, (struct sockaddr *)&addr, &sa_size) == -1)
+        return ERR_SOCK;
+
+    *port = addr.sin_port;
+
+    return OK;
+}
+
+int open_listen_tcp_socket()
+{
+    int sock;
+    struct sockaddr_in addr;
+
+    bzero(&addr, sizeof(struct sockaddr_in));
+
+    addr.sin_family = PF_INET;
+    addr.sin_port = 0;
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_TCP);
+
+    if (sock == -1)
+        return ERR_SOCK;
+
+    if (bind(sock, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in) ) == -1)
+    {
+        close(sock);
+        return ERR_SOCK;
+    }
+
+    return sock;
+}
+
+int open_listen_udp_socket()
+{
+    int sock;
+    struct sockaddr_in addr;
+
+    bzero(&addr, sizeof(struct sockaddr_in));
+
+    addr.sin_family = PF_INET;
+    addr.sin_port = 0;
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (sock == -1)
+        return ERR_SOCK;
+
+    if (bind(sock, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in) ) == -1)
+    {
+        close(sock);
+        return ERR_SOCK;
+    }
+
+    return sock;
+}
+

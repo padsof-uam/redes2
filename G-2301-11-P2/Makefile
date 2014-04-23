@@ -14,6 +14,7 @@ DOCDIR = doc
 LIBDIR = lib
 LIBSRCDIR = srclib
 TESTDIR = tests
+CERTDIR = cert
 
 P_GROUP = 2301
 P_NUM = 2
@@ -50,7 +51,7 @@ FMT_BOLD := $(shell tput bold)
 FMT_NORM := $(shell tput sgr0)
 
 
-.PRECIOUS: %.o %.d
+.PRECIOUS: %.o %.d %.key %.csr %.crt %.scrt %.pem
 .PHONY: debug clean pack doxydoc docclean
  
 all: test $(TARGETS)
@@ -182,3 +183,41 @@ pack: docs
 	@tools/redes_rename
 	@cd ..; tar -X $(P_NAME)/.tarexcludes -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."
+
+### Certificates
+
+ROOTKEY = $(CERTDIR)/root.key
+ROOTCERT = $(CERTDIR)/root.scrt
+ROOTPEM = $(CERTDIR)/root.pem
+CLIENTPEM = $(CERTDIR)/client.pem
+SERVPEM = $(CERTDIR)/server.pem
+
+certificates: $(ROOTPEM) $(CLIENTPEM) $(SERVPEM) | $(CERTDIR)
+
+$(CERTDIR): 
+	@mkdir -p $(CERTDIR)
+
+%.key: | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating key $@...$(FMT_NORM)"
+	@openssl genrsa -out $@ 2048
+
+%.csr: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generate certificate signing request...$(FMT_NORM)"
+	@openssl req -new -key $< -out $@
+
+%.crt: %.csr $(ROOTCERT) $(ROOTKEY) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Signing client certificate...$(FMT_NORM)"
+	@openssl x509 -req -in $< -CA $(ROOTCERT) -CAkey $(ROOTKEY) -CAcreateserial -out $@ -days 500
+
+%.scrt: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Self-signing root certificate...$(FMT_NORM)"	
+	@openssl req -new -x509 -key $< -out $@
+
+%.pem: %.crt %.key $(ROOTCERT) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating client certificate...$(FMT_NORM)"
+	@cat $^ > $@
+
+$(ROOTPEM): %.scrt %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating root certificate...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@

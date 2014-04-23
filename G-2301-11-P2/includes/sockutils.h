@@ -33,5 +33,9 @@ int resolve_ip4(const char* host, uint32_t* ip);
 
 int get_socket_port(int sock, int *port);
 
+int open_listen_udp_socket();
+
+int open_listen_tcp_socket();
+
 #endif
 

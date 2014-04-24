@@ -13,6 +13,7 @@
 #include "irc_core.h"
 #include "voicecall.h"
 #include "irc_funs_client.h"
+#include "ssltrans.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -79,6 +80,8 @@ int main(int argc, char const *argv[])
     int snd_qkey, rcv_qkey;
     int instances_running = -1;
     char lock_file[100];
+
+    init_all_ssl_default();
 
     install_stop_handlers();
 
@@ -200,6 +203,8 @@ cleanup:
 
     if (comm_socks[1] != 0)
         close(comm_socks[1]);
+
+    cleanup_all_ssl();
 
     slog(LOG_NOTICE, "Daemon terminado.\n");
 

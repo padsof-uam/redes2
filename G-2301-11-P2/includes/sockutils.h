@@ -21,6 +21,7 @@ int server_open_socket(int port, int max_long, short use_ssl);
 *			en caso de éxito.
 */
 int server_listen_connect(int handler);
+
 /**
 * Función encargada de cerrar la conexión.
 * @param	handler 	Identificador del socket a cerrar.
@@ -30,6 +31,7 @@ int server_close_communication(int handler);
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl);
 int resolve_ip4(const char* host, uint32_t* ip);
 int ssl_socketpair(int domain, int type, int protocol, int sockets[2]);
+int sock_set_block(int socket, short block);
 
 #endif
 

@@ -17,4 +17,6 @@ int evaluar_post_conectar_SSL(SSL_CTX* ctx, SSL* ssl);
 void cerrar_canal_SSL(SSL* ssl);
 int enviar_datos_SSL(SSL* ssl, const void* msg, ssize_t len);
 ssize_t recibir_datos_SSL(SSL* ssl, void* buffer, ssize_t buflen);
+
+void slog_sslerr();
 #endif

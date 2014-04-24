@@ -111,6 +111,8 @@ int main(int argc, char const *argv[])
     slog_set_output_syslog();
     slog_set_level(LOG_DEBUG);
 
+    install_stop_handlers();
+
     init_all_ssl_default();
 
 #ifndef NODAEMON

@@ -1,5 +1,6 @@
 #include "sockssl.h"
 #include "log.h"
+#include "sockutils.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -95,8 +96,12 @@ int conectar_canal_seguro_SSL(SSL_CTX *ctx, int socket, SSL **ssl, const struct 
         return ERR_SSL;
     }
 
+    sock_set_block(socket, 1);
+
     if (SSL_connect(*ssl) != 1)
         return ERR_SSL;
+
+    sock_set_block(socket, 0);
 
     return OK;
 }
@@ -107,6 +112,10 @@ int aceptar_canal_seguro_SSL(SSL_CTX *ctx, int socket, int *newsock, SSL **ssl, 
 
     if (*newsock == -1)
         return ERR_SOCK;
+
+    sock_set_block(*newsock, 1);
+
+    slog(LOG_DEBUG, "Aceptada conexión en socket %d. Negociando handshake...", *newsock);
 
     *ssl = SSL_new(ctx);
 
@@ -129,6 +138,10 @@ int aceptar_canal_seguro_SSL(SSL_CTX *ctx, int socket, int *newsock, SSL **ssl, 
         close(*newsock);
         return ERR_SSL;
     }
+
+    sock_set_block(*newsock, 0);
+
+    slog(LOG_DEBUG, "Handshake finalizado con éxito en %d.", *newsock);
 
     return OK;
 }
@@ -157,4 +170,22 @@ int enviar_datos_SSL(SSL *ssl, const void *msg, ssize_t len)
 ssize_t recibir_datos_SSL(SSL *ssl, void *buffer, ssize_t buflen)
 {
     return SSL_read(ssl, buffer, buflen);
+}
+
+void slog_sslerr()
+{
+    unsigned long error;
+    char errorstr[200];
+    int count = 0;
+
+    while((error = ERR_get_error()) != 0)
+    {
+        count++;
+        ERR_error_string_n(error, errorstr, 200);
+        slog(LOG_ERR, "Error SSL %d (%s) en %s/%s: %s", error, errorstr, 
+            ERR_GET_FUNC(error), ERR_GET_LIB(error), ERR_GET_REASON(error));
+    }
+
+    if(count == 0)
+        slog(LOG_WARNING, "No hay errores SSL.");
 }

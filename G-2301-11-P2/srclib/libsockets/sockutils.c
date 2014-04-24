@@ -108,14 +108,12 @@ int server_listen_connect(int handler)
 
     if (handler_accepted == -1)
     {
-        slog(LOG_ERR, "Error aceptando conexiones : %s", strerror(errno));
+        slog(LOG_ERR, "Error aceptando conexión en socket %d: %s", handler, strerror(errno));
         return ERR_SOCK;
     }
 
     if (fcntl(handler_accepted, F_SETFL, O_NONBLOCK) == -1)
-    {
-        slog(LOG_WARNING, "Error al marcar el socket %d como O_NONBLOCK: %s", handler_accepted, strerror(errno));
-    }
+        slog(LOG_WARNING, "Error al marcar el socket %d como no bloqueante: %s", handler_accepted, strerror(errno));
 
     return handler_accepted;
 
@@ -183,7 +181,7 @@ int client_connect_to(const char *host, const char *port, char *resolved_addr, s
     {
         sock = dsocket(info->ai_family, info->ai_socktype, info->ai_protocol, use_ssl);
 
-        if (sock == -1 || dconnect(sock, info->ai_addr, info->ai_addrlen) == -1)
+        if (sock == -1 || dconnect(sock, info->ai_addr, info->ai_addrlen) != 0)
         {
             dclose(sock);
             info = info->ai_next;
@@ -301,4 +299,22 @@ error:
         dclose(sock_rcv);
 
     return -1;
+}
+
+int sock_set_block(int socket, short block)
+{
+    int opts = fcntl(socket, F_GETFL);
+
+    if(opts < 0)
+        return ERR_SOCK;
+
+    if(block)
+        opts = opts & (~O_NONBLOCK);
+    else
+        opts = opts | O_NONBLOCK;
+
+    if(fcntl(socket, F_SETFL, opts) < 0)
+        return ERR_SOCK;
+
+    return OK;
 }

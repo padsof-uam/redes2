@@ -83,7 +83,7 @@ void connectToServer(const char *server, const char* port)
 
     messageText("Conectando con %s...", server);
 
-    retval = client_connect_to(server, port, addr_str, 100, 0);
+    retval = client_connect_to(server, port, addr_str, 100, 1);
 
     if (retval == ERR_SYS)
         err = strerror(errno);

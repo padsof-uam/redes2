@@ -105,6 +105,7 @@ int daccept(int socket, struct sockaddr *addr, socklen_t *addr_len)
             if (retval != OK)
             {
                 slog(LOG_WARNING, "Error de certificado en conexión recibida en %d, retorno %d", newsock, retval);
+                slog_sslerr();
                 close(retval);
                 return -1;
             }

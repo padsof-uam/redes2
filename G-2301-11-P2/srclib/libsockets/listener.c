@@ -5,6 +5,7 @@
 #include "log.h"
 #include "sysutils.h"
 #include "sockutils.h"
+#include "sockssl.h"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -57,7 +58,8 @@ void *thread_listener(void *data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
     int listen_sock, listen_sock_ssl = -1;
-    struct pollfd fds[2];
+    struct pollfd fds[3];
+    int numfds = 2;
     char *commbuf;
 
     slog(LOG_NOTICE, "Hilo de escucha creado.");
@@ -65,7 +67,7 @@ void *thread_listener(void *data)
     listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE, 0);
 
     if (thdata->ssl_port != 0)
-        listen_sock_ssl = server_open_socket(thdata->ssl_port, DEFAULT_MAX_QUEUE, 0);
+        listen_sock_ssl = server_open_socket(thdata->ssl_port, DEFAULT_MAX_QUEUE, 1);
 
     thdata->listen_sock = listen_sock;
     thdata->listen_sock_ssl = listen_sock_ssl;
@@ -84,6 +86,18 @@ void *thread_listener(void *data)
         slog(LOG_NOTICE, "Puerto de escucha abierto en %d", thdata->port);
     }
 
+    if (listen_sock_ssl < 0 && thdata->ssl_port != 0)
+    {
+        slog(LOG_CRIT, "Abortando: No se puede abrir un socket de escucha SSL en %d con long. cola %d: %s.", thdata->ssl_port, DEFAULT_MAX_QUEUE, strerror(errno));
+        thdata->listen_sock_ssl = -1;
+        raise(SIGTERM); /* Salimos */
+        pthread_exit(NULL);
+    }
+    else if(listen_sock_ssl > 0)
+    {
+        slog(LOG_NOTICE, "Puerto de escucha SSL abierto en %d", thdata->ssl_port);
+    }
+
     fds[0].events = POLLIN;
     fds[0].fd = listen_sock;
 
@@ -94,12 +108,13 @@ void *thread_listener(void *data)
     {
         fds[2].events = POLLIN;
         fds[2].fd = listen_sock_ssl;
+        numfds++;
     }
 
     while (1)
     {
         /* Esperamos indefinidamente hasta que haya datos en algún socket */
-        if (poll(fds, 2, -1) < 0)
+        if (poll(fds, numfds, -1) < 0)
         {
             slog(LOG_NOTICE, "Error al llamar a poll: %s", strerror(errno));
         }
@@ -111,10 +126,14 @@ void *thread_listener(void *data)
                     slog(LOG_ERR, "Fallo al aceptar una conexión. Error %s", strerror(errno));
             }
 
-            if (listen_sock_ssl != -1 && fds[2].revents & POLLIN)
+            if (listen_sock_ssl != -1 && (fds[2].revents & POLLIN))
             {
+                slog(LOG_DEBUG, "Conexión pendiente en socket SSL.");
                 if (create_new_connection_thread(listen_sock_ssl, thdata->commsocket) != OK)
-                    slog(LOG_ERR, "Fallo al aceptar una conexión. Error %s", strerror(errno));
+                {
+                    slog(LOG_ERR, "Fallo al aceptar una conexión en socket SSL. Error %s", strerror(errno));
+                    slog_sslerr();
+                }
             }
 
             if (fds[1].revents & POLLIN)

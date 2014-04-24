@@ -1,6 +1,7 @@
 #include "sysutils.h"
 #include "errors.h"
 #include "termcolor.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,8 +114,8 @@ static void _critical_stop_handler(int signum, siginfo_t *info, void *ucontext)
     signal(signum, SIG_DFL); /* Avoid infinite loops */
     signal(SIGABRT, SIG_DFL); 
     fflush(stdout);
-    fprintf(stderr, TRESET "\n\nCritical error: received signal %s. Unexpected exit.\n", strsignal(signum));
-    fprintf(stderr, "Trying to get the backtrace (max. depth %d)...\n", BT_DEPTH);
+    slog(LOG_CRIT, TRESET "Critical error: received signal %s. Unexpected exit.", strsignal(signum));
+    slog(LOG_CRIT, "Trying to get the backtrace (max. depth %d)...", BT_DEPTH);
 
     frames = backtrace(callstack, BT_DEPTH);
 
@@ -131,7 +132,7 @@ static void _critical_stop_handler(int signum, siginfo_t *info, void *ucontext)
     strs = backtrace_symbols(callstack, frames);
 
     for (i = 0; i < frames; ++i)
-        fprintf(stderr, "%s\n", strs[i]);
+        slog(LOG_CRIT, "%s", strs[i]);
 
     free(strs);
 

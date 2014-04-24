@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
+#include <string.h>
 
 FILE *_out = NULL;
 int _level = LOG_INFO;
@@ -66,10 +68,8 @@ void vslog(int level, const char *format, va_list ap)
     time_t rawtime;
     struct tm *timeinfo;
 
-
     if (level > _level)
         return;
-
 
     if (_out != NULL)
     {
@@ -89,6 +89,18 @@ void vslog(int level, const char *format, va_list ap)
     {
         vsyslog(level, format, ap);
     }
+}
+
+void slog_sys(int log_type, const char* format, ...)
+{
+    va_list ap;
+    char line_buf[500];
+
+    va_start(ap, format);   
+    vsnprintf(line_buf, 500, format, ap);
+    va_end(ap);
+
+    slog(log_type, "%s: %s (%d)", line_buf, strerror(errno), errno);
 }
 
 void slog(int level, const char *str, ...)

@@ -96,7 +96,10 @@ int daccept(int socket, struct sockaddr *addr, socklen_t *addr_len)
         retval = aceptar_canal_seguro_SSL(get_ssl_ctx(), socket, &newsock, &ssl, addr, addr_len);
 
         if (retval != OK)
+        {
+            slog_sslerr();
             return -1;
+        }
 
         if (_verify_peer)
         {

@@ -7,20 +7,7 @@
 #include "messager.h"
 
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/msg.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-#include <signal.h>
-#include <sys/file.h>
-#include <time.h>
 
-#define irc_exit(code) do { retval = code; goto cleanup; } while (0);
-
-sig_atomic_t stop = 0;
 const char *_argp_progname = "echoserver";
 
 int main(int argc, char const *argv[])
@@ -75,7 +62,7 @@ int main(int argc, char const *argv[])
 
     lsock = server_open_socket(port, 1, 1);
 
-    if (lsock == -1)
+    if (lsock < 0)
     {
         slog_sys(LOG_CRIT, "server_open_socket");
         return EXIT_FAILURE;
@@ -87,7 +74,7 @@ int main(int argc, char const *argv[])
 
     while (sock == -1)
     {
-        slog(LOG_DEBUG, "Esperando conexión...");
+        slog(LOG_NOTICE, "Esperando conexión...");
         sock = server_listen_connect(lsock);
         sock_set_block(sock, 1);
 
@@ -98,17 +85,26 @@ int main(int argc, char const *argv[])
         }
         slog(LOG_NOTICE, "Recibida conexión.");
 
-        while ((bytes_read = rcv_message(sock, (void **)&buffer)) > 0)
+        while ((sock_wait_data(sock, -1) > 0) && 
+            (bytes_read = rcv_message(sock, (void **)&buffer)) > 0)
         {
             send_message(sock, buffer, bytes_read);
             slog(LOG_DEBUG, "recibido mensaje de tamaño %d: %s", bytes_read, buffer);
         }
 
         if (bytes_read == 0)
+        {
             slog(LOG_NOTICE, "Conexión finalizada");
-        else
+            close(sock);
+            sock = -1;
+        }
+        else if(bytes_read < 0)
             slog_sys(LOG_ERR, "rcv_message");
     }
+
+    if(sock != -1)
+        close(sock);
+    close(lsock);
 
     return EXIT_SUCCESS;
 }

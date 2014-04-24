@@ -15,6 +15,7 @@ struct arginfo {
 	arg_type type;
 	const char* help;
 	const char* argname;
+	const char* default_param;
 	short present;
 	const char* param;
 };

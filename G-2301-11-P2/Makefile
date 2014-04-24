@@ -22,7 +22,7 @@ P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 
 TARGET = server
-TARGETS := server chat prsound echoserver
+TARGETS := server chat prsound echoserver echoclient
 INCLUDES = -I./includes/
 
 INCS := $(wildcard $(INCDIR)/*.h)
@@ -74,6 +74,7 @@ prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
 
 echoserver: $(BINDIR)/echoserver
+echoclient: $(BINDIR)/echoclient
 
 scan: clean
 	@scan-build make test

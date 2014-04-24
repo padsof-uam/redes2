@@ -6,11 +6,14 @@
 
 /**
  * Llama a select(2) para devolver si hay datos disponibles para
- * 	leer en un socket.
+ * 	leer en un socket, sin bloquear;
  * @param  socket Socket.
  * @return        0 si no hay datos, un valor mayor que cero si los hay.
  */
 int sock_data_available(int socket);
+
+
+int sock_wait_data(int socket, int ms_timeout);
 
 /**
  * Envía un mensaje a través de un socket.

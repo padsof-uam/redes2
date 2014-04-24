@@ -8,8 +8,20 @@
 #include <errors.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <signal.h>
+#include <unistd.h>
 
+ftp_callback timeout;
+int flag_timeout = 0;
 
+static void _call_timeout(int sig)
+{
+	if(sig == SIGALRM)
+	{
+		timeout(ftp_timeout);
+		flag_timeout = 1;		
+	}
+}
 
 
 void * thread_wait_file(void * ftpdata){
@@ -27,6 +39,11 @@ void * thread_wait_file(void * ftpdata){
 	slog(LOG_DEBUG, "Conexión ftp aceptada");
 	
 	data->cb(ftp_started);
+	
+	timeout = data->cb;
+	flag_timeout = 0;
+
+	signal(SIGALRM, _call_timeout);
 
 	if(rcv_message_staticbuf(sock, size,sizeof(long)) < 0)
 	{
@@ -41,7 +58,7 @@ void * thread_wait_file(void * ftpdata){
 	}
 	
 	while(recv_bytes > 0 && counter_rcv_bytes < *size){
-
+		alarm(FTP_TIMEOUT);
 		recv_bytes = rcv_message(sock, (void **) &buffer);
 		slog(LOG_DEBUG, "Recibido: %s",buffer);
 
@@ -61,10 +78,13 @@ void * thread_wait_file(void * ftpdata){
 	} 
 
 	/* Recepción completada*/
-	if (counter_rcv_bytes == *size )
-		data->cb(ftp_finished);
-	else
-		data->cb(ftp_aborted);
+	if (flag_timeout == 0)
+	{
+		if (counter_rcv_bytes == *size )
+			data->cb(ftp_finished);
+		else
+			data->cb(ftp_aborted);
+	}
 
 
 	slog(LOG_DEBUG, "Hilo de recepción de fichero saliendo");

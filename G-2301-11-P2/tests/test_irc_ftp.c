@@ -2,6 +2,7 @@
 #include "testmacros.h"
 #include "irc_ftp.h"
 #include "errors.h"
+#include "messager.h"
 
 #include <pthread.h>
 #include <string.h>
@@ -108,52 +109,47 @@ int t_irc_ftp__transfer_big_file__ok() {
 
 	mu_end;
 }
-int t_irc_ftp__transfer_complete__ok() {
-	glob_status_snd = ftp_started;
-	glob_status_rcv = ftp_started;
+
+int t_irc_ftp__transfer__timeout() {
 	
+	glob_status_rcv = ftp_started;
 	char payload_snd[] = "01234";	
-	int len = strlen(payload_snd)+1,retval;
-	char * payload_read = calloc(sizeof(char),len+1);
-	FILE * tosend;
-	pthread_t  snd_ftp_th=0,recv_ftp_th=0;
-	uint32_t ip = inet_addr("127.0.0.1");
+	pthread_t recv_ftp_th=0;
 	int * port = malloc(sizeof(int));
-
-
-	tosend = fopen(TOSEND_FILE,"w");
-	if (tosend == NULL)
-		mu_fail("No se puede abrir el fichero de envío");
-	fwrite(payload_snd, sizeof(char), len, tosend);
-	fclose(tosend);
-
+	struct sockaddr_in dst_addr;
+	int sock,retval;
 
 	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
 	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
 
-	retval = ftp_send_file(TOSEND_FILE, ip, *port, ftp_glob_change_snd, &snd_ftp_th);
-	mu_assert_eq(retval, OK, "Fallando la preparación para envío ftp");    	
+	/* Nos preparamos para enviar con timeout. */
+	bzero(&dst_addr, sizeof dst_addr);
+	dst_addr.sin_addr.s_addr =  inet_addr("127.0.0.1");;
+	dst_addr.sin_port = *port;
+	dst_addr.sin_family = PF_INET;
+
+	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+	{
+		mu_fail("Error conectando");
+		return ERR_SOCK;
+	}
+
+	send_message(sock,payload_snd,sizeof(long));
+
+	/* Espera del timeout */
+	sleep(2*FTP_TIMEOUT);
 
 	/* Espera a que finalice la transmisión. */
 	pthread_mutex_lock(&stop_mutex);
 	{
-		while (glob_status_rcv == ftp_started || glob_status_snd == ftp_started)
+		while (glob_status_rcv == ftp_started)
 			pthread_cond_wait(&stop_cond, &stop_mutex);
 	}
 	pthread_mutex_unlock(&stop_mutex);
 
-	mu_assert("Condición de recepción ha fallado", glob_status_rcv == ftp_finished);
-	mu_assert("Condición de envío ha fallado", glob_status_snd == ftp_finished);
-
-
-	FILE * torcv = fopen(TORCV_FILE,"r");
-	if (torcv == NULL)
-		mu_fail("No se puede abrir el fichero de recepción.");
-	fread(payload_read, sizeof(char), len, torcv);
-	fclose(torcv);
-
-
-	mu_assert_streq(payload_read, payload_snd, "No coinciden");
+	mu_assert_eq(glob_status_rcv, ftp_timeout, "Condición de recepción ha fallado");
 
 	mu_end;
 }
@@ -166,7 +162,7 @@ int test_irc_ftp_suite(int *errors, int *success)
 
 	printf("Begin test_irc_ftp suite.\n");
 	/* BEGIN TEST EXEC */
-	mu_run_test(t_irc_ftp__transfer_complete__ok);
+	mu_run_test(t_irc_ftp__transfer__timeout);
 	mu_run_test(t_irc_ftp__transfer_big_file__ok);
 	/* END TEST EXEC */
 	if (tests_passed == tests_run)

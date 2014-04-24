@@ -20,11 +20,12 @@
 #include <signal.h>
 #include <sys/resource.h>
 
-int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
+int spawn_listener_thread(pthread_t *pth, int port, int ssl_port, int commsocket)
 {
-    struct listener_thdata* thdata = malloc(sizeof(struct listener_thdata));
+    struct listener_thdata *thdata = malloc(sizeof(struct listener_thdata));
     thdata->commsocket = commsocket;
     thdata->port = port;
+    thdata->ssl_port = ssl_port;
 
     if (pthread_create(pth, NULL, thread_listener, thdata))
     {
@@ -38,11 +39,15 @@ int spawn_listener_thread(pthread_t *pth, int port, int commsocket)
     }
 }
 
-void listener_cleanup(void* data)
+void listener_cleanup(void *data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
-    
+
     server_close_communication(thdata->listen_sock);
+
+    if (thdata->listen_sock_ssl != -1)
+        server_close_communication(thdata->listen_sock_ssl);
+
     slog(LOG_NOTICE, "listener: limpiando.");
 
     free(thdata);
@@ -51,13 +56,20 @@ void listener_cleanup(void* data)
 void *thread_listener(void *data)
 {
     struct listener_thdata *thdata = (struct listener_thdata *) data;
-    int listen_sock;
+    int listen_sock, listen_sock_ssl = -1;
     struct pollfd fds[2];
     char *commbuf;
 
     slog(LOG_NOTICE, "Hilo de escucha creado.");
+
     listen_sock = server_open_socket(thdata->port, DEFAULT_MAX_QUEUE, 0);
+
+    if (thdata->ssl_port != 0)
+        listen_sock_ssl = server_open_socket(thdata->ssl_port, DEFAULT_MAX_QUEUE, 0);
+
     thdata->listen_sock = listen_sock;
+    thdata->listen_sock_ssl = listen_sock_ssl;
+
     pthread_cleanup_push(listener_cleanup, thdata);
 
     if (listen_sock < 0)
@@ -75,8 +87,14 @@ void *thread_listener(void *data)
     fds[0].events = POLLIN;
     fds[0].fd = listen_sock;
 
-	fds[1].events = POLLIN;
-    fds[1].fd = thdata->commsocket; 
+    fds[1].events = POLLIN;
+    fds[1].fd = thdata->commsocket;
+
+    if (listen_sock_ssl != -1)
+    {
+        fds[2].events = POLLIN;
+        fds[2].fd = listen_sock_ssl;
+    }
 
     while (1)
     {
@@ -90,6 +108,12 @@ void *thread_listener(void *data)
             if (fds[0].revents & POLLIN)
             {
                 if (create_new_connection_thread(listen_sock, thdata->commsocket) != OK)
+                    slog(LOG_ERR, "Fallo al aceptar una conexión. Error %s", strerror(errno));
+            }
+
+            if (listen_sock_ssl != -1 && fds[2].revents & POLLIN)
+            {
+                if (create_new_connection_thread(listen_sock_ssl, thdata->commsocket) != OK)
                     slog(LOG_ERR, "Fallo al aceptar una conexión. Error %s", strerror(errno));
             }
 
@@ -113,7 +137,7 @@ void *thread_listener(void *data)
     pthread_cleanup_pop(0);
 
     pthread_exit(0);
-    
+
 }
 
 int create_new_connection_thread(int listen_sock, int commsocket)

@@ -11,6 +11,7 @@
 #include "log.h"
 #include "irc_core.h"
 #include "irc_funs_server.h"
+#include "ssltrans.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include <time.h>
 
 #define IRC_PORT 6667
+#define IRC_SSL_PORT 6697
 #define LOG_ID "redirc"
 #define MAX_ERR_THRESHOLD 5
 #define RCV_QKEY 3981
@@ -105,10 +107,14 @@ int main(int argc, char const *argv[])
     comm_socks[0] = 0;
     comm_socks[1] = 0;
 
+    open_syslog(LOG_ID);
+    slog_set_output_syslog();
     slog_set_level(LOG_DEBUG);
 
+    init_all_ssl_default();
+
 #ifndef NODAEMON
-    if (daemonize(LOG_ID) != OK)
+    if (daemonize() != OK)
     {
         slog(LOG_CRIT, "No se ha podido daemonizar.");
         irc_exit(EXIT_FAILURE)
@@ -164,7 +170,7 @@ int main(int argc, char const *argv[])
         irc_exit(EXIT_FAILURE);
     }
 
-    if (spawn_listener_thread(&listener_th, IRC_PORT, comm_socks[1]) < 0)
+    if (spawn_listener_thread(&listener_th, IRC_PORT, IRC_SSL_PORT, comm_socks[1]) < 0)
     {
         slog(LOG_CRIT, "No se ha podido crear el hilo de escucha: %s", strerror(errno));
         irc_exit(EXIT_FAILURE);
@@ -242,6 +248,8 @@ cleanup:
 
     if (comm_socks[1] != 0)
         close(comm_socks[1]);
+
+    cleanup_all_ssl();
 
     slog(LOG_NOTICE, "Daemon terminado.\n");
 

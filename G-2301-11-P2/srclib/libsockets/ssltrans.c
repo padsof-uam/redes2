@@ -216,6 +216,8 @@ int init_all_ssl(const char *ca_path, const char *ca_key, short verify_peer)
 
     set_ssl_ctx(ctx);
 
+    slog(LOG_NOTICE, "Contexto SSL inicializado con CA %s, clave %s.", ca_path, ca_key);
+
     return OK;
 }
 

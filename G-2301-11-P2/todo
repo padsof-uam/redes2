@@ -9,3 +9,17 @@ HANDSHAKE para enviar.
 fwrite, fputs, write, fprintf... y para leer?
 
 Timeouts de tiempos de espera.
+
+Test, y si bucle infinito?
+
+
+Miercoles noche:
+
+cliente (sender):
+	- server_open_socket (abre socket no bloqueante y bindea)
+	- conecta.
+
+servidor (waiter):
+	- server_open_tcp_socket_b (abre socket sí bloquante y bindea y listenea)
+
+se hace mucho lío por tener INADDR_ANY escucha de todas las interfaces entonces el par (ip,puerto) ya está cogido y no puede conectar... ¿sugerencias? 

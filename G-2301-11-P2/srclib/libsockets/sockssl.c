@@ -2,6 +2,7 @@
 #include "log.h"
 
 #include <unistd.h>
+#include <stdlib.h>
 
 void inicializar_nivel_SSL()
 {
@@ -14,12 +15,28 @@ void inicializar_nivel_SSL()
 
 SSL_CTX *fijar_contexto_SSL(const char *ca_path, const char *key_path, short verify_peer)
 {
-    SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
+    char ca_realpath[512];
+    char key_realpath[512];
+    SSL_CTX *ctx;
+
+    if(realpath(ca_path, ca_realpath) == NULL)
+    {
+        slog(LOG_ERR, "Error resolviendo la ruta del certificado CA.");
+        return NULL;
+    }
+
+    if(realpath(key_path, key_realpath) == NULL)
+    {
+        slog(LOG_ERR, "Error resolviendo la ruta del certificado.");
+        return NULL;
+    }
+
+    ctx = SSL_CTX_new(SSLv23_method());
 
     if (!ctx)
         return NULL;
 
-    if (SSL_CTX_load_verify_locations(ctx, ca_path, NULL) == 0)
+    if (SSL_CTX_load_verify_locations(ctx, ca_realpath, NULL) == 0)
     {
         slog(LOG_ERR, "Error cargando certificado raíz.");
         goto error;
@@ -31,13 +48,13 @@ SSL_CTX *fijar_contexto_SSL(const char *ca_path, const char *key_path, short ver
         goto error;
     }
 
-    if (SSL_CTX_use_certificate_chain_file(ctx, key_path) != 1)
+    if (SSL_CTX_use_certificate_chain_file(ctx, key_realpath) != 1)
     {
         slog(LOG_ERR, "Error cargando certificado raíz.");
         goto error;
     }
 
-    if (SSL_CTX_use_RSAPrivateKey_file(ctx, key_path, SSL_FILETYPE_PEM) != 1)
+    if (SSL_CTX_use_RSAPrivateKey_file(ctx, key_realpath, SSL_FILETYPE_PEM) != 1)
     {
         slog(LOG_ERR, "Error cargando clave privada.");
         goto error;

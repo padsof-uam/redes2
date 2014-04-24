@@ -25,7 +25,13 @@ void * thread_wait_file(void * ftpdata){
 	pthread_cleanup_push(free, buffer);
 	pthread_cleanup_push(free, data);
 
-	if(rcv_message_staticbuf(data->sock, size,2*sizeof(long)) < 0)
+	int sock = server_listen_connect_block(data->sock);
+
+	slog(LOG_INFO, "Conexión ftp aceptada");
+	
+	data->cb(ftp_started);
+
+	if(rcv_message_staticbuf(sock, size,sizeof(long)) < 0)
 	{
 		slog(LOG_ERR, "Error recibiendo el primer mensaje de recepción ftp.");
 		return NULL;
@@ -37,17 +43,15 @@ void * thread_wait_file(void * ftpdata){
 		return NULL;
 	}
 	
-	data->cb(ftp_started);
+	while(recv_bytes > 0 && counter_rcv_bytes < *size){
 
-	while(recv_bytes > 0 && counter_rcv_bytes <= *size){
-		recv_bytes = rcv_message(data->sock, (void **) &buffer);
-		if (recv_bytes < 0){
+		recv_bytes = rcv_message(sock, (void **) &buffer);
+		if (recv_bytes <= 0){
 			slog(LOG_ERR, "Error recibiendo mensaje");
-			data->cb(ftp_aborted);
 			break;
 		}
 
-		if (fwrite(buffer, 1, MAX_LEN_FTP, data->f)<= 0 ){
+		if (fwrite(buffer, 1, recv_bytes, data->f) == 0 ){
 			slog(LOG_ERR, "Error escribiendo en el fichero");
 		}
 		counter_rcv_bytes+=recv_bytes;
@@ -58,11 +62,16 @@ void * thread_wait_file(void * ftpdata){
 	} 
 
 	/* Recepción completada*/
-	if (recv_bytes >= 0 /*&& !timeout*/ )
-	data->cb(ftp_finished);
+	if (counter_rcv_bytes == *size )
+		data->cb(ftp_finished);
+	else
+		data->cb(ftp_aborted);
+
 
 	slog(LOG_DEBUG, "Hilo de recepción de fichero saliendo");
 
+	/*con pushpop*/
+	fclose(data->f);
 	pthread_cleanup_pop(0);
 	pthread_cleanup_pop(0);
 	pthread_exit(0);
@@ -85,7 +94,7 @@ int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv
 	th_data->f = f;
 	th_data->cb = cb;
 
-	sock = server_open_tcp_socket_b(0,2*MAX_LEN_FTP);
+	sock = server_open_socket_block(0,MAX_LEN_FTP);
 
 	if (sock < 0)
 	{
@@ -95,11 +104,7 @@ int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv
 
 	th_data->sock = sock;
 
-	if (th_data->sock < 0){
-		slog(LOG_ERR,"Error poniendo a escuchar el socket tcp receptor de ftp");
-		return ERR_SOCK;		
-	}
-	if(get_socket_port(th_data->sock,port) != OK){
+	if(get_socket_port(sock,port) != OK){
 		slog(LOG_ERR,"Error obteniendo puerto del socket tcp");
 		return ERR_SOCK;
 	}
@@ -119,25 +124,25 @@ int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv
 
 void * thread_send_file(void * ftpdata){
 	struct th_ftpdata * data = ftpdata;
-	char buffer;
+	char buffer[MAX_LEN_FTP];
 	int snd_bytes = 1;
 	int counter_snd_bytes = 0;
 
-	pthread_cleanup_push(free, data);
+	//pthread_cleanup_push(free, data);
 
-	while (snd_bytes >=0 && counter_snd_bytes <= data->size){
-		snd_bytes = fread(&buffer, 1, MAX_LEN_FTP - 1, data->f);
-		if (snd_bytes < 0)
+	while (snd_bytes > 0 && counter_snd_bytes < data->size){
+		snd_bytes = fread(buffer, sizeof(char), MAX_LEN_FTP, data->f);
+		if (snd_bytes > 0)
 		{
-			if (send_message(data->sock, &buffer, snd_bytes) < 0)
+			if (send_message(data->sock, buffer, snd_bytes) < 0)
 			{
 				slog(LOG_ERR, "Error enviando un mensaje de transmisión ftp");
 				data->cb(ftp_aborted);
 				break;
 			}
 
-			counter_snd_bytes += snd_bytes;
 		}
+		counter_snd_bytes += snd_bytes;
 	}
 
 	if (counter_snd_bytes == data->size)
@@ -147,7 +152,7 @@ void * thread_send_file(void * ftpdata){
 	}
 
 	slog(LOG_INFO, "Hilo envío ftp saliendo");
-	pthread_cleanup_pop(0);
+	//hread_cleanup_pop(0);
 	pthread_exit(0);
 
 }
@@ -172,9 +177,9 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 	bzero(&dst_addr, sizeof dst_addr);
 	dst_addr.sin_addr.s_addr = ip;
 	dst_addr.sin_port = port;
-	dst_addr.sin_family = AF_INET;
+	dst_addr.sin_family = PF_INET;
 
-	sock = server_open_socket(0, MAX_LEN_FTP);
+	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if (sock == ERR_SOCK)
 	{
@@ -192,8 +197,8 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 	fseek(f, 0L, SEEK_END);
 	size = ftell(f);
 	fseek(f, 0L, SEEK_SET);
-	th_data->size = size;
 
+	th_data->size = size;
 	th_data->f = f;
 	th_data->cb = cb;
 	th_data->sock = sock;

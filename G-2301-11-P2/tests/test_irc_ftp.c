@@ -13,30 +13,33 @@
 #define TOSEND_FILE "/tmp/tosend"
 #define TORCV_FILE "/tmp/torcv"
 
-/* BEGIN TESTS */
-ftp_status glob_status_snd = 0;
-ftp_status glob_status_rcv = 0;
+ftp_status glob_status_snd = ftp_started;
+ftp_status glob_status_rcv = ftp_started;
+pthread_mutex_t stop_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
 
-pthread_mutex_t stop_mutex_snd = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t stop_mutex_rcv = PTHREAD_MUTEX_INITIALIZER;
+void ftp_glob_change_snd(ftp_status status){  
 
-void ftp_glob_change_snd(ftp_status status){
-    pthread_mutex_lock(&stop_mutex_snd);
-    {
+	pthread_mutex_lock(&stop_mutex);
+	{
 		glob_status_snd = status;
+		pthread_cond_signal(&stop_cond);
 	}
-    pthread_mutex_unlock(&stop_mutex_snd);
+	pthread_mutex_unlock(&stop_mutex);
 
 }
 void ftp_glob_change_rcv(ftp_status status){
-    pthread_mutex_lock(&stop_mutex_rcv);
-    {
+
+	pthread_mutex_lock(&stop_mutex);
+	{
 		glob_status_rcv = status;
+		pthread_cond_signal(&stop_cond);
 	}
-    pthread_mutex_unlock(&stop_mutex_rcv);
+	pthread_mutex_unlock(&stop_mutex);
 }
 
 
+/* BEGIN TESTS */
 int t_irc_ftp__transfer_complete__ok() {
 	/* Preparación del fichero a enviar. */
 	char payload_snd[] = "01234";	
@@ -44,7 +47,7 @@ int t_irc_ftp__transfer_complete__ok() {
 	char * payload_read = calloc(sizeof(char),len+1);
 	FILE * tosend;
 	pthread_t  snd_ftp_th=0,recv_ftp_th=0;
-	uint32_t ip = inet_addr("192.168.1.5");
+	uint32_t ip = inet_addr("127.0.0.1");
 	int * port = malloc(sizeof(int));
 
 
@@ -60,8 +63,9 @@ int t_irc_ftp__transfer_complete__ok() {
 
 	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
 	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
-		retval = ftp_send_file(TOSEND_FILE, ip, *port, ftp_glob_change_snd, &snd_ftp_th);
-		mu_assert_eq(retval, OK, "Fallando la preparación para envío ftp");    	
+
+	retval = ftp_send_file(TOSEND_FILE, ip, *port, ftp_glob_change_snd, &snd_ftp_th);
+	mu_assert_eq(retval, OK, "Fallando la preparación para envío ftp");    	
 	/**
 	 * Fin de la ejecución.
 	 */
@@ -69,8 +73,15 @@ int t_irc_ftp__transfer_complete__ok() {
 	/*
 	Esperamos a que acaben. ARREGLAR
 	 */
-	while((glob_status_rcv != ftp_finished || glob_status_rcv != ftp_aborted) && (glob_status_snd != ftp_finished || glob_status_snd != ftp_aborted));
+	pthread_mutex_lock(&stop_mutex);
+	{
+	while (glob_status_rcv == ftp_started || glob_status_snd == ftp_started)
+		pthread_cond_wait(&stop_cond, &stop_mutex);
+	}
+	pthread_mutex_unlock(&stop_mutex);
 
+	mu_assert("Condición de recepción ha fallado", glob_status_rcv == ftp_finished);
+	mu_assert("Condición de envío ha fallado", glob_status_snd == ftp_finished);
 
 
 	FILE * torcv = fopen(TORCV_FILE,"r");
@@ -80,9 +91,8 @@ int t_irc_ftp__transfer_complete__ok() {
 	fclose(torcv);
 
 
-	mu_assert_streq(payload_snd, payload_read, "No coinciden");
+	mu_assert_streq(payload_read, payload_snd, "No coinciden");
 
-	mu_fail("Not implemented");
 	mu_end;
 }
 /* END TESTS */

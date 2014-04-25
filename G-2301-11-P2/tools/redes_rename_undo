@@ -15,6 +15,12 @@ function process_dir() {
 }
 
 
+function repl_target() {
+	sed -i .sed "s/\$(P_NAME)-$1/$1/g" Makefile
+	rm Makefile.sed
+}
+
+
 process_dir src
 process_dir includes
 process_dir tests
@@ -27,5 +33,6 @@ done
 
 mv $prefix-makefile Makefile
 sed -i .sed 's/\/$(P_NAME)-test/\/test/g' Makefile
-sed -i .sed 's/$(P_NAME)-main/main/g' Makefile
-rm Makefile.sed
+repl_target server 
+repl_target chat
+repl_target prsound

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-prefix=G-2301-11-P2
+prefix=G-2301-11-P3
 
 function replace_infile() {
 	sed -i .sed -e "s/$prefix-//g" $1

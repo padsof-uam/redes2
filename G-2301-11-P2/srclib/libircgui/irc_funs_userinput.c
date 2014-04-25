@@ -28,6 +28,7 @@ const char* _ui_commands[] =
 	"quit",
 	"ban",
 	"exit",
+	"query",
 	"*"
 };
 
@@ -43,6 +44,7 @@ cmd_action _ui_actions[] =
 	irc_ui_quit,
 	irc_ui_ban,
 	irc_ui_exit,
+	irc_msg,
 	irc_server_forward
 };
 
@@ -85,7 +87,7 @@ int irc_msg(void* data)
 
 	if(nick_start == NULL)
 	{
-		errorText("Sintaxis incorrecta. Uso: /msg nick (mensaje)");
+		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
 		return ERR_PARSE;
 	}
 
@@ -95,7 +97,7 @@ int irc_msg(void* data)
 
 	if(msg_start == NULL)
 	{
-		errorText("Sintaxis incorrecta. Uso: /msg nick (mensaje)");
+		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
 		return ERR_PARSE;
 	}
 

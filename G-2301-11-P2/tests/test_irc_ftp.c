@@ -53,6 +53,46 @@ void ftp_glob_change_rcv(ftp_status status){
 
 
 /* BEGIN TESTS */
+int t_irc_ftp__transfer_something__timeout() {
+
+	glob_status_rcv = ftp_started;
+	char payload_snd[] = "1234";	
+	pthread_t recv_ftp_th=0;
+	int * port = malloc(sizeof(int));
+	struct sockaddr_in dst_addr;
+	int sock,retval;
+
+	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
+	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
+
+	/* Nos preparamos para enviar con timeout. */
+	bzero(&dst_addr, sizeof dst_addr);
+	dst_addr.sin_addr.s_addr =  inet_addr("127.0.0.1");;
+	dst_addr.sin_port = *port;
+	dst_addr.sin_family = PF_INET;
+
+	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+	{
+		mu_fail("Error conectando");
+		return ERR_SOCK;
+	}
+
+	send_message(sock, payload_snd, sizeof(long));
+
+	/* Espera a que finalice la transmisión. */
+	pthread_mutex_lock(&stop_mutex);
+	{
+		while (glob_status_rcv == ftp_started)
+			pthread_cond_wait(&stop_cond, &stop_mutex);
+	}
+	pthread_mutex_unlock(&stop_mutex);
+
+	mu_assert_eq(glob_status_rcv, ftp_timeout, "Condición de recepción ha fallado");
+
+	mu_end;
+}
 int t_irc_ftp__transfer_big_file__ok() {
 	glob_status_snd = ftp_started;
 	glob_status_rcv = ftp_started;
@@ -113,7 +153,6 @@ int t_irc_ftp__transfer_big_file__ok() {
 int t_irc_ftp__transfer__timeout() {
 	
 	glob_status_rcv = ftp_started;
-	char payload_snd[] = "01234";	
 	pthread_t recv_ftp_th=0;
 	int * port = malloc(sizeof(int));
 	struct sockaddr_in dst_addr;
@@ -136,11 +175,6 @@ int t_irc_ftp__transfer__timeout() {
 		return ERR_SOCK;
 	}
 
-	send_message(sock,payload_snd,sizeof(long));
-
-	/* Espera del timeout */
-	sleep(2*FTP_TIMEOUT);
-
 	/* Espera a que finalice la transmisión. */
 	pthread_mutex_lock(&stop_mutex);
 	{
@@ -162,6 +196,7 @@ int test_irc_ftp_suite(int *errors, int *success)
 
 	printf("Begin test_irc_ftp suite.\n");
 	/* BEGIN TEST EXEC */
+	mu_run_test(t_irc_ftp__transfer_something__timeout);
 	mu_run_test(t_irc_ftp__transfer__timeout);
 	mu_run_test(t_irc_ftp__transfer_big_file__ok);
 	/* END TEST EXEC */

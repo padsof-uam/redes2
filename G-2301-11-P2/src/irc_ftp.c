@@ -9,19 +9,6 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include <unistd.h>
-
-ftp_callback timeout;
-int flag_timeout = 0;
-
-static void _call_timeout(int sig)
-{
-	if(sig == SIGALRM)
-	{
-		timeout(ftp_timeout);
-		flag_timeout = 1;		
-	}
-}
 
 
 void * thread_wait_file(void * ftpdata){
@@ -40,11 +27,12 @@ void * thread_wait_file(void * ftpdata){
 	
 	data->cb(ftp_started);
 	
-	timeout = data->cb;
-	flag_timeout = 0;
 
-	signal(SIGALRM, _call_timeout);
-
+	if (!sock_wait_data(sock,FTP_TIMEOUT_MS))
+	{
+		data->cb(ftp_timeout);
+		return NULL;
+	}
 	if(rcv_message_staticbuf(sock, size,sizeof(long)) < 0)
 	{
 		slog(LOG_ERR, "Error recibiendo el primer mensaje de recepción ftp.");
@@ -58,34 +46,31 @@ void * thread_wait_file(void * ftpdata){
 	}
 	
 	while(recv_bytes > 0 && counter_rcv_bytes < *size){
-		alarm(FTP_TIMEOUT);
+		if (!sock_wait_data(sock,FTP_TIMEOUT_MS))
+		{
+			data->cb(ftp_timeout);
+			return NULL;
+		}
 		recv_bytes = rcv_message(sock, (void **) &buffer);
-		slog(LOG_DEBUG, "Recibido: %s",buffer);
-
-		if (recv_bytes <= 0){
+		if (recv_bytes < 0){
 			slog(LOG_ERR, "Error recibiendo mensaje");
 			break;
 		}
 
-		if (fwrite(buffer, sizeof(char), recv_bytes, data->f) == 0 ){
+		if (recv_bytes > 0 && fwrite(buffer, sizeof(char), recv_bytes, data->f) == 0 ){
 			slog(LOG_ERR, "Error escribiendo en el fichero");
 		}
 		counter_rcv_bytes+=recv_bytes;
-
-	/* Controlar timeout*/
-		/*if (timeout)
-			data->cb(ftp_timeout);*/
+		free(buffer);
 	} 
 
-	/* Recepción completada*/
-	if (flag_timeout == 0)
-	{
-		if (counter_rcv_bytes == *size )
-			data->cb(ftp_finished);
-		else
-			data->cb(ftp_aborted);
-	}
 
+	/* Recepción completada*/
+	
+	if (counter_rcv_bytes == *size )
+		data->cb(ftp_finished);
+	else
+		data->cb(ftp_aborted);
 
 	slog(LOG_DEBUG, "Hilo de recepción de fichero saliendo");
 

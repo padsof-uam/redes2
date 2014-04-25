@@ -1,0 +1,233 @@
+CC = gcc
+CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) 
+DEBUG_CFLAGS = -DDEBUG -ggdb
+LDFLAGS := $(shell pkg-config --libs libpulse-simple) $(shell pkg-config --libs gtk+-2.0) -lssl -lcrypto
+E_LIBS = -lpthread
+
+CFLAGS += $(DEBUG_CFLAGS)
+
+OBJDIR = obj
+SRCDIR = src
+INCDIR = includes
+BINDIR = bin
+DOCDIR = doc
+LIBDIR = lib
+LIBSRCDIR = srclib
+TESTDIR = tests
+CERTDIR = cert
+
+P_GROUP = 2301
+P_NUM = 3
+P_PAR = 11
+P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
+
+TARGET = $(P_NAME)-server
+TARGETS := $(P_NAME)-server $(P_NAME)-chat $(P_NAME)-prsound $(P_NAME)-echoserver $(P_NAME)-echoclient
+INCLUDES = -I./includes/
+
+INCS := $(wildcard $(INCDIR)/*.h)
+SRCS := $(wildcard $(SRCDIR)/*.c)
+OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(SRCS)))
+
+LIB_SRCS := $(wildcard $(LIBSRCDIR)/**/*.c)
+LIB_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(LIB_SRCS)))
+LIB_NAMES := $(patsubst $(LIBSRCDIR)/%, %, $(wildcard $(LIBSRCDIR)/*))
+LIBS :=	$(addprefix $(LIBDIR)/, $(addsuffix .a, $(LIB_NAMES)))
+LIB_DEPS := $(addsuffix .deps, $(addprefix $(OBJDIR)/., $(LIB_NAMES)))
+LIB_OBJDIRS := $(addprefix $(OBJDIR)/$(LIBSRCDIR)/, $(LIB_NAMES))
+LIBS_NOGUI := $(filter-out %/libircgui.a, $(LIBS))
+
+TEST_SRCS := $(wildcard $(TESTDIR)/*.c)
+TEST_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o, $(TEST_SRCS)))
+OBJS_NOMAIN := $(filter-out $(addprefix %/, $(addsuffix .o, $(TARGETS))), $(OBJS))
+
+DOC_TEXS := $(wildcard $(DOCDIR)/*.tex)
+DOC_TEXS += $(DOCDIR)/latex/refman.tex
+DOC_PDFS := $(patsubst %.tex, %.pdf, $(DOC_TEXS))
+
+DOXY_OUTPUTS := $(filter-out $(DOCDIR)/, $(dir $(wildcard $(DOCDIR)/*/)))
+
+FMT_BOLD := $(shell tput bold)
+FMT_NORM := $(shell tput sgr0)
+
+
+.PRECIOUS: %.o %.d %.key %.csr %.crt %.cer %.pem
+.PHONY: debug clean pack doxydoc docclean
+ 
+all: test $(TARGETS)
+
+debug: CFLAGS += $(DEBUG_CFLAGS)
+debug: test $(TARGETS)
+
+final: all docs pack
+
+### Compilation
+
+no-daemon: CFLAGS += -DNODAEMON
+no-daemon: debug
+
+$(P_NAME)-chat: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
+$(P_NAME)-chat: CFLAGS += $(shell pkg-config --libs gtk+-2.0) 
+$(P_NAME)-chat: $(BINDIR)/$(P_NAME)-chat | certificados
+
+$(P_NAME)-prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
+$(P_NAME)-prsound: $(BINDIR)/$(P_NAME)-prsound
+
+$(P_NAME)-echoserver: $(BINDIR)/$(P_NAME)-echoserver
+$(P_NAME)-echoclient: $(BINDIR)/$(P_NAME)-echoclient
+
+scan: clean
+	@scan-build make test
+	
+$(OBJS): | $(OBJDIR)
+
+## Dependencies
+
+depend: $(OBJDIR)/.deps $(LIB_DEPS)
+
+$(OBJDIR)/.deps: $(SRCS) | $(OBJDIR)
+	@-rm -f $(OBJDIR)/.deps
+	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $(OBJDIR)/.deps;
+	@awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' $@ > "$@.0"
+	@mv "$@.0" $@
+	@awk '{printf("$(OBJDIR)/$(SRCDIR)/%s\n", $$0)}' $@ > "$@.0"
+	@mv "$@.0" $@
+
+$(OBJDIR)/.%.deps: $(LIBSRCDIR)/%/*.c | $(OBJDIR)
+	@-rm -f $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -MM $^ >> $@;
+	@awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' $@ > "$@.0"
+	@mv "$@.0" $@
+	@awk '{printf("$(OBJDIR)/$(LIBSRCDIR)/$*/%s\n", $$0)}' $@ > "$@.0"
+	@mv "$@.0" $@
+	@echo $(LIBDIR)/$*.a: $(patsubst %.c, $(OBJDIR)/%.o, $^) >> $@
+
+-include $(OBJDIR)/.deps
+-include $(LIB_DEPS)
+
+## Directories
+
+$(OBJDIR):
+	@echo Creating obj directories
+	@mkdir -p $(OBJDIR)/$(SRCDIR)
+	@mkdir -p $(OBJDIR)/$(LIBSRCDIR)
+	@mkdir -p $(OBJDIR)/$(TESTDIR)
+	@mkdir -p $(LIB_OBJDIRS)
+
+$(BINDIR):
+	@echo Creating bin directory
+	@mkdir -p $(BINDIR)
+
+$(LIBDIR):
+	@echo Creating lib directory
+	@mkdir -p $(LIBDIR)
+
+## Common
+
+$(OBJDIR)/%.o: %.c | $(OBJDIR) depend
+	@echo "$< -> $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+clean: docclean
+	@echo Clearing build folders...
+	-rm -rf $(OBJDIR) $(BINDIR) $(LIBDIR)
+	
+## Libraries
+
+$(LIBDIR)/%.a: | $(LIBDIR) $(OBJDIR)/$(LIBSRCDIR)/%/
+	@echo "$(FMT_BOLD)Building library $*... $(FMT_NORM)"
+	@$(AR) -r $@ $?
+
+## Executable
+
+$(TARGET): $(BINDIR)/$(TARGET)
+
+$(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
+	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LIBS_NOGUI) $(E_LIBS) $(LDFLAGS)
+
+## Tests
+
+test: CFLAGS += $(DEBUG_CFLAGS)
+test: $(BINDIR)/$(P_NAME)-test | $(OBJDIR)
+
+$(BINDIR)/$(P_NAME)-test: $(OBJDIR)/$(TESTDIR)/$(P_NAME)-test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS_NOGUI) | $(BINDIR) depend
+	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LIBS_NOGUI) $(E_LIBS) $(LDFLAGS)
+
+### Documentation
+
+docs: doxydoc $(DOC_PDFS)
+
+# Por alguna razón, los manuales no tienen la codificación correcta. Por eso el for ese de ahí.
+doxydoc: 
+	@echo "$(FMT_BOLD)Building doxygen docs... $(FMT_NORM)"
+	@doxygen
+	@echo "Converting files to correct encoding..."
+	@for f in doc/man/man3/*; do \
+		iconv -t latin1 "$$f" > iconv.tmp; \
+		mv iconv.tmp "$$f"; \
+	done
+
+%.pdf: %.tex
+	@echo "$(FMT_BOLD)Latexmk: generating $@ $(FMT_NORM)"
+	@cd $(dir $<); latexmk -pdf -silent $(notdir $<)
+
+docclean:
+	@echo Removing LaTeX files...
+	@cd $(DOCDIR); (which latexmk > /dev/null && latexmk -C) || true # Clean tex files if latexmk is present.
+	@echo Removing doxygen output...
+	@-rm -r $(DOXY_OUTPUTS)
+	
+### Packing
+
+pack: docs
+	cp -r "$(shell pwd)" ../$(P_NAME)-backup
+	@tools/redes_rename
+	@cd ..; tar -X $(P_NAME)/.tarexcludes -czf $(P_NAME).tar.gz $(P_NAME) 
+	@echo "Packed $(P_NAME).tar.gz in parent directory."
+
+### Certificates
+
+ROOTKEY = $(CERTDIR)/root.key
+ROOTCERT = $(CERTDIR)/root.cer
+ROOTPEM = $(CERTDIR)/root.pemr
+CLIENTPEM = $(CERTDIR)/client.pem
+SERVPEM = $(CERTDIR)/$(P_NAME)-server.pem
+
+certificados: $(ROOTPEM) $(SERVPEM) | $(CERTDIR)
+
+certclean:
+	@echo "$(FMT_BOLD)Cleaning certificates...$(FMT_NORM)"
+	@-rm -r $(CERTDIR)
+
+$(CERTDIR): 
+	@mkdir -p $(CERTDIR)
+
+%.key: | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating key $@...$(FMT_NORM)"
+	@openssl genrsa -out $@ 2048
+
+%.csr: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generate certificate signing request $@ from $<...$(FMT_NORM)"
+	@openssl req -new -key $< -out $@
+
+%.crt: %.csr $(ROOTCERT) $(ROOTKEY) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Signing client certificate request $< with $(ROOTCERT)...$(FMT_NORM)"
+	@openssl x509 -req -in $< -CA $(ROOTCERT) -CAkey $(ROOTKEY) -CAcreateserial -out $@ -days 500
+
+%.cer: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Self-signing certificate $@...$(FMT_NORM)"	
+	@openssl req -new -x509 -key $< -out $@
+
+%.pem: %.crt %.key $(ROOTCERT) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating certificate $@...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@
+
+%.pemr: %.cer %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating root certificate $@ from $^...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@

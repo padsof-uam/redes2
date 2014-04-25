@@ -4,6 +4,7 @@
 #include "voicecall.h"
 #include "sockutils.h"
 #include "log.h"
+#include "irc_ftp.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -11,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #define CALL_TIMEOUT_SEC 10
 
@@ -29,6 +31,9 @@ const char* _ui_commands[] =
 	"ban",
 	"exit",
 	"query",
+	"fsend",
+	"faccept",
+	"fcancel",
 	"*"
 };
 
@@ -45,6 +50,9 @@ cmd_action _ui_actions[] =
 	irc_ui_ban,
 	irc_ui_exit,
 	irc_msg,
+	irc_fsend,
+	irc_faccept,
+	irc_fcancel,
 	irc_server_forward
 };
 
@@ -340,3 +348,79 @@ int irc_ui_exit(void* data)
 	return OK;
 }
 
+int irc_fsend(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	char* msg = strdup(msgdata->msg);
+	char* params[2];
+	int retval;
+	
+	if(irc_parse_paramlist(msg, params, 2) != 2)
+	{
+		errorText("Error de sintaxis. Uso: /fcall nick fichero");
+		free(msg);
+		return OK;
+	}
+
+	retval = irc_ftp_reqsend(&msgdata->clientdata->ftp_con_data, params[1]);
+
+	if(retval == ERR_NOTFOUND)
+	{
+		errorText("El archivo %s no existe", params[1]);
+		free(msg);
+		return OK;
+	}
+	else if(retval != OK)
+	{
+		errorText("No se puede enviar el archivo: ya hay una transferencia en curso.");
+		free(msg);
+		return OK;
+	}
+
+	strncpy(msgdata->clientdata->ftp_user, params[0], MAX_NICK_LEN);
+	irc_send_to_server(msgdata, "PRIVMSG %s :$FSEND %s", params[0], basename(params[1]));
+
+	return OK;
+}
+
+int irc_faccept(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+	char* file = irc_next_param(msgdata->msg);
+	int retval;
+	int port;
+	
+	retval = irc_ftp_accept(&msgdata->clientdata->ftp_con_data, file, &port, ftp_uicallback);
+
+	if(retval == ERR_NOTFOUND)
+	{
+		errorText("El archivo %s no se puede crear", file);
+		return OK;
+	}
+	else if(retval != OK)
+	{
+		errorText("No se puede enviar el archivo: ya hay una transferencia en curso.");
+		return OK;
+	}
+
+	irc_send_to_server(msgdata, "PRIVMSG %s :$FACCEPT %d %d", msgdata->clientdata->ftp_user, msgdata->clientdata->client_ip, port);
+
+	return OK;
+}
+
+int irc_fcancel(void* data)
+{
+	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
+
+	if(irc_ftp_cancel(&msgdata->clientdata->ftp_con_data) == OK)
+	{
+		irc_send_to_server(msgdata, "PRIVMSG %s :$FCANCEL ", msgdata->clientdata->ftp_user);
+        messageText("Transfencia cancelada.");
+    }
+    else
+    {
+        errorText("No hay nada que cancelar.");
+    }
+    
+	return OK;
+}

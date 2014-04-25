@@ -166,8 +166,14 @@ int irc_recv_privmsg(void *data)
         parse_pcall(msgdata->clientdata, text, user);
     else if (!strncmp("$PACCEPT ", text, strlen("$PACCEPT ")))
         parse_paccept(msgdata->clientdata, text, user);
-    else if (!strncmp("$PCLOSE ", text, strlen("$PACCEPT ")))
+    else if (!strncmp("$PCLOSE ", text, strlen("$PCLOSE ")))
         parse_pclose(msgdata->clientdata, text, user);
+    else if (!strncmp("$FSEND ", text, strlen("$FSEND ")))
+        parse_fsend(msgdata->clientdata, text, user);
+    else if (!strncmp("$FACCEPT ", text, strlen("$FACCEPT ")))
+        parse_faccept(msgdata->clientdata, text, user);
+    else if (!strncmp("$FCANCEL ", text, strlen("$FCANCEL ")))
+        parse_fcancel(msgdata->clientdata, text, user);
     else
     {
         if (!strncmp(params[0], msgdata->clientdata->nick, MAX_NICK_LEN))
@@ -498,6 +504,12 @@ int irc_recv_nosuchnick(void *data)
         close(msgdata->clientdata->call_socket);
         signal(SIGALRM, SIG_IGN);
     }
+    else if (!strncmp(params[1], msgdata->clientdata->ftp_user, MAX_NICK_LEN) &&
+            msgdata->clientdata->ftp_con_data.status == ftp_requested)
+    {
+        errorText("No se puede realizar la transferencia: el usuario %s no existe.", params[1]);
+        irc_ftp_cancel(&msgdata->clientdata->ftp_con_data);
+    }
     else
     {
         errorText("El usuario %s no existe", params[1]);
@@ -506,45 +518,48 @@ int irc_recv_nosuchnick(void *data)
     return OK;
 }
 
-
-void ftp_cb (ftp_status status)
+void parse_fsend(struct irc_clientdata * cdata, char* text, char* source)
 {
-    return;
-}
+    char* fname = irc_next_param(text);
 
-
-void parse_fsend(struct irc_clientdata * con_data, char* text, char* source)
-{
-    if (con_data->ftp_con_data->status == ftp_started)
-        irc_response_create(con_data->serv_sock, "PRIVMSG %s :Límite de transferencia de archivos alcanzado.",source);
+    if (irc_ftp_recvsend(&cdata->ftp_con_data, fname) != OK)
+        irc_response_create(cdata->serv_sock, "PRIVMSG %s :Límite de transferencia de archivos alcanzado.",source);
     else
-        messageText("El usuario %s quiere transferirle un archivo. /faccept :\"ruta del fichero\" para aceptarlo, /fnoaccept para rechazarla",con_data->call_user);
-    
+    {
+        strncpy(cdata->ftp_user, source, MAX_NICK_LEN);
+        cdata->ftp_user[MAX_NICK_LEN] = '\0';
+        messageText("El usuario %s quiere transferirle un archivo. /faccept [ruta del fichero (opcional)] para aceptarlo, /fcancel para rechazarla", source);
+    }
+
     return;
 }
 
-
-
-void parse_faccpet(struct irc_clientdata * con_data, char* text, char* source)
+void parse_faccept(struct irc_clientdata * cdata, char* text, char* source)
 {
     char* params[2];
-    int port;
-    if (irc_parse_paramlist(text, params, 2) != 2)
+    char* msg = strdup(text);
+
+    params[0] = NULL;
+    params[1] = NULL;
+
+    if(irc_parse_paramlist(msg, params, 2) != 2)
     {
-        slog(LOG_WARNING, "Recibido faccept mal formado");
+        slog(LOG_WARNING, "Mensaje $FACCEPT mal formado.");
+        free(msg);
         return;
     }
-    pthread_t th_manager = 0;
 
-    if (ftp_wait_file(params[1], &port, ftp_cb, &th_manager) != OK)
-        errorText("No se ha podido completar la recepción del fichero");
+    if (irc_ftp_recvaccept(&cdata->ftp_con_data, params[0], params[1], ftp_uicallback) != OK)
+    {
+        errorText("Error al recibir la aceptación del usuario remoto.");
+        irc_ftp_cancel(&cdata->ftp_con_data);
+    }
 
+    free(msg);
 }
-void parse_fnoaccept(struct irc_clientdata * con_data, char* text, char* source)
+
+void parse_fcancel(struct irc_clientdata * cdata, char* text, char* source)
 {
-    irc_response_create(con_data->serv_sock, "PRIVMSG %s :No quiero recibir el fichero",source);
-}
-void parse_fcancel(struct irc_clientdata * con_data, char* text, char* source)
-{
-    
+    errorText("Transferencia cancelada.");
+    irc_ftp_cancel(&cdata->ftp_con_data);
 }

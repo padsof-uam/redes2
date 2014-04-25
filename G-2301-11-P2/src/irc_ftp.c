@@ -227,3 +227,94 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 	return OK;
 }
 
+static int _can_open_file(const char* file, const char* mode)
+{
+	FILE* f = fopen(file, mode);
+
+	if(!f) return 0;
+	fclose(f);
+	return 1;
+}
+
+int irc_ftp_reqsend(struct ftp_connection* conn, const char* file)
+{
+	if(conn->status != ftp_finished)
+		return ERR;
+
+	if(!_can_open_file(file, "r"))
+		return ERR_NOTFOUND;
+
+	strncpy(conn->file_to_send, file, MAX_FTP_PATH);
+	conn->status = ftp_requested;
+
+	return OK;
+}
+
+int irc_ftp_accept(struct ftp_connection* conn, const char* file, int* port, ftp_callback cb)
+{
+	if(conn->status != ftp_recv_req)
+		return ERR;
+
+	if(!file)
+		file = conn->file_to_send;
+
+	if(!_can_open_file(file, "w"))
+		return ERR_NOTFOUND;
+
+	if(ftp_wait_file(file, port, cb, &conn->th_manager) != OK)
+		return ERR;
+
+	return OK;
+}
+
+int irc_ftp_recvaccept(struct ftp_connection* conn, const char* ip, const char* port, ftp_callback cb)
+{
+	int port_n;
+	uint32_t ip_n;
+
+	if(conn->status != ftp_requested)
+		return ERR;
+
+	ip_n = strtol(ip, NULL, 10);
+
+    if (ip_n == 0)
+    {
+        slog(LOG_ERR, "IP inválido: %s", ip);
+        return ERR;
+    }
+
+    port_n = strtol(port, NULL, 10);
+
+    if (port_n == 0)
+    {
+        slog(LOG_ERR, "Puerto inválido: %s", port);
+        return ERR;
+    }	
+
+    if(ftp_send_file(conn->file_to_send, ip_n, port_n, cb, &conn->th_manager) != OK)
+    	return ERR;
+
+    return OK;
+}
+
+int irc_ftp_recvsend(struct ftp_connection* conn, const char* file)
+{
+	if(conn->status != ftp_finished)
+		return ERR;
+
+	strncpy(conn->file_to_send, file, MAX_FTP_PATH);
+	conn->status = ftp_recv_req;
+
+	return OK;
+}
+
+int irc_ftp_cancel(struct ftp_connection* conn)
+{
+	if(conn->status == ftp_finished)
+		return ERR;
+
+	conn->status = ftp_finished;
+
+	pthread_cancel(conn->th_manager);
+	return OK;
+}

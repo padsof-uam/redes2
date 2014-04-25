@@ -89,6 +89,22 @@ extern struct irc_globdata *ircdata;
 extern int serv_sock;
 extern struct irc_clientdata *client;
 
+void ftp_uicallback(ftp_status status)
+{
+    client->ftp_con_data.status = status;
+
+    if(status == ftp_aborted)
+        errorText("Transferencia abortada");
+    else if(status == ftp_finished)
+        messageText("Transferencia finalizada con éxito");
+    else if(status == ftp_timeout)
+        errorText("El usuario remoto no ha respondido a tiempo.");
+    else if (status == ftp_started)
+        messageText("Transferencia iniciada.");
+    else 
+        errorText("Error desconocido");
+}
+
 /*******************************************************************************
 *  Lee los valores de inicio del chat y los devuelven del tipo que corresponda *
 *******************************************************************************/

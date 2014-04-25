@@ -10,6 +10,7 @@
 #define GUI_CLIENT_H
 
 #include <glib.h>
+#include "irc_ftp.h"
 
 #ifndef FALSE
 	#define FALSE	0
@@ -25,6 +26,8 @@ void errorWindow(char *msg);
 
 /* Pregunta al usuario. */
 int promptWindow(const char* msg);
+
+void ftp_uicallback(ftp_status status);
 
 /* Interfaz de impresión de textos */
 void publicText(const char *username, const char *text);

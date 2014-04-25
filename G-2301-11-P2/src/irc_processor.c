@@ -281,7 +281,7 @@ struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, i
 
 struct sockcomm_data *irc_response_vcreate(int fd, const char *fmt_string, va_list ap)
 {
-    struct sockcomm_data *msg = malloc(sizeof(struct sockcomm_data));
+    struct sockcomm_data *msg = calloc(1, sizeof(struct sockcomm_data));
 
     msg->fd = fd;
     msg->len = vsnprintf(msg->data, MAX_IRC_MSG - 2, fmt_string, ap);

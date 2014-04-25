@@ -69,7 +69,7 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	struct sockaddr_in dst_addr;
  	int sock,retval;
 
- 	init_all_ssl_default();
+ 	init_all_ssl_default_verify();
 
  	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
  	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
@@ -117,7 +117,7 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	int * port = malloc(sizeof(int));
  	char ch1,ch2;
 
- 	init_all_ssl_default();
+ 	init_all_ssl_default_verify();
 
  	tosend = fopen(TOSEND_FILE,"w");
  	if (tosend == NULL)
@@ -173,7 +173,7 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	struct sockaddr_in dst_addr;
  	int sock,retval;
 
- 	init_all_ssl_default();
+ 	init_all_ssl_default_verify();
 
  	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
  	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");

@@ -81,7 +81,12 @@ int main(int argc, char const *argv[])
     int instances_running = -1;
     char lock_file[100];
 
-    init_all_ssl_default();
+    if(init_all_ssl_default_verify() != OK)
+    {
+        slog_sslerr();
+        slog(LOG_CRIT, "No se han podido cargar los certificados SSL.");
+        return EXIT_FAILURE;
+    }
 
     install_stop_handlers();
 

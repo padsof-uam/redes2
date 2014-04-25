@@ -247,3 +247,9 @@ int init_all_ssl_default()
 {
     return init_all_ssl(CA_PATH, CA_KEY, 0);
 }
+
+
+int init_all_ssl_default_verify()
+{
+    return init_all_ssl(CA_PATH, CA_KEY, 1);
+}

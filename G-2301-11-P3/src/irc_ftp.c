@@ -23,15 +23,15 @@ void * thread_wait_file(void * ftpdata){
 	pthread_cleanup_push(free, data);
 
 	int sock = server_listen_connect(data->sock);
-
-	sock_set_block(sock, 1);
 	
-	if(sock == -1)
+	if(sock < 0)
 	{
 		slog(LOG_ERR, "Error aceptando conexión.");
 		data->cb(ftp_aborted);
 		return NULL;
 	}
+
+	sock_set_block(sock, 1);
 
 	slog(LOG_DEBUG, "Conexión ftp aceptada");
 	

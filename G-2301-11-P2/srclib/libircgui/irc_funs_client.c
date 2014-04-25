@@ -61,7 +61,6 @@ int irc_ignore(void* data)
     return OK;
 }
 
-
 int irc_recv_end_motd(void* data)
 {
     struct irc_msgdata *msgdata = (struct irc_msgdata *) data;

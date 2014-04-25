@@ -162,6 +162,23 @@ void errorWindow(char *msg)
     gtk_widget_destroy (pError);
 }
 
+int promptWindow(const char* msg)
+{
+    GtkWidget *diag;
+    gint retval;
+
+    diag = gtk_message_dialog_new (GTK_WINDOW(window), 
+                                     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                     GTK_MESSAGE_QUESTION,
+                                     GTK_BUTTONS_YES_NO,
+                                    "%s", msg);
+
+    retval = gtk_dialog_run(GTK_DIALOG(diag));
+    gtk_widget_destroy(diag);
+
+    return retval == GTK_RESPONSE_YES;
+}
+
 /*******************************************************************************
 *  Funciones de uso interno                                                    *
 *******************************************************************************/

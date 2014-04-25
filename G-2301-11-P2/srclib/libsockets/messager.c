@@ -12,18 +12,26 @@
 
 int sock_data_available(int socket)
 {
+    return sock_wait_data(socket, 1);
+}
+
+int sock_wait_data(int socket, int ms_timeout)
+{
     fd_set set;
     struct timeval timeout;
 
     FD_ZERO(&set);
     FD_SET(socket, &set);
 
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 1000;
+    timeout.tv_sec = (ms_timeout / 1000);
+    timeout.tv_usec = 1000 * (ms_timeout % 1000);
     /* Esperamos 1 ms para permitir al otro lado de la conexión
         enviar datos si tenía su buffer lleno. Importante para tests. */
 
-    return select(socket + 1, &set, NULL, NULL, &timeout);
+    if (ms_timeout == -1)
+        return select(socket + 1, &set, NULL, NULL, NULL);
+    else
+        return select(socket + 1, &set, NULL, NULL, &timeout);
 }
 
 int send_message(int socket, const void *msg, ssize_t len)

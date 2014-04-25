@@ -27,6 +27,7 @@ const char* _ui_commands[] =
 	"pclose",
 	"quit",
 	"ban",
+	"exit",
 	"*"
 };
 
@@ -41,6 +42,7 @@ cmd_action _ui_actions[] =
 	irc_pclose,
 	irc_ui_quit,
 	irc_ui_ban,
+	irc_ui_exit,
 	irc_server_forward
 };
 
@@ -323,6 +325,14 @@ int irc_ui_ban(void* data)
 
 	irc_send_to_server(msgdata, "MODE %s +b %s", params[0], params[1]);
 	free(msg_dup);
+
+	return OK;
+}
+
+int irc_ui_exit(void* data)
+{
+	if(promptWindow("¿Deseas cerrar el programa?"))
+		raise(SIGTERM);
 
 	return OK;
 }

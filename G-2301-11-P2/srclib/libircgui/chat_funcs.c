@@ -180,9 +180,11 @@ void moderated(gboolean state)
     _send_flag('m', state);
 }
 
-static short _is_server_message(const char* msg)
+#define streq(stat, str) (strncmp(stat, str, strlen(stat) < strlen(msg) ? strlen(stat) + 1 : strlen(msg) + 1) == 0)
+
+static short _can_process_without_connection(const char* msg)
 {
-    return strncmp("/server", msg, strlen("/server")) == 0;
+    return streq("/server", msg) || streq("/exit", msg);
 }
 
 void newText (const char *msg)
@@ -197,7 +199,7 @@ void newText (const char *msg)
 
     slog(LOG_DEBUG, "Recibido el mensaje \"%s\" desde interfaz para ser procesado", msg);
 
-    if(!client->connected && !_is_server_message(msg))
+    if(!client->connected && !_can_process_without_connection(msg))
     {
         errorText("No estás conectado a ningún servidor.");
         return;

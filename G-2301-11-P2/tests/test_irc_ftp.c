@@ -3,6 +3,7 @@
 #include "irc_ftp.h"
 #include "errors.h"
 #include "messager.h"
+#include "ssltrans.h"
 
 #include <pthread.h>
 #include <string.h>
@@ -68,6 +69,8 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	struct sockaddr_in dst_addr;
  	int sock,retval;
 
+ 	init_all_ssl_default();
+
  	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
  	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
 
@@ -77,9 +80,9 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	dst_addr.sin_port = *port;
  	dst_addr.sin_family = PF_INET;
 
- 	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+ 	sock = dsocket(PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
 
- 	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+ 	if (dconnect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
  	{
  		mu_fail("Error conectando");
  		return ERR_SOCK;
@@ -98,13 +101,14 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	pthread_mutex_unlock(&stop_mutex);
 
  	mu_assert_eq(glob_status_rcv, ftp_timeout, "Condición de recepción ha fallado");
+ 	
+ 	cleanup_all_ssl();
  	mu_end;
  }
 
  int t_irc_ftp__transfer_big_file__ok() {
  	glob_status_snd = ftp_started;
  	glob_status_rcv = ftp_started;
-
  	int len = 3*MAX_LEN_FTP+6,retval;
  	char * payload_snd = _rand_data(len);	
  	FILE * tosend, *torcv;
@@ -113,6 +117,7 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	int * port = malloc(sizeof(int));
  	char ch1,ch2;
 
+ 	init_all_ssl_default();
 
  	tosend = fopen(TOSEND_FILE,"w");
  	if (tosend == NULL)
@@ -155,6 +160,8 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
 
  	mu_assert_eq(ch1, ch2, "Los contenidos de los ficheros no son iguales");
 
+ 	cleanup_all_ssl();
+
  	mu_end;
  }
 
@@ -166,6 +173,8 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	struct sockaddr_in dst_addr;
  	int sock,retval;
 
+ 	init_all_ssl_default();
+
  	retval = ftp_wait_file(TORCV_FILE, port, ftp_glob_change_rcv, &recv_ftp_th);
  	mu_assert_eq(retval, OK, "Fallando la preparación para recepción ftp");
 
@@ -175,9 +184,9 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	dst_addr.sin_port = *port;
  	dst_addr.sin_family = PF_INET;
 
- 	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+ 	sock = dsocket(PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
 
- 	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+ 	if (dconnect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
  	{
  		mu_fail("Error conectando");
  		return ERR_SOCK;
@@ -192,6 +201,8 @@ pthread_cond_t stop_cond = PTHREAD_COND_INITIALIZER;
  	pthread_mutex_unlock(&stop_mutex);
 
  	mu_assert_eq(glob_status_rcv, ftp_timeout, "Condición de recepción ha fallado");
+
+ 	cleanup_all_ssl();
 
  	mu_end;
  }

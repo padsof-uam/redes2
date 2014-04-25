@@ -121,42 +121,6 @@ int server_listen_connect(int handler)
 
 }
 
-int server_open_socket_block(int port, int max_long)
-{
-    int handler = _server_open_socket(0);
-    if (handler == ERR_SOCK)
-    {
-        slog(LOG_ERR, "Error al abrir el socket");
-        return ERR_SOCK;
-    }
-
-    if(_link_socket_port(port, handler) != OK)
-        return ERR_SOCK;
-
-    if ( _set_queue_socket(handler, max_long) != OK)
-        return ERR_SOCK;
-
-    return handler;
-}
-
-int server_listen_connect_block(int handler)
-{
-    struct sockaddr peer_addr;
-    socklen_t peer_len = sizeof(peer_addr);
-    int handler_accepted;
-
-    handler_accepted = accept(handler, &peer_addr, &peer_len);
-
-    if (handler_accepted == -1)
-    {
-        slog(LOG_ERR, "Error aceptando conexiones : %s", strerror(errno));
-        return ERR_SOCK;
-    }
-
-    return handler_accepted;
-
-}
-
 int server_close_communication(int handler)
 {
     return _server_close_socket(handler);

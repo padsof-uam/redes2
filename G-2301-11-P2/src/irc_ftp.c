@@ -4,6 +4,7 @@
 #include "sockutils.h"
 #include "sysutils.h"
 #include "types.h"
+#include "ssltrans.h"
 
 #include <errno.h>
 #include <errors.h>
@@ -22,18 +23,25 @@ void * thread_wait_file(void * ftpdata){
 	pthread_cleanup_push(free, buffer);
 	pthread_cleanup_push(free, data);
 
-	int sock = server_listen_connect_block(data->sock);
+	int sock = server_listen_connect(data->sock);
+
+	if(sock == -1)
+	{
+		slog(LOG_ERR, "Error aceptando conexión.");
+		data->cb(ftp_aborted);
+		return NULL;
+	}
 
 	slog(LOG_DEBUG, "Conexión ftp aceptada");
 	
-	data->cb(ftp_started);
-	
+	data->cb(ftp_started);	
 
-	if (!sock_wait_data(sock,FTP_TIMEOUT_MS))
+	if (!sock_wait_data(sock, FTP_TIMEOUT_MS))
 	{
 		data->cb(ftp_timeout);
 		return NULL;
 	}
+
 	if(rcv_message_staticbuf(sock, size,sizeof(long)) < 0)
 	{
 		slog(LOG_ERR, "Error recibiendo el primer mensaje de recepción ftp.");
@@ -98,13 +106,15 @@ int ftp_wait_file(const char* dest, int* port, ftp_callback cb, pthread_t * recv
 	th_data->f = f;
 	th_data->cb = cb;
 
-	sock = server_open_socket_block(0,MAX_LEN_FTP);
+	sock = server_open_socket(0, MAX_LEN_FTP, 1);
 
 	if (sock < 0)
 	{
 		slog(LOG_ERR,"Error abriendo socket tcp para ftp");
 		return ERR_SOCK;
 	}
+
+	sock_set_block(sock, 1);
 
 	th_data->sock = sock;
 
@@ -184,7 +194,7 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 	dst_addr.sin_port = port;
 	dst_addr.sin_family = PF_INET;
 
-	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	sock = dsocket(PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
 
 	if (sock == ERR_SOCK)
 	{
@@ -192,7 +202,7 @@ int ftp_send_file(const char* file, uint32_t ip, int port, ftp_callback cb,	pthr
 		return ERR_SOCK;
 	}
 
-	if (connect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
+	if (dconnect(sock, (struct sockaddr *)&dst_addr, sizeof dst_addr) == -1)
 	{
 		slog(LOG_CRIT, "Error asociando socket al otro extremo de la conexión: %s", strerror(errno));
 		return ERR_SOCK;

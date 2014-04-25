@@ -106,7 +106,7 @@ char *irc_errstr (int errcode);
 
 /**
  * Crea los mensajes de bienvenida especificados en el RFC para un usuario.
- * @notes Esta función no modifica la estructura de usuario.
+ * Esta función no modifica la estructura de usuario.
  * @param  user     Usuario.
  * @param  msgqueue Lista donde se introducirán los mensajes.
  * @return          Código de retorno.

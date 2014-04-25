@@ -495,6 +495,5 @@ int call_stop(struct cm_info *cm)
 
 uint32_t generate_ssrc()
 {
-    /* Podemos implementar lo que pone en el RFC, o hacer esta chapuza. */
     return rand();
 }

@@ -89,7 +89,8 @@ int t_voicecall__20_sec_transmission__works()
     struct timespec ts;
 
     // Tarda mucho, no se controla bien la pérdida de paquetes UDP.
-
+    mu_ignore;
+    
     _set_use_mocks(1);
 
     _set_play_cb(_mock_receive_buffer);

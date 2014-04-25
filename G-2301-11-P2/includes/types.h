@@ -78,6 +78,18 @@ struct ircuser {
 	list* channels; /**<Lista de punteros a estructuras de los canales a los que pertenece.>*/
 };
 
+typedef enum {
+	ftp_finished, ftp_aborted, ftp_timeout, ftp_started
+} ftp_status;
+
+struct ftp_connection
+{
+	ftp_status status;
+	pthread_t * th_manager;
+	pthread_mutex_t stop_mutex;
+	pthread_cond_t stop_cond;
+};
+
 struct irc_clientdata {
 	short connected;
 	char chan[MAX_CHAN_LEN + 1];
@@ -92,6 +104,7 @@ struct irc_clientdata {
 	struct cm_info call_info;
 	char call_user[MAX_NICK_LEN + 1];
 	uint32_t client_ip;
+	struct ftp_connection * ftp_con_data;
 };
 
 /**

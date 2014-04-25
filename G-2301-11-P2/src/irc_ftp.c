@@ -3,6 +3,7 @@
 #include "messager.h"
 #include "sockutils.h"
 #include "sysutils.h"
+#include "types.h"
 
 #include <errno.h>
 #include <errors.h>

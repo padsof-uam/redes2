@@ -4,6 +4,7 @@
 #include "log.h"
 #include "gui_client.h"
 #include "sockutils.h"
+#include "irc_ftp.h"
 
 #include <string.h>
 #include <arpa/inet.h>
@@ -490,4 +491,47 @@ int irc_recv_nosuchnick(void* data)
     }
 
     return OK;
+}
+
+
+void ftp_cb (ftp_status status)
+{
+    return;
+}
+
+
+void parse_fsend(struct irc_clientdata * con_data, char* text, char* source)
+{
+    if (con_data->ftp_con_data->status == ftp_started)
+        irc_response_create(con_data->serv_sock, "PRIVMSG %s :Límite de transferencia de archivos alcanzado.",source);
+    else
+        messageText("El usuario %s quiere transferirle un archivo. /faccept :\"ruta del fichero\" para aceptarlo, /fnoaccept para rechazarla",con_data->call_user);
+    
+    return;
+}
+
+
+
+void parse_faccpet(struct irc_clientdata * con_data, char* text, char* source)
+{
+    char* params[2];
+    int port;
+    if (irc_parse_paramlist(text, params, 2) != 2)
+    {
+        slog(LOG_WARNING, "Recibido faccept mal formado");
+        return;
+    }
+    pthread_t th_manager = 0;
+
+    if (ftp_wait_file(params[1], &port, ftp_cb, &th_manager) != OK)
+        errorText("No se ha podido completar la recepción del fichero");
+
+}
+void parse_fnoaccept(struct irc_clientdata * con_data, char* text, char* source)
+{
+    irc_response_create(con_data->serv_sock, "PRIVMSG %s :No quiero recibir el fichero",source);
+}
+void parse_fcancel(struct irc_clientdata * con_data, char* text, char* source)
+{
+    
 }

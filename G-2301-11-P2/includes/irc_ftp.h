@@ -5,14 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "types.h"
 /**
 * Longitud máxima de los tamaños ftp.
 */
 #define MAX_LEN_FTP 10240
 #define FTP_TIMEOUT_MS 700
-typedef enum {
-	ftp_finished, ftp_aborted, ftp_timeout, ftp_started
-} ftp_status;
 
 typedef void (*ftp_callback)(ftp_status);
 
@@ -22,7 +20,8 @@ struct th_ftpdata
 	int sock;
 	ftp_callback cb;
 	int size;
-} ;
+	struct ftp_connection * data;
+};
 
 
 /**

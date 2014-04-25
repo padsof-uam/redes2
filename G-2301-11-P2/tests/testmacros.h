@@ -52,3 +52,21 @@
 
 #define mu_cleanup_fail(label, message) do { mu_perror(message); retval = MU_ERR; goto label; } while(0)
 #define mu_cleanup_sysfail(label, message) do { mu_psyserror(message); retval = MU_ERR; goto label; } while(0)
+
+#define mu_cleanup_assert(label, message, test) do { \
+	if (!(test)) { \
+			mu_cleanup_fail(label, message); \
+		} \
+	} while (0)
+
+#define mu_cleanup_assert_eq(label, actual, expected, message) do { \
+	char _meqstr[200]; \
+	sprintf(_meqstr, "%s: expected %d, got %d.", message, expected, actual); \
+	mu_cleanup_assert(label, _meqstr, (expected) == (actual)); \
+} while(0)
+
+#define mu_cleanup_assert_streq(label, actual, expected, message) do { \
+	char _meqstr[200]; \
+	sprintf(_meqstr, "%s: expected %s, got %s.", message, expected, actual); \
+	mu_cleanup_assert(label, _meqstr, strcmp((expected), (actual)) == 0); \
+} while(0)

@@ -74,6 +74,7 @@ GtkWidget *eApodo, *eNombre, *eNombreR, *eServidor, *ePuerto;
 GtkTextIter iter;
 GtkTextBuffer *buffer;
 GtkWidget *topicB, *externB, *secretB, *guestB, *privateB, *moderatedB;
+GtkToggleButton *sslB;
 GtkWidget *btnConnect, *btnDisconnect, *tbInput;
 short btnChangeTriggered = FALSE;
 
@@ -193,6 +194,11 @@ int promptWindow(const char* msg)
     gtk_widget_destroy(diag);
 
     return retval == GTK_RESPONSE_YES;
+}
+
+gboolean getUseSSL()
+{
+    return gtk_toggle_button_get_active(sslB);
 }
 
 /*******************************************************************************
@@ -317,6 +323,10 @@ void setPrivate(gboolean state, gboolean enabled)
 void setModerated(gboolean state, gboolean enabled)
 {
     _set_btn_state(GTK_TOGGLE_BUTTON(moderatedB), state, enabled);
+}
+void setSSL(gboolean state, gboolean enabled)
+{
+    _set_btn_state(GTK_TOGGLE_BUTTON(sslB), state, enabled);
 }
 
 /*******************************************************************************
@@ -490,13 +500,13 @@ void scrolling(GtkWidget *widget, gpointer data)
 void ConnectArea(GtkWidget *vbox)
 {
     GtkWidget *table;
-    GtkWidget *hb1, *hb2, *hb3, *hb4, *hb5, *hb6;
+    GtkWidget *hb1, *hb2, *hb3, *hb4, *hb5, *hb6, *hb7;
     GtkWidget *l1, *l2, *l3, *l4, *l5;
     GtkWidget *frm;
 
     frm = gtk_frame_new("Conexión");
     gtk_box_pack_start(GTK_BOX(vbox), frm, FALSE, FALSE, 2);
-    table = gtk_table_new(1, 6, FALSE);
+    table = gtk_table_new(1, 7, FALSE);
     gtk_container_add(GTK_CONTAINER(frm), table);
 
     hb1 = gtk_hbox_new(FALSE, 2);
@@ -505,17 +515,20 @@ void ConnectArea(GtkWidget *vbox)
     hb4 = gtk_hbox_new(FALSE, 2);
     hb5 = gtk_hbox_new(FALSE, 2);
     hb6 = gtk_hbox_new(FALSE, 2);
+    hb7 = gtk_hbox_new(FALSE, 2);
     gtk_table_attach(GTK_TABLE(table), hb1, 0, 1, 0, 1, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     gtk_table_attach(GTK_TABLE(table), hb2, 0, 1, 1, 2, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     gtk_table_attach(GTK_TABLE(table), hb3, 0, 1, 2, 3, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     gtk_table_attach(GTK_TABLE(table), hb4, 0, 1, 3, 4, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     gtk_table_attach(GTK_TABLE(table), hb5, 0, 1, 4, 5, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     gtk_table_attach(GTK_TABLE(table), hb6, 0, 1, 5, 6, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
+    gtk_table_attach(GTK_TABLE(table), hb7, 0, 1, 6, 7, GTK_FILL | GTK_SHRINK, GTK_SHRINK, 2, 2);
     l1 = gtk_label_new("Apodo");
     l2 = gtk_label_new("Nombre");
     l3 = gtk_label_new("Nombre real");
     l4 = gtk_label_new("Servidor");
     l5 = gtk_label_new("Puerto");
+
     eApodo    = gtk_entry_new();
     eNombre   = gtk_entry_new();
     eNombreR  = gtk_entry_new();
@@ -523,6 +536,7 @@ void ConnectArea(GtkWidget *vbox)
     ePuerto   = gtk_entry_new();
     btnConnect = gtk_button_new_with_mnemonic("_Conectar");
     btnDisconnect = gtk_button_new_with_mnemonic("_Desconectar");
+    sslB    = (GtkToggleButton*) gtk_check_button_new_with_mnemonic("Conexión _segura");
 
     gtk_box_pack_start(GTK_BOX(hb1), l1 , FALSE, FALSE, 2);
     gtk_box_pack_start(GTK_BOX(hb2), l2 , FALSE, FALSE, 2);
@@ -530,6 +544,7 @@ void ConnectArea(GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(hb4), l4 , FALSE, FALSE, 2);
     gtk_box_pack_start(GTK_BOX(hb5), l5 , FALSE, FALSE, 2);
     gtk_box_pack_start(GTK_BOX(hb6), btnConnect, TRUE , TRUE , 2);
+    gtk_box_pack_start(GTK_BOX(hb7), GTK_WIDGET(sslB), TRUE , TRUE , 2);
 
     gtk_box_pack_end(GTK_BOX(hb1), eApodo   , FALSE, FALSE, 2);
     gtk_box_pack_end(GTK_BOX(hb2), eNombre  , FALSE, FALSE, 2);

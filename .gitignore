@@ -8,6 +8,8 @@ latex
 html
 *.dat
 .redirc*
+cert
+
 # LaTeX
 *.acn
 *.acr

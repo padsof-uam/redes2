@@ -6,7 +6,9 @@
  * @param  log_id Nombre del log.
  * @return        OK/ERR
  */
-int daemonize(const char* log_id);
+int daemonize();
+
+void open_syslog(const char* id);
 
 /**
  * @internal

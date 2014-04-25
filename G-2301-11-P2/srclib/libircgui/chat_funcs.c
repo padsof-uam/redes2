@@ -59,6 +59,13 @@ void connectToServer(const char *server, const char* port)
     char addr_str[100];
     int retval;
     struct serv_info serv;
+    short use_ssl = 0;
+
+    if(getUseSSL())
+    {
+        slog(LOG_DEBUG, "Conectando con SSL");
+        use_ssl = 1;
+    }
 
     if (!server || strlen(server) == 0)
     {
@@ -83,7 +90,7 @@ void connectToServer(const char *server, const char* port)
 
     messageText("Conectando con %s...", server);
 
-    retval = client_connect_to(server, port, addr_str, 100);
+    retval = client_connect_to(server, port, addr_str, 100, use_ssl);
 
     if (retval == ERR_SYS)
         err = strerror(errno);

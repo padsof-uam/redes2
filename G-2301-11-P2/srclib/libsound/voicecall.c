@@ -8,6 +8,7 @@
 #include "sockutils.h"
 #include "irc_processor.h"
 #include "gui_client.h"
+#include "ssltrans.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>

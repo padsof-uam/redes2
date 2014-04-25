@@ -17,9 +17,11 @@
  */
 struct listener_thdata {
 	int port; /**< Puerto de escucha */
+	int ssl_port;
 	int commsocket; /**< Socket de comunicaciones con el hilo principal. */
 	int listen_sock; /**< Socket de escucha. Se guarda en la 
 						estructura para poder hacer la limpieza con pthread_cleanup */
+	int listen_sock_ssl;
 };
 
 /**
@@ -30,7 +32,7 @@ struct listener_thdata {
  * @param  commsocket  Socket de comunicaciones con el hilo principal. 
  * @return             OK/ERR.
  */
-int spawn_listener_thread(pthread_t* pth, int port, int commsocket);
+int spawn_listener_thread(pthread_t* pth, int port, int ssl_port, int commsocket);
 
 /**
  * Función que se encarga de escuchar las conexiones entrandes.

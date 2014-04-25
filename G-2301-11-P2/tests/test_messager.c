@@ -2,6 +2,9 @@
 #include "test_messager.h"
 #include "messager.h"
 #include "testmacros.h"
+#include "sockutils.h"
+#include "ssltrans.h"
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -16,12 +19,24 @@
 #include <sys/un.h>
 #include <pthread.h>
 
-struct th_data 
+struct th_data
 {
-    const void* data;
+    const void *data;
     int size;
     int socket;
 };
+
+static int _get_sockpair(short use_ssl, int sockets[2])
+{
+    int retval;
+
+    if (!use_ssl)
+        retval = socketpair(PF_LOCAL, SOCK_STREAM, 0, sockets);
+    else
+        retval = ssl_socketpair(PF_INET, SOCK_STREAM, 0, sockets);
+
+    return retval;
+}
 
 static char *_rand_data(size_t len)
 {
@@ -29,13 +44,13 @@ static char *_rand_data(size_t len)
     char *buffer = malloc(len * sizeof(char));
     srand(clock());
 
-    for(i = 0; i < len; i++)
+    for (i = 0; i < len; i++)
         buffer[i] = rand();
 
     return buffer;
 }
 
-static int _test_msgsize_send(int size)
+static int _test_msgsize_send(int size, short use_ssl)
 {
     char *data = _rand_data(size);
     char *rcvbuf = malloc(size * sizeof(char));
@@ -45,7 +60,7 @@ static int _test_msgsize_send(int size)
     int i;
     int retval = MU_PASSED;
 
-    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sockets) == -1)
+    if (_get_sockpair(use_ssl, sockets) == -1)
     {
         mu_cleanup_sysfail(nosock_cleanup, "socketpair");
     }
@@ -53,22 +68,27 @@ static int _test_msgsize_send(int size)
     r_sck = sockets[0];
     s_sck = sockets[1];
 
-    if (send_message(s_sck, data, size) < 0)
+    if (send_message(s_sck, data, size) != OK)
     {
+        ERR_print_errors_fp(stderr);
         mu_cleanup_sysfail(cleanup, "send_message");
     }
 
     if (!sock_data_available(r_sck))
     {
+        ERR_print_errors_fp(stderr);
         mu_cleanup_fail(cleanup, "No data available.");
     }
 
-    rcv_data = recv(r_sck, rcvbuf, size, 0);
+    rcv_data = rcv_message_staticbuf(r_sck, rcvbuf, size);
 
-    if (rcv_data != size)
+    if(rcv_data <= 0)
     {
-        mu_cleanup_fail(cleanup, "didn't receive all data");
+        perror("rcv");
+        ERR_print_errors_fp(stderr);
     }
+
+    mu_cleanup_assert_eq(cleanup, rcv_data, size, "didn't receive all data");
 
     for (i = 0; i < size; i++)
     {
@@ -88,16 +108,16 @@ nosock_cleanup:
     return retval;
 }
 
-static void* _send_msg(void* data)
-{  
-    struct th_data* tdata = (struct th_data*)data;
+static void *_send_msg(void *data)
+{
+    struct th_data *tdata = (struct th_data *)data;
     if (send_message(tdata->socket, tdata->data, tdata->size) < 0)
         return NULL;
     else
-        return (void*) 1;
+        return (void *) 1;
 }
 
-static int _test_msgsize_send_async(int size)
+static int _test_msgsize_send_async(int size, short use_ssl)
 {
     char *data = _rand_data(size);
     char *rcvbuf = malloc(size * sizeof(char));
@@ -109,7 +129,7 @@ static int _test_msgsize_send_async(int size)
     pthread_t send_t;
     struct th_data tdata;
 
-    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sockets) == -1)
+    if (_get_sockpair(use_ssl, sockets) == -1)
     {
         mu_cleanup_sysfail(nosock_cleanup, "socketpair");
     }
@@ -119,28 +139,30 @@ static int _test_msgsize_send_async(int size)
 
     tdata.data = data;
     tdata.size = size;
-    tdata.socket = s_sck;   
+    tdata.socket = s_sck;
 
-    if(pthread_create(&send_t, NULL, _send_msg, &tdata) < 0)
+    if (pthread_create(&send_t, NULL, _send_msg, &tdata) < 0)
     {
         mu_cleanup_sysfail(cleanup, "pthread_create");
     }
-
-    pthread_detach(send_t);
 
     usleep(200); /* Chapuza. */
 
     if (!sock_data_available(r_sck))
     {
+        ERR_print_errors_fp(stderr);
         mu_cleanup_fail(cleanup, "No data available.");
     }
 
-    rcv_data = rcv_message(r_sck, (void**)(&rcvbuf));
+    rcv_data = rcv_message(r_sck, (void **)(&rcvbuf));
 
-    if (rcv_data != size)
+    if(rcv_data <= 0)
     {
-        mu_cleanup_fail(cleanup, "didn't receive all data");
+        perror("rcv");
+        ERR_print_errors_fp(stderr);
     }
+
+    mu_cleanup_assert_eq(cleanup, rcv_data, size, "didn't receive all data");
 
     for (i = 0; i < size; i++)
     {
@@ -161,36 +183,86 @@ nosock_cleanup:
 }
 
 /* BEGIN TESTS */
-int t_rcv_message__bigmsg__received() 
+int t_rcv_message__bigmsg__received()
 {
     int retval;
-    retval = _test_msgsize_send_async(65000);
+    retval = _test_msgsize_send_async(65000, 0);
 
-    if(retval == MU_ERR)
-        printf("Error on %s\n", __FUNCTION__);
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
 
-    return retval;
+    mu_end;
 }
-int t_rcv_message__normalmsg__received() 
+int t_rcv_message__normalmsg__received()
 {
     int retval;
-    retval = _test_msgsize_send_async(512);
+    retval = _test_msgsize_send_async(512, 0);
 
-    if(retval == MU_ERR)
-        printf("Error on %s\n", __FUNCTION__);
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
 
-    return retval;
+    mu_end;
 }
 int t_send_message__big_message__sent()
 {
     /* No podemos hacerlo muy grande que si no hay que esperar
          a que el otro extremo lea y es un lío enorme para probarlo. */
-    return _test_msgsize_send(5000);
+    int retval = _test_msgsize_send(5000, 0);
+
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
+    mu_end;
 }
 
 int t_send_message__normal_len__message_sent()
 {
-    return _test_msgsize_send(512);
+    int retval = _test_msgsize_send(512, 0);
+
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
+    mu_end;
+}
+
+int t_rcv_message__bigmsg_ssl__received()
+{
+    int retval;
+    init_all_ssl_default();
+    retval = _test_msgsize_send_async(65000, 1);
+
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
+
+    cleanup_all_ssl();
+    mu_end;
+}
+int t_rcv_message__normalmsg_ssl__received()
+{
+    int retval;
+    init_all_ssl_default();
+    retval = _test_msgsize_send_async(512, 1);
+
+    mu_assert_eq(retval, MU_PASSED, "operation failed");
+
+    cleanup_all_ssl();
+    mu_end;
+}
+int t_send_message__big_message_ssl__sent()
+{
+    /* No podemos hacerlo muy grande que si no hay que esperar
+         a que el otro extremo lea y es un lío enorme para probarlo. */
+    int retval;
+
+    init_all_ssl_default();
+    retval = _test_msgsize_send(5000, 1);
+    cleanup_all_ssl();
+
+    mu_end;
+}
+
+int t_send_message__normal_len_ssl__message_sent()
+{
+    int retval;
+
+    init_all_ssl_default();
+    retval = _test_msgsize_send(512, 1);
+    cleanup_all_ssl();
+
+    mu_end;
 }
 
 int t_send_message__negative_len__returns_err()
@@ -214,14 +286,18 @@ int test_messager_suite(int *errors, int *success)
 
     printf("Begin test_messager suite.\n");
     /* BEGIN TEST EXEC */
-	mu_run_test(t_rcv_message__bigmsg__received);
-	mu_run_test(t_rcv_message__normalmsg__received);
+    mu_run_test(t_rcv_message__bigmsg__received);
+    mu_run_test(t_rcv_message__normalmsg__received);
     mu_run_test(t_send_message__big_message__sent);
     mu_run_test(t_send_message__normal_len__message_sent);
+    mu_run_test(t_rcv_message__bigmsg_ssl__received);
+    mu_run_test(t_rcv_message__normalmsg_ssl__received);
+    mu_run_test(t_send_message__big_message_ssl__sent);
+    mu_run_test(t_send_message__normal_len_ssl__message_sent);
     mu_run_test(t_send_message__msg_is_null__returns_err);
 
     /* END TEST EXEC */
-    if(tests_passed == tests_run)
+    if (tests_passed == tests_run)
         printf("End test_messager suite. " TGREEN "%d/%d\n\n" TRESET, tests_passed, tests_run);
     else
         printf("End test_messager suite. " TRED "%d/%d\n\n" TRESET, tests_passed, tests_run);

@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include "errors.h"
 #include "sockutils.h"
+#include "ssltrans.h"
 
 /* BEGIN TESTS */
 int t_Server_close_communication__close_noconnected_socket() {
@@ -35,15 +36,24 @@ int t_Server_close_communication__close_connected_socket() {
 	if(res != OK)
 		mu_sysfail("close s2 failed");
 
-
 	mu_end;
 }
 
 int t_server_open_socket__opensocket() {
-	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE);
+	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE, 0);
 	mu_assert("Server won't open", handler !=ERR_SOCK);
 
 	close(handler);
+	mu_end;
+}
+
+int t_server_open_socket_ssl__opensocket() {
+	init_all_ssl_default();
+	int handler = server_open_socket(DEFAULT_PORT, DEFAULT_MAX_QUEUE, 1);
+	mu_assert("Server won't open", handler !=ERR_SOCK);
+
+	close(handler);
+	cleanup_all_ssl();
 	mu_end;
 }
 
@@ -58,6 +68,7 @@ int test_sockutils_suite(int* errors, int* success) {
 	mu_run_test(t_Server_close_communication__close_noconnected_socket);
 	mu_run_test(t_Server_close_communication__close_connected_socket);
 	mu_run_test(t_server_open_socket__opensocket);
+	mu_run_test(t_server_open_socket_ssl__opensocket);
 	
 /* END TEST EXEC */
 	if(tests_passed == tests_run)

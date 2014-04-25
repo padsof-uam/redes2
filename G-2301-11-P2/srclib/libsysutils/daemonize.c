@@ -61,13 +61,17 @@ void critical_stop_handler(int signum)
     kill(getpid(), SIGTERM);
 }
 
-int daemonize(const char *log_id)
+void open_syslog(const char* log_id)
 {
-    int pid;
     _log_id = strdup(log_id);
-    umask(0);
     _open_log();
     setlogmask (LOG_UPTO (LOG_DEBUG));
+}
+
+int daemonize()
+{
+    int pid;
+    umask(0);
 
     if (signal(SIGTTOU, SIG_IGN))
     {

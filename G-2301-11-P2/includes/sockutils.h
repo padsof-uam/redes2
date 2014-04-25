@@ -12,7 +12,7 @@
 * @return 	Un valor negativo en caso de error o el handler del socket
 *			en caso de éxito.
 */
-int server_open_socket(int port, int max_long);
+int server_open_socket(int port, int max_long, short use_ssl);
 
 /**
 * Función encargada de aceptar una conexión en un socket.
@@ -21,6 +21,7 @@ int server_open_socket(int port, int max_long);
 *			en caso de éxito.
 */
 int server_listen_connect(int handler);
+
 /**
 * Función encargada de cerrar la conexión.
 * @param	handler 	Identificador del socket a cerrar.
@@ -34,9 +35,10 @@ int server_close_communication(int handler);
  * @param  port          Puerto.
  * @param  resolved_addr Cadena donde se guarda la dirección resuelta.
  * @param  resadr_len    Longitud del buffer donde guardar la dirección resuelta.
+ * @param  use_ssl		 Activar uso de SSL o no.
  * @return               Socket o número negativo en caso de error.
  */
-int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len);
+int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len, short use_ssl);
 
 /**
  * Resuelve un host a una dirección IP4.
@@ -45,6 +47,9 @@ int client_connect_to(const char* host, const char* port, char* resolved_addr, s
  * @return      OK/ERR.
  */
 int resolve_ip4(const char* host, uint32_t* ip);
+
+int ssl_socketpair(int domain, int type, int protocol, int sockets[2]);
+int sock_set_block(int socket, short block);
 
 /**
  * Obtiene el puerto en el que está escuchando un socket.

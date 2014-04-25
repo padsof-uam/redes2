@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) -ffast-math
+CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) 
 DEBUG_CFLAGS = -DDEBUG -ggdb
-LDFLAGS := $(shell pkg-config --libs libpulse-simple) $(shell pkg-config --libs gtk+-2.0)
+LDFLAGS := $(shell pkg-config --libs libpulse-simple) $(shell pkg-config --libs gtk+-2.0) -lssl -lcrypto
 E_LIBS = -lpthread
 
 CFLAGS += $(DEBUG_CFLAGS)
@@ -14,6 +14,7 @@ DOCDIR = doc
 LIBDIR = lib
 LIBSRCDIR = srclib
 TESTDIR = tests
+CERTDIR = cert
 
 P_GROUP = 2301
 P_NUM = 2
@@ -21,7 +22,7 @@ P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 
 TARGET = server
-TARGETS := server chat prsound
+TARGETS := server chat prsound echoserver echoclient
 INCLUDES = -I./includes/
 
 INCS := $(wildcard $(INCDIR)/*.h)
@@ -50,7 +51,7 @@ FMT_BOLD := $(shell tput bold)
 FMT_NORM := $(shell tput sgr0)
 
 
-.PRECIOUS: %.o %.d
+.PRECIOUS: %.o %.d %.key %.csr %.crt %.cer %.pem
 .PHONY: debug clean pack doxydoc docclean
  
 all: test $(TARGETS)
@@ -71,6 +72,9 @@ chat: $(BINDIR)/chat
 
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
+
+echoserver: $(BINDIR)/echoserver
+echoclient: $(BINDIR)/echoclient
 
 scan: clean
 	@scan-build make test
@@ -140,7 +144,7 @@ $(TARGET): $(BINDIR)/$(TARGET)
 
 $(BINDIR)/%: $(OBJDIR)/$(SRCDIR)/%.o $(OBJS_NOMAIN) $(LIBS) | $(BINDIR) depend $(LIBS)
 	@echo "$(FMT_BOLD)Building final target: $@ $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS) $(LDFLAGS)
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LIBS_NOGUI) $(E_LIBS) $(LDFLAGS)
 
 ## Tests
 
@@ -149,7 +153,7 @@ test: $(BINDIR)/test | $(OBJDIR)
 
 $(BINDIR)/test: $(OBJDIR)/$(TESTDIR)/test.o $(TEST_OBJS) $(OBJS_NOMAIN) $(LIBS_NOGUI) | $(BINDIR) depend
 	@echo "$(FMT_BOLD)Building test executable $(FMT_NORM)"
-	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(E_LIBS) $(LDFLAGS)
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LIBS_NOGUI) $(E_LIBS) $(LDFLAGS)
 
 ### Documentation
 
@@ -182,3 +186,48 @@ pack: docs
 	@tools/redes_rename
 	@cd ..; tar -X $(P_NAME)/.tarexcludes -czf $(P_NAME).tar.gz $(P_NAME) 
 	@echo "Packed $(P_NAME).tar.gz in parent directory."
+
+### Certificates
+
+ROOTKEY = $(CERTDIR)/root.key
+ROOTCERT = $(CERTDIR)/root.cer
+ROOTPEM = $(CERTDIR)/root.pemr
+CLIENTPEM = $(CERTDIR)/client.pem
+SERVPEM = $(CERTDIR)/server.pem
+
+certificates: $(ROOTPEM) $(SERVPEM) | $(CERTDIR)
+
+certclean:
+	@echo "$(FMT_BOLD)Cleaning certificates...$(FMT_NORM)"
+	@-rm -r $(CERTDIR)
+
+$(CERTDIR): 
+	@mkdir -p $(CERTDIR)
+
+%.key: | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating key $@...$(FMT_NORM)"
+	@openssl genrsa -out $@ 2048
+
+%.csr: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generate certificate signing request $@ from $<...$(FMT_NORM)"
+	@openssl req -new -key $< -out $@
+
+%.crt: %.csr $(ROOTCERT) $(ROOTKEY) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Signing client certificate request $< with $(ROOTCERT)...$(FMT_NORM)"
+	@openssl x509 -req -in $< -CA $(ROOTCERT) -CAkey $(ROOTKEY) -CAcreateserial -out $@ -days 500
+
+%.cer: %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Self-signing certificate $@...$(FMT_NORM)"	
+	@openssl req -new -x509 -key $< -out $@
+
+%.pem: %.crt %.key $(ROOTCERT) | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating certificate $@...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@
+
+%.pemr: %.cer %.key | $(CERTDIR)
+	@echo "$(FMT_BOLD)Generating root certificate $@ from $^...$(FMT_NORM)"
+	@cat $^ > $@
+	@openssl x509 -subject -issuer -noout -in $@
+	@openssl verify -CAfile $(ROOTCERT) $@

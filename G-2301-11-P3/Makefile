@@ -17,7 +17,7 @@ TESTDIR = tests
 CERTDIR = cert
 
 P_GROUP = 2301
-P_NUM = 2
+P_NUM = 3
 P_PAR = 11
 P_NAME = G-$(P_GROUP)-$(P_PAR)-P$(P_NUM)
 

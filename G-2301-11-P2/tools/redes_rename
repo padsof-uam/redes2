@@ -14,6 +14,10 @@ function process_dir() {
 	done	
 }
 
+function repl_target() {
+	sed -i .sed "s/$1/\$(P_NAME)-$1/g" Makefile
+	rm Makefile.sed
+}
 
 process_dir src
 process_dir includes
@@ -25,7 +29,11 @@ for d in $(ls srclib); do
 	fi
 done
 
-sed -i .sed 's/main/$(P_NAME)-main/g' Makefile
+repl_target server
+repl_target chat
+repl_target prsound
+repl_target echoserver
+repl_target echoclient
+
 sed -i .sed 's/\/test/\/$(P_NAME)-test/g' Makefile
-rm Makefile.sed
 mv Makefile $prefix-makefile

@@ -37,7 +37,7 @@ void connectToFavServ(int favserv)
 {
     struct serv_info serv;
 
-    if(serv_get_number(favserv, &serv) != OK)
+    if(serv_get_number(favserv - 1, &serv) != OK)
     {
         errorText("No hemos podido recuperar el servidor número %d", favserv);
         return;
@@ -180,7 +180,7 @@ void moderated(gboolean state)
     _send_flag('m', state);
 }
 
-#define streq(stat, str) (strncmp(stat, str, strlen(stat) < strlen(msg) ? strlen(stat) + 1 : strlen(msg) + 1) == 0)
+#define streq(stat, str) (strncmp(stat, str, strlen(stat) < strlen(msg) ? strlen(stat) : strlen(msg)) == 0)
 
 static short _can_process_without_connection(const char* msg)
 {

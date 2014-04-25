@@ -144,7 +144,7 @@ int irc_server(void* data)
 
 	if(parnum == 0)
 	{
-		connectToFavServ(0);
+		connectToFavServ(1);
 	}
 	else if(parnum >= 1)
 	{	
@@ -152,7 +152,7 @@ int irc_server(void* data)
 
 		if(servnum != 0)
 		{
-			connectToFavServ(servnum - 1);
+			connectToFavServ(servnum);
 		}
 		else
 		{

@@ -16,6 +16,7 @@ struct serv_info {
 };
 
 int serv_get_number(int servnum, struct serv_info* info);
+int serv_get_number_in(const char* file, int servnum, struct serv_info* info);
 int serv_save_connection(struct serv_info* info);
 int parse_servinfo(char* line, struct serv_info* info);
 int serv_getlist(FILE* f, struct serv_info* list, size_t list_size);

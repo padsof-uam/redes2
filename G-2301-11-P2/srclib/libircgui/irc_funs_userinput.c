@@ -28,6 +28,7 @@ const char* _ui_commands[] =
 	"quit",
 	"ban",
 	"exit",
+	"query",
 	"*"
 };
 
@@ -43,6 +44,7 @@ cmd_action _ui_actions[] =
 	irc_ui_quit,
 	irc_ui_ban,
 	irc_ui_exit,
+	irc_msg,
 	irc_server_forward
 };
 
@@ -78,34 +80,35 @@ int irc_msg(void* data)
 {
 	char *nick_start, *msg_start;
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
-	const char* msg = msgdata->msg;
+	char* msg = strdup(msgdata->msg);
 	char user_dst[40];
 
-	nick_start = strchr(msg, ' ');
+	nick_start = irc_next_param(msg);
 
 	if(nick_start == NULL)
 	{
-		errorText("Sintaxis incorrecta. Uso: /msg nick (mensaje)");
+		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
+		free(msg);
 		return ERR_PARSE;
 	}
 
-	nick_start++;
-
-	msg_start = strchr(msg, ' ');
+	msg_start = irc_next_param(nick_start);
 
 	if(msg_start == NULL)
 	{
-		errorText("Sintaxis incorrecta. Uso: /msg nick (mensaje)");
+		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
+		free(msg);
 		return ERR_PARSE;
 	}
 
-	msg_start++;
+	*(msg_start - 1) = '\0';
 
 	irc_send_to_server(msgdata, "PRIVMSG %s :%s", nick_start, msg_start);
 
 	snprintf(user_dst, 40, "%s -> %s", msgdata->clientdata->nick, nick_start);
 	privateText(user_dst, msg);
 
+	free(msg);
 	return OK;
 }
 
@@ -144,7 +147,7 @@ int irc_server(void* data)
 
 	if(parnum == 0)
 	{
-		connectToFavServ(0);
+		connectToFavServ(1);
 	}
 	else if(parnum >= 1)
 	{	
@@ -152,7 +155,7 @@ int irc_server(void* data)
 
 		if(servnum != 0)
 		{
-			connectToFavServ(servnum - 1);
+			connectToFavServ(servnum);
 		}
 		else
 		{

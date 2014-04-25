@@ -20,6 +20,7 @@
 #define MAX_KEY_LEN 50
 #define MAX_TOPIC_LEN 500
 #define MAX_AWAYMSG_LEN 100
+#define MAX_FTP_PATH 500
 
 #define MAX_MEMBERS_IN_CHANNEL 100
 #define MAX_CHANNELES_USER 10
@@ -27,6 +28,12 @@
 #define MAX_ERR_THRESHOLD 5
 
 #define SERVER_VERSION 0
+
+/**
+* Longitud máxima de los tamaños ftp.
+*/
+#define MAX_LEN_FTP 10240
+#define FTP_TIMEOUT_MS 700
 
 typedef enum {
 	call_none, call_incoming, call_outgoing, call_running
@@ -78,6 +85,22 @@ struct ircuser {
 	list* channels; /**<Lista de punteros a estructuras de los canales a los que pertenece.>*/
 };
 
+/**
+ * Enumerado de posibles estados de una conexión ftp
+ */
+typedef enum {
+	ftp_finished = 0, ftp_aborted, ftp_timeout, ftp_started, ftp_requested, ftp_recv_req
+} ftp_status;
+
+struct ftp_connection
+{
+	ftp_status status;
+	char file_to_send[MAX_FTP_PATH];
+	pthread_t th_manager;
+	pthread_mutex_t stop_mutex;
+	pthread_cond_t stop_cond;
+};
+
 struct irc_clientdata {
 	short connected;
 	char chan[MAX_CHAN_LEN + 1];
@@ -91,7 +114,9 @@ struct irc_clientdata {
 	call_status call_status;
 	struct cm_info call_info;
 	char call_user[MAX_NICK_LEN + 1];
+	char ftp_user[MAX_NICK_LEN + 1];
 	uint32_t client_ip;
+	struct ftp_connection ftp_con_data;
 };
 
 /**

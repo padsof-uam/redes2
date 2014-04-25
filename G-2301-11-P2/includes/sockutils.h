@@ -61,10 +61,18 @@ int get_socket_port(int sock, int *port);
 int open_listen_udp_socket();
 
 /**
- * Abre un socket de escucha TCP.
+ * Abre un socket de escucha TCP bloqueante.
+ * @param  port     Puerto de escucha.
+ * @param  max_long Longitud de la cola de escucha del socket.
  * @return	Un valor negativo en caso de error o el handler del socket creado.
  */
-int open_listen_tcp_socket();
+int server_open_socket_block(int port, int max_long);
+/**
+ * Función encargada de aceptar una conexión en un socket (bloqueante)
+ * @param  handler Identificador del socket.
+ * @return         ERR/Identificador del socket.
+ */
+int server_listen_connect_block(int handler);
 
 #endif
 

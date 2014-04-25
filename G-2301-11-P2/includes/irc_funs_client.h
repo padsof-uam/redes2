@@ -32,4 +32,8 @@ void parse_pcall(struct irc_clientdata* cdata, char* text, char* source);
 void parse_paccept(struct irc_clientdata* cdata, char* text, char* source);
 void parse_pclose(struct irc_clientdata* cdata, char* text, char* source);
 
+void parse_fsend(struct irc_clientdata * con_data, char* text, char* source);
+void parse_faccept(struct irc_clientdata * con_data, char* text, char* source);
+void parse_fcancel(struct irc_clientdata * con_data, char* text, char* source);
+
 #endif

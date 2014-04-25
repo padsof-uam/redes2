@@ -16,5 +16,7 @@ int irc_ui_quit(void* data);
 int irc_ui_nick(void* data);
 int irc_ui_ban(void* data);
 int irc_ui_exit(void* data);
-
+int irc_fsend(void* data);
+int irc_faccept(void* data);
+int irc_fcancel(void* data);
 #endif

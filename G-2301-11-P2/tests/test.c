@@ -1,3 +1,4 @@
+#include "test_irc_ftp.h"
 #include "test_voicecall.h"
 #include "test_server_history.h"
 #include "test_lfringbuf.h"
@@ -71,6 +72,8 @@ int main(int argc, const char **argv)
 
     printf("Begin test run %s\n", ctime(&t));
     /* BEGIN TEST REGION */
+	if(include_test("irc_ftp", argc, argv))
+		run += test_irc_ftp_suite(&error, &success);
 	if(include_test("voicecall", argc, spec_start))
 		run += test_voicecall_suite(&error, &success);
 	if(include_test("server_history", argc, spec_start))

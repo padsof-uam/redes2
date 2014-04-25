@@ -883,12 +883,10 @@ int t_irc_user()
     output = _process_message(irc_user, irc, fd, msg);
 
     mu_assert_streq(a->name, "comida de gato", "Name not set");
+    irc_testend;
 
     assert_generated(1);
-
     assert_numeric_reply_text(msgnum(0), RPL_MOTD, NULL, "Bienvenido a redes-ircd! Eres el 1 usuario");
-
-    irc_testend;
 }
 
 int t_irc_nick_collision()
@@ -913,10 +911,10 @@ int t_irc_nick__set_nick__set()
 
     output = _process_message(irc_nick, irc, 1, "NICK Juan");
 
+    irc_testend;
+    
     assert_generated(1);
     mu_assert_streq(a->nick, "Juan", "Nick was not set");
-
-    irc_testend;
 }
 
 int t_irc_nick__change_nick__set_and_broadcast()

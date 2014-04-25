@@ -1,5 +1,5 @@
-CC = clang
-CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) 
+CC = gcc
+CFLAGS :=  -Wall -pedantic -std=c99 -D_GNU_SOURCE $(shell pkg-config --cflags gtk+-2.0) -ffast-math
 DEBUG_CFLAGS = -DDEBUG -ggdb
 LDFLAGS := $(shell pkg-config --libs libpulse-simple) $(shell pkg-config --libs gtk+-2.0)
 E_LIBS = -lpthread

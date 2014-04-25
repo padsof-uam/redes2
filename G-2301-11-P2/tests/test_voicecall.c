@@ -1,6 +1,6 @@
 #include "test_voicecall.h"
 #include "testmacros.h"
-
+#include "sockutils.h"
 #include "sound.h"
 #include "voicecall.h"
 #include "errors.h"
@@ -90,7 +90,7 @@ int t_voicecall__20_sec_transmission__works()
 
     // Tarda mucho, no se controla bien la pérdida de paquetes UDP.
     mu_ignore;
-
+    
     _set_use_mocks(1);
 
     _set_play_cb(_mock_receive_buffer);
@@ -101,13 +101,13 @@ int t_voicecall__20_sec_transmission__works()
     if (retval != OK)
         mu_sysfail("init_callbuf");
 
-    socket_a = open_listen_socket();
+    socket_a = open_listen_udp_socket();
     if (socket_a <= 0)
-        mu_cleanup_sysfail(cleanup, "open_listen_socket a");
-
-    socket_b = open_listen_socket();
+        mu_cleanup_sysfail(cleanup, "open_listen_udp_socket a");
+ 
+    socket_b = open_listen_udp_socket();
     if (socket_b <= 0)
-        mu_cleanup_sysfail(cleanup, "open_listen_socket b");
+        mu_cleanup_sysfail(cleanup, "open_listen_udp_socket b");
 
     retval = get_socket_port(socket_a, &port_a);
     if (retval != OK)

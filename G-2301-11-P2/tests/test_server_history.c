@@ -11,6 +11,69 @@
 #define TMP_FSFILE "/tmp/redirc-favserv"
 
 /* BEGIN TESTS */
+int t_serv_get_number_in__non_existing_file__returns_err_not_found() {
+    struct serv_info info;
+    int retval;
+
+    retval = serv_get_number_in("this/does/not/exist", 0, &info);
+
+    mu_assert_eq(retval, ERR_NOTFOUND, "bad error code");
+
+	mu_end;
+}
+int t_serv_get_number_in__out_of_range__returns_err_notfound() {
+    FILE *f = fopen(TMP_FSFILE, "w");
+    int retval;
+    struct serv_info info;
+
+    mu_assert("fopen", f);
+    fprintf(f, "localhost 6667 4\n");
+    fprintf(f, "otherhost 612 3\n");
+    fclose(f);
+
+    retval = serv_get_number_in(TMP_FSFILE, 3, &info);
+
+    mu_assert_eq(retval, ERR_RANGE, "ERR_NOTFOUND");
+
+    mu_end;
+}
+int t_serv_get_number_in__negative__returns_err_range() {
+    FILE *f = fopen(TMP_FSFILE, "w");
+    int retval;
+    struct serv_info info;
+
+    mu_assert("fopen", f);
+    fprintf(f, "localhost 6667 4\n");
+    fprintf(f, "otherhost 612 3\n");
+    fclose(f);
+
+    retval = serv_get_number_in(TMP_FSFILE, -1, &info);
+
+    mu_assert_eq(retval, ERR_RANGE, "ERR_RANGE");
+
+    mu_end;
+}
+int t_serv_get_number_in__in_range__returns_info() 
+{
+    FILE *f = fopen(TMP_FSFILE, "w");
+    int retval;
+    struct serv_info info;
+
+    mu_assert("fopen", f);
+    fprintf(f, "localhost 6667 4\n");
+    fprintf(f, "otherhost 612 3\n");
+    fclose(f);
+
+    retval = serv_get_number_in(TMP_FSFILE, 0, &info);
+
+    mu_assert_eq(retval, OK, "retval");
+
+    mu_assert_streq(info.servname, "localhost", "host");
+    mu_assert_streq(info.port, "6667", "port");
+    mu_assert_eq(info.times_used, 4, "times_used");
+
+    mu_end;
+}
 int t_serv_save_connection__new_connection__added()
 {
     FILE *f = fopen(TMP_FSFILE, "w");
@@ -134,6 +197,10 @@ int test_server_history_suite(int *errors, int *success)
 
     printf("Begin test_server_history suite.\n");
     /* BEGIN TEST EXEC */
+	mu_run_test(t_serv_get_number_in__non_existing_file__returns_err_not_found);
+	mu_run_test(t_serv_get_number_in__out_of_range__returns_err_notfound);
+	mu_run_test(t_serv_get_number_in__negative__returns_err_range);
+	mu_run_test(t_serv_get_number_in__in_range__returns_info);
     mu_run_test(t_serv_save_connection__new_connection__added);
     mu_run_test(t_serv_save_connection__existing_connection__times_used_increased);
     mu_run_test(t_servhistory_getlist__multiple_items__retrieved);

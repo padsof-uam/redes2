@@ -6,14 +6,12 @@
 #include <stdlib.h>
 
 #include "types.h"
-/**
-* Longitud máxima de los tamaños ftp.
-*/
-#define MAX_LEN_FTP 10240
-#define FTP_TIMEOUT_MS 700
 
 typedef void (*ftp_callback)(ftp_status);
 
+/**
+ * Estructura para la creación de hilos manejadores de ftp.
+ */
 struct th_ftpdata
 {
 	FILE * f;

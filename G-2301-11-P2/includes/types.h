@@ -28,6 +28,12 @@
 
 #define SERVER_VERSION 0
 
+/**
+* Longitud máxima de los tamaños ftp.
+*/
+#define MAX_LEN_FTP 10240
+#define FTP_TIMEOUT_MS 700
+
 typedef enum {
 	call_none, call_incoming, call_outgoing, call_running
 } call_status;
@@ -78,6 +84,9 @@ struct ircuser {
 	list* channels; /**<Lista de punteros a estructuras de los canales a los que pertenece.>*/
 };
 
+/**
+ * Enumerado de posibles estados de una conexión ftp
+ */
 typedef enum {
 	ftp_finished, ftp_aborted, ftp_timeout, ftp_started
 } ftp_status;

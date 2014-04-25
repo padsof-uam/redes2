@@ -52,7 +52,11 @@ int open_listen_udp_socket();
  * @return	Un valor negativo en caso de error o el handler del socket creado.
  */
 int server_open_socket_block(int port, int max_long);
-
+/**
+ * Función encargada de aceptar una conexión en un socket (bloqueante)
+ * @param  handler Identificador del socket.
+ * @return         ERR/Identificador del socket.
+ */
 int server_listen_connect_block(int handler);
 
 #endif

@@ -305,14 +305,6 @@ static char *_get_packet_with_seq(list *ls, int seq)
     return NULL;
 }
 
-static void _update_running_avg(double* avg, int newval)
-{
-    if(*avg < 0)
-        *avg = newval;
-    else
-        *avg = (1 - RUNNING_AVG_FACTOR) * (*avg) + RUNNING_AVG_FACTOR * newval;
-}
-
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;

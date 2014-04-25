@@ -182,10 +182,7 @@ int client_connect_to(const char *host, const char *port, char *resolved_addr, s
     while (info != NULL && !connected)
     {   
         sock = dsocket(info->ai_family, info->ai_socktype, info->ai_protocol, use_ssl);
-
-        if(sock != -1)
-            sock_set_block(sock, 0);
-
+        
         if (sock == -1 || dconnect(sock, info->ai_addr, info->ai_addrlen) != 0)
         {
             dclose(sock);

@@ -25,6 +25,8 @@ void * thread_wait_file(void * ftpdata){
 
 	int sock = server_listen_connect(data->sock);
 
+	sock_set_block(sock, 1);
+	
 	if(sock == -1)
 	{
 		slog(LOG_ERR, "Error aceptando conexión.");

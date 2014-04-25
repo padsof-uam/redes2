@@ -1,6 +1,8 @@
 #include "sockssl.h"
 #include "log.h"
 #include "sockutils.h"
+#include "messager.h"
+#include "ssltrans.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,13 +22,13 @@ SSL_CTX *fijar_contexto_SSL(const char *ca_path, const char *key_path, short ver
     char key_realpath[512];
     SSL_CTX *ctx;
 
-    if(realpath(ca_path, ca_realpath) == NULL)
+    if (realpath(ca_path, ca_realpath) == NULL)
     {
         slog(LOG_ERR, "Error resolviendo la ruta del certificado CA.");
         return NULL;
     }
 
-    if(realpath(key_path, key_realpath) == NULL)
+    if (realpath(key_path, key_realpath) == NULL)
     {
         slog(LOG_ERR, "Error resolviendo la ruta del certificado.");
         return NULL;
@@ -44,7 +46,7 @@ SSL_CTX *fijar_contexto_SSL(const char *ca_path, const char *key_path, short ver
     }
 
     if (SSL_CTX_set_default_verify_paths(ctx) != 1)
-	{    
+    {
         slog(LOG_ERR, "Error cargando certificados por defecto.");
         goto error;
     }
@@ -91,7 +93,7 @@ int conectar_canal_seguro_SSL(SSL_CTX *ctx, int socket, SSL **ssl, const struct 
 
     if (SSL_set_fd(*ssl, socket) == 0)
     {
-        cerrar_canal_SSL(*ssl);
+        SSL_free(*ssl);
         *ssl = NULL;
         return ERR_SSL;
     }
@@ -100,7 +102,7 @@ int conectar_canal_seguro_SSL(SSL_CTX *ctx, int socket, SSL **ssl, const struct 
 
     if (SSL_connect(*ssl) != 1)
         return ERR_SSL;
-
+    
     sock_set_block(socket, 0);
 
     return OK;
@@ -158,9 +160,13 @@ int evaluar_post_conectar_SSL(SSL_CTX *ctx, SSL *ssl)
 
 void cerrar_canal_SSL(SSL *ssl)
 {
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
+    if (ssl && ssl != SSL_NOT_CONN)
+    {
+        SSL_shutdown(ssl);
+        SSL_free(ssl);
+    }
 }
+
 
 int enviar_datos_SSL(SSL *ssl, const void *msg, ssize_t len)
 {
@@ -178,14 +184,16 @@ void slog_sslerr()
     char errorstr[200];
     int count = 0;
 
-    while((error = ERR_get_error()) != 0)
+    while ((error = ERR_get_error()) != 0)
     {
         count++;
         ERR_error_string_n(error, errorstr, 200);
-        slog(LOG_ERR, "Error SSL %d (%s) en %s/%s: %s", error, errorstr, 
-            ERR_GET_FUNC(error), ERR_GET_LIB(error), ERR_GET_REASON(error));
+        slog(LOG_ERR, "Error SSL %d (%s)", error, errorstr,
+             ERR_GET_FUNC(error), ERR_GET_LIB(error), ERR_GET_REASON(error));
     }
 
-    if(count == 0)
+    if (count == 0)
         slog(LOG_WARNING, "No hay errores SSL.");
+    else
+        slog(LOG_NOTICE, "Fin errores SSL.");
 }

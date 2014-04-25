@@ -134,12 +134,16 @@ int dconnect(int socket, const struct sockaddr *addr, socklen_t addr_len)
         retval = conectar_canal_seguro_SSL(get_ssl_ctx(), socket, &ssl, addr, addr_len);
 
         if (retval != OK)
-            return ERR_SSL;
+        {
+            slog_sslerr();
+            return -1;
+        }
 
         retval = evaluar_post_conectar_SSL(get_ssl_ctx(), ssl);
 
         if (retval != OK)
         {
+            slog_sslerr();
             slog(LOG_WARNING, "Error de certificado en conexión recibida en %d, retorno %d", socket, retval);
             close(retval);
             return -1;
@@ -158,6 +162,12 @@ int dconnect(int socket, const struct sockaddr *addr, socklen_t addr_len)
 ssize_t dsend(int socket, const void *buffer, size_t length, int flags)
 {
     SSL *ssl = get_ssl(socket);
+
+    if (ssl == SSL_NOT_CONN)
+    {
+        slog(LOG_ERR, "No se puede escribir en un socket SSL no conectado.");
+        return -1;
+    }
 
     if (ssl)
         return enviar_datos_SSL(ssl, buffer, length);

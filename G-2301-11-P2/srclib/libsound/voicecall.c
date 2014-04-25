@@ -22,7 +22,7 @@
 #define ERR_THRESHOLD 5
 #define RUNNING_AVG_FACTOR 0.2
 #define PACKET_MIN_DROP_MS_SEP 200
-#define LATENCY_THRESHOLD_MS 150
+#define LATENCY_THRESHOLD_MS 300
 
 #define __sync_retrieve(val) __sync_add_and_fetch(&(val), 0)
 
@@ -305,14 +305,6 @@ static char *_get_packet_with_seq(list *ls, int seq)
     return NULL;
 }
 
-static void _update_running_avg(double* avg, int newval)
-{
-    if(*avg < 0)
-        *avg = newval;
-    else
-        *avg = (1 - RUNNING_AVG_FACTOR) * (*avg) + RUNNING_AVG_FACTOR * newval;
-}
-
 void *sound_receiver_entrypoint(void *data)
 {
     struct cm_thdata *thdata = (struct cm_thdata *) data;
@@ -330,8 +322,7 @@ void *sound_receiver_entrypoint(void *data)
     int last_force_drop_ts = -1;
     int current_ts;
     int empty_buffer = 0;
-    int queue_delay_ms, tx_delay_ms;
-    double tx_delay_avg = -1;
+    int queue_delay_ms;
     int packets_per_sec = 1000 / ((double) thdata->sample_duration_ms);
 
     pfd.events = POLLIN;
@@ -409,15 +400,12 @@ void *sound_receiver_entrypoint(void *data)
         last_seq++;
 
         current_ts = get_timestamp();
-        tx_delay_ms = current_ts - packet->timestamp;
         queue_delay_ms = lfringbuf_count(thdata->ringbuf) * thdata->sample_duration_ms + __sync_retrieve(thdata->play_latency);
 
-        _update_running_avg(&tx_delay_avg, tx_delay_ms);
-
         if(last_seq % packets_per_sec == 0)
-            slog(LOG_DEBUG, "Current tx calculated delay: %f ms. Queue delay: %d ms", tx_delay_avg, queue_delay_ms);
+            slog(LOG_DEBUG, "Queue delay: %d ms", queue_delay_ms);
 
-        if(abs(queue_delay_ms - tx_delay_avg) > LATENCY_THRESHOLD_MS && 
+        if(queue_delay_ms > LATENCY_THRESHOLD_MS && 
             (current_ts - last_force_drop_ts > PACKET_MIN_DROP_MS_SEP))
         {
             last_force_drop_ts = current_ts;
@@ -495,6 +483,5 @@ int call_stop(struct cm_info *cm)
 
 uint32_t generate_ssrc()
 {
-    /* Podemos implementar lo que pone en el RFC, o hacer esta chapuza. */
     return rand();
 }

@@ -10,7 +10,6 @@
 #define VC_OK 0
 #define VC_CALL_ENDED 1
 #define VC_ERR 2
-#define VC_FUCKOFF 4
 #define VC_TIMEOUT 8
 
 #define VC_CHUNK_TIME_MS 20
@@ -42,12 +41,54 @@ struct rtp_header {
 	uint32_t ssrc_id;
 };
 
+/**
+ * Crea los hilos encargados de gestionar la llamada.
+ * @param  cm            Información de la llamada.
+ * @param  ip            IP de destino.
+ * @param  port          Puerto de destino.
+ * @param  socket        Socket a usar (se creará si no es válido)
+ * @param  format        Formato de llamada.
+ * @param  channels      Canales a usar.
+ * @param  chunk_time_ms Tiempo de cada segmento a enviear.
+ * @return               OK/ERR
+ */
 int spawn_call_manager_thread(struct cm_info *cm, uint32_t ip, uint16_t port, int socket, int format, int channels, int chunk_time_ms);
+
+/**
+ * Punto de entrada del hilo de grabación y envío.
+ * @param data Datos del hilo
+ */
 void* sound_sender_entrypoint(void* data);
+
+/**
+ * Punto de entrada del hilo de recepción.
+ * @param data Datos del hilo
+ */
 void* sound_receiver_entrypoint(void* data);
+
+/**
+ * Punto de entrada del hilo de reproducción.
+ * @param data Datos del hilo
+ */
 void* sound_player_entrypoint(void* data);
+
+/**
+ * Detiene una llamada
+ * @param  cm Información de la llamada
+ * @return    OK/ERR
+ */
 int call_stop(struct cm_info* cm);
+
+/**
+ * Genera un código ssrc.
+ * @return Código SSRC.
+ */
 uint32_t generate_ssrc();
+
+/**
+ * Obtiene el timestamp actual
+ * @return Timestamp.
+ */
 uint32_t get_timestamp();
 
 #endif

@@ -80,34 +80,35 @@ int irc_msg(void* data)
 {
 	char *nick_start, *msg_start;
 	struct irc_msgdata* msgdata = (struct irc_msgdata*) data;
-	const char* msg = msgdata->msg;
+	char* msg = strdup(msgdata->msg);
 	char user_dst[40];
 
-	nick_start = strchr(msg, ' ');
+	nick_start = irc_next_param(msg);
 
 	if(nick_start == NULL)
 	{
 		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
+		free(msg);
 		return ERR_PARSE;
 	}
 
-	nick_start++;
-
-	msg_start = strchr(msg, ' ');
+	msg_start = irc_next_param(nick_start);
 
 	if(msg_start == NULL)
 	{
 		errorText("Sintaxis incorrecta. Uso: /[msg|query] nick (mensaje)");
+		free(msg);
 		return ERR_PARSE;
 	}
 
-	msg_start++;
+	*(msg_start - 1) = '\0';
 
 	irc_send_to_server(msgdata, "PRIVMSG %s :%s", nick_start, msg_start);
 
 	snprintf(user_dst, 40, "%s -> %s", msgdata->clientdata->nick, nick_start);
 	privateText(user_dst, msg);
 
+	free(msg);
 	return OK;
 }
 

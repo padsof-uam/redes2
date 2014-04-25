@@ -56,12 +56,12 @@ void irc_client_msgprocess(int snd_qid, struct sockcomm_data *data, struct irc_c
     _irc_msgprocess(snd_qid, data, NULL, cdata, _irc_client_cmds, _irc_client_actions, (sizeof(_irc_client_actions) / sizeof(cmd_action)));
 }
 
-int irc_ignore(void* data)
+int irc_ignore(void *data)
 {
     return OK;
 }
 
-int irc_recv_end_motd(void* data)
+int irc_recv_end_motd(void *data)
 {
     struct irc_msgdata *msgdata = (struct irc_msgdata *) data;
     irc_send_response(msgdata, "WHO %s", msgdata->clientdata->nick);
@@ -146,8 +146,11 @@ int irc_recv_privmsg(void *data)
 {
     struct irc_msgdata *msgdata = (struct irc_msgdata *) data;
     char user[MAX_NICK_LEN + 1];
+    char buf[100];
     char *params[2];
     char *text;
+
+    bzero(user, sizeof user);
 
     if (irc_get_prefix(msgdata->msg, user, MAX_NICK_LEN) != OK ||
             irc_parse_paramlist(msgdata->msg, params, 2) != 2)
@@ -165,7 +168,17 @@ int irc_recv_privmsg(void *data)
     else if (!strncmp("$PCLOSE ", text, strlen("$PACCEPT ")))
         parse_pclose(msgdata->clientdata, text, user);
     else
-        publicText(user, text);
+    {
+        if (!strncmp(params[0], msgdata->clientdata->nick, MAX_NICK_LEN))
+        {
+            snprintf(buf, 100, "%s -> %s", user, params[0]);
+            privateText(buf, text);
+        }
+        else
+        {
+            publicText(user, text);
+        }
+    }
 
     return OK;
 }
@@ -401,13 +414,13 @@ void parse_pclose(struct irc_clientdata *cdata, char *text, char *source)
     if (cdata->call_status != call_none)
     {
         messageText("El usuario remoto ha terminado la llamada.");
-            
-        if(cdata->call_status == call_outgoing)
+
+        if (cdata->call_status == call_outgoing)
         {
             close(cdata->call_socket);
             signal(SIGALRM, SIG_IGN);
         }
-        else if(cdata->call_status == call_running)
+        else if (cdata->call_status == call_running)
         {
             call_stop(&(cdata->call_info));
         }
@@ -465,19 +478,19 @@ int irc_recv_who(void *data)
     return OK;
 }
 
-int irc_recv_nosuchnick(void* data)
+int irc_recv_nosuchnick(void *data)
 {
     struct irc_msgdata *msgdata = (struct irc_msgdata *) data;
-    char* params[2];
+    char *params[2];
 
-    if(irc_parse_paramlist(msgdata->msg, params, 2) != 2)
+    if (irc_parse_paramlist(msgdata->msg, params, 2) != 2)
     {
         slog(LOG_WARNING, "Recibido mensaje ERR_NOSUCHNICK (401) mal formado: %s", msgdata->msg);
         return OK;
     }
 
-    if(!strncmp(params[1], msgdata->clientdata->call_user, MAX_NICK_LEN) && 
-        msgdata->clientdata->call_status == call_outgoing)
+    if (!strncmp(params[1], msgdata->clientdata->call_user, MAX_NICK_LEN) &&
+            msgdata->clientdata->call_status == call_outgoing)
     {
         errorText("No se puede realizar la llamada: el usuario %s no existe.", params[1]);
         msgdata->clientdata->call_status = call_none;

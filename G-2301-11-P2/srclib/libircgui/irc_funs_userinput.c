@@ -379,6 +379,7 @@ int irc_fsend(void* data)
 
 	strncpy(msgdata->clientdata->ftp_user, params[0], MAX_NICK_LEN);
 	irc_send_to_server(msgdata, "PRIVMSG %s :$FSEND %s", params[0], basename(params[1]));
+	messageText("Esperando respuesta...");
 
 	return OK;
 }

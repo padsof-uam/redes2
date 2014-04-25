@@ -46,6 +46,8 @@ void guests(gboolean state);
 void privated(gboolean state);
 void moderated(gboolean state);
 
+gboolean getUseSSL();
+
 /* Funciones para cambiar el estado */
 void setTopicProtect(gboolean state, gboolean enabled);
 void setExternMsg(gboolean state, gboolean enabled);
@@ -53,6 +55,7 @@ void setSecret(gboolean state, gboolean enabled);
 void setGuests(gboolean state, gboolean enabled);
 void setPrivate(gboolean state, gboolean enabled);
 void setModerated(gboolean state, gboolean enabled);
+void setSSL(gboolean state, gboolean enabled);
 
 /* Función llamada cuando se introduce una entrada */
 void newText (const char *msg);

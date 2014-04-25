@@ -68,7 +68,7 @@ no-daemon: debug
 
 chat: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 chat: CFLAGS += $(shell pkg-config --libs gtk+-2.0) 
-chat: $(BINDIR)/chat
+chat: $(BINDIR)/chat | certificados
 
 prsound: LDFLAGS += $(shell pkg-config --libs libpulse-simple)
 prsound: $(BINDIR)/prsound
@@ -195,7 +195,7 @@ ROOTPEM = $(CERTDIR)/root.pemr
 CLIENTPEM = $(CERTDIR)/client.pem
 SERVPEM = $(CERTDIR)/server.pem
 
-certificates: $(ROOTPEM) $(SERVPEM) | $(CERTDIR)
+certificados: $(ROOTPEM) $(SERVPEM) | $(CERTDIR)
 
 certclean:
 	@echo "$(FMT_BOLD)Cleaning certificates...$(FMT_NORM)"

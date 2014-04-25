@@ -7,7 +7,6 @@
 #include "ssltrans.h"
 
 #include <errno.h>
-#include <errors.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <signal.h>

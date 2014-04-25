@@ -5,3 +5,5 @@ Las funcionalidades implementadas de transmisión de ficheros se encuentran en \
 La transmisión de ficheros tiene sus propios test (que prueban la correcta transmisión del fichero y el timeout).
 
 En caso de querer una transmisión segura de ficheros ftp mediante SSL es suficiente con activar la opción de conexiones seguras, en cuyo caso los sockets que se abrirán serán una conexión segura. Añadiendo SSL a la librería \textit{sockutils} se consigue seguridad en todos los niveles superiores.
+
+Hemos fijado un tamaño máximo de transmisión FTP menor que el límite de tamaño impuesto por TCP.

@@ -102,8 +102,11 @@ int serv_save_connection_to(const char *file, struct serv_info *info)
     int i, serv_size = 0;
 
     if (serv_f)
+    {
         serv_size = serv_getlist(serv_f, infolist, MAX_SERV_HISTORY);
-
+        fclose(serv_f);
+    }
+    
     if (serv_size < 0)
     {
         slog(LOG_ERR, "Error %s leyendo lista de servidores preferidos", strerror(errno));
@@ -135,7 +138,6 @@ int serv_save_connection_to(const char *file, struct serv_info *info)
 
     qsort(infolist, serv_size, sizeof(struct serv_info), _serv_compare);
 
-    fclose(serv_f);
     serv_f = fopen(file, "w");
 
     for (i = 0; i < serv_size; i++)

@@ -57,9 +57,19 @@ static int _serv_compare(const void *a, const void *b)
 
 int serv_get_number(int servnum, struct serv_info *info)
 {
-    FILE *serv_f = fopen(FAVSERVS_FILE, "r");
-    char line[200];
-    int line_num = 0;
+    return serv_get_number_in(FAVSERVS_FILE, servnum, info);
+}
+
+int serv_get_number_in(const char* file, int servnum, struct serv_info* info)
+{   
+    size_t lsize;
+    struct serv_info list[MAX_SERV_HISTORY];
+    FILE *serv_f;
+
+    if(servnum < 0)
+        return ERR_RANGE;
+
+    serv_f = fopen(file, "r");
 
     if (!serv_f)
     {
@@ -69,20 +79,14 @@ int serv_get_number(int servnum, struct serv_info *info)
             return ERR_SYS;
     }
 
-    while (fgets(line, 200, serv_f) && line_num < servnum);
+    lsize = serv_getlist(serv_f, list, servnum + 1);
+    fclose(serv_f);
 
-    if (feof(serv_f) && line_num != servnum)
-    {
-        fclose(serv_f);
-        return ERR_NOTFOUND;
-    }
-    else if (ferror(serv_f))
-    {
-        fclose(serv_f);
-        return ERR_SYS;
-    }
+    if(servnum >= lsize)
+        return ERR_RANGE;
 
-    parse_servinfo(line, info);
+    memcpy(info, list + servnum, sizeof(struct serv_info));
+
     return OK;
 }
 

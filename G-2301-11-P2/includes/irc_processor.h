@@ -92,7 +92,7 @@ struct sockcomm_data *irc_build_numericreply(struct irc_msgdata *irc, int errcod
  * @param  errcode           Código de respuesta.
  * @see irc_codes.h
  * @param  additional_params (Opcional) Parámetros adicionales del mensaje de error.
- * @param  msg_text          Texto adicional de la respuesta.
+ * @param  text              Texto adicional de la respuesta.
  * @return                   Estructura rellena con el mensaje.
  */
 struct sockcomm_data *irc_build_numericreply_withtext(struct irc_msgdata *irc, int errcode, const char *additional_params, const char *text);
@@ -106,7 +106,7 @@ char *irc_errstr (int errcode);
 
 /**
  * Crea los mensajes de bienvenida especificados en el RFC para un usuario.
- * @notes Esta función no modifica la estructura de usuario.
+ * Esta función no modifica la estructura de usuario.
  * @param  user     Usuario.
  * @param  msgqueue Lista donde se introducirán los mensajes.
  * @return          Código de retorno.
@@ -126,6 +126,7 @@ int irc_create_quit_messages(struct ircuser *user, list *msgqueue, const char *m
  * Crea los mensajes de salida de un usuario especificados en el RFC para un usuario.
  * @param  user     Usuario.
  * @param  msgqueue Lista donde se introducirán los mensajes.
+ * @param  tokill_name Nombre del usuario a matar.
  * @param  message  Comentario de kill.
  * @return          Código de error.
  */
@@ -259,6 +260,10 @@ int irc_send_message(int snd_qid, int fd, const char* format, ...);
  */
 char* irc_next_param(const char* msg);
 
+/**
+ * Envía los mensajes de bienvenida al usuario que se acaba de registrar.
+ * @param ircdata Datos IRC.
+ */
 void irc_send_welcome_message(struct irc_msgdata* ircdata);
 
 /**

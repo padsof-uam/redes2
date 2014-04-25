@@ -21,6 +21,8 @@ int playSound	(char * buf, int size);
 void closeRecord(void);
 void closePlay	(void);
 
+long getMsLatencyPlay(void);
+
 long getFormatBps(enum pa_sample_format format, int channels);
 long getBytesPerSample(enum pa_sample_format format, int channels, int ms_samplelen);
 

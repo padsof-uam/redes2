@@ -28,9 +28,24 @@ int server_listen_connect(int handler);
 */
 int server_close_communication(int handler);
 
+/**
+ * Devuelve un socket connectado al host y puerto que se pasen como argumentos.
+ * @param  host          Host.
+ * @param  port          Puerto.
+ * @param  resolved_addr Cadena donde se guarda la dirección resuelta.
+ * @param  resadr_len    Longitud del buffer donde guardar la dirección resuelta.
+ * @return               Socket o número negativo en caso de error.
+ */
 int client_connect_to(const char* host, const char* port, char* resolved_addr, size_t resadr_len);
 
+/**
+ * Resuelve un host a una dirección IP4.
+ * @param  host Host.
+ * @param  ip   IP.
+ * @return      OK/ERR.
+ */
 int resolve_ip4(const char* host, uint32_t* ip);
+
 /**
  * Obtiene el puerto en el que está escuchando un socket.
  * @param  sock 	El socket del que queremos saber el puerto.

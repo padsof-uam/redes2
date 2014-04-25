@@ -73,6 +73,16 @@ int sampleFormat(enum pa_sample_format format, int channels)
     return -1;
 }
 
+long getMsLatencyPlay(void)
+{
+    if(!sp)
+        return 0;
+
+    pa_usec_t usecs = pa_simple_get_latency(sp, NULL);
+    return usecs / 1000;
+}
+
+
 int _openRecord(char *identificacion)
 {
     int error;

@@ -6,11 +6,14 @@
 
 /**
  * Llama a select(2) para devolver si hay datos disponibles para
- * 	leer en un socket.
+ * 	leer en un socket, sin bloquear;
  * @param  socket Socket.
  * @return        0 si no hay datos, un valor mayor que cero si los hay.
  */
 int sock_data_available(int socket);
+
+
+int sock_wait_data(int socket, int ms_timeout);
 
 /**
  * Envía un mensaje a través de un socket.
@@ -30,14 +33,7 @@ int send_message(int socket, const void* msg, ssize_t len);
  */
 ssize_t rcv_message(int socket, void** buffer);
 
-/**
- * Recibe un mensaje de un socket dado un tamaño fijo del buffer.
- * @param  socket	Socket.
- * @param  buffer	Puntero al buffer en el que almacenar los bytes recibidos.
- * @param  buflen	Tamaño fijo del buffer.
- * @return ERR/Bytes leídos.
- */
-ssize_t rcv_message_staticbuf(int socket, void *buffer, ssize_t buflen);
 
+ssize_t rcv_message_staticbuf(int socket, void *buffer, ssize_t buflen);
 #endif
 

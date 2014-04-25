@@ -1,0 +1,5 @@
+\subsection{Transmisión de ficheros ftp}
+
+Las funcionalidades implementadas de transmisión de ficheros se encuentran en \textit{irc\_ftp}. Tanto para el cliente (emisor del mensaje) y servidor (receptor del fichero) la conexión se gestiona desde un hilo en paralelo que informan al hilo principal del estado de la transmisión con una función de \textit{callback}. 
+
+La transmisión de ficheros tiene sus propios test (que prueban la correcta transmisión del fichero y el timeout).
